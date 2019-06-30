@@ -1,0 +1,11 @@
+{
+  "name": "tmux-run",
+  "version": "0.0.1",
+  "description": "tmux wrapper for simpler package.json scripts",
+  "main": "bin/tmux-run",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Evan Purcer <evanpurcer@gmail.com> (http://evnp.ca)",
+  "license": "ISC"
+}

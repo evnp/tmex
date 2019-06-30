@@ -1,0 +1,568 @@
+#!/usr/bin/env bash
+
+if (( $# == 0 )); then
+  echo "session name required as first argument"
+  exit 1
+fi
+
+SESSION_NAME="$1"
+shift
+
+# if 1st arg is a string containing only numbers...
+if [[ $1 =~ ^[0-9]+$ ]]; then
+  LAYOUT="$1"
+  shift
+
+  # if layout contains zero...
+  if [[ $LAYOUT =~ "0" ]]; then
+    echo "layout column cannot be set to zero"
+    exit 1
+  fi
+fi
+
+NUM_COMMANDS="$#"
+
+# if layout is not set...
+if [[ -z $LAYOUT ]]; then
+  case "$NUM_COMMANDS" in
+    "1")
+      LAYOUT="1"
+      ;;
+    "2")
+      LAYOUT="11"
+      ;;
+    "3")
+      LAYOUT="12"
+      ;;
+    "4")
+      LAYOUT="22"
+      ;;
+    "5")
+      LAYOUT="122"
+      ;;
+    "6")
+      LAYOUT="222"
+      ;;
+  esac
+fi
+
+LAYOUT_SUM=0
+
+# sum digits in layout
+for (( i = 0; i < ${#LAYOUT}; i++ )); do
+  (( LAYOUT_SUM += ${LAYOUT:i:1} ))
+done
+
+# if number of commands does not match sum of layout string digits...
+if (( $NUM_COMMANDS != $LAYOUT_SUM )); then
+  echo "given layout does not match number of commands provided"
+  exit 1
+fi
+
+echo $SESSION_NAME
+echo $LAYOUT
+echo $NUM_COMMANDS
+echo $LAYOUT_SUM
+
+TMUX="tmux new-session -s \"$SESSION_NAME\""
+
+if [[ -n $1 ]]; then
+  TMUX+=" \"$1\""
+
+  case "$NUM_COMMANDS" in
+    2)
+      case "$LAYOUT" in
+        "2")
+          TMUX+="
+            \\; split-window -v \"$2\"
+          "
+          ;;
+        "11")
+          TMUX+="
+            \\; split-window -h \"$2\"
+          "
+          ;;
+      esac
+      ;;
+    3)
+      case "$LAYOUT" in
+        "3")
+          TMUX+="
+            \\; split-window -v -p66 \"$2\"
+            \\; split-window -v \"$3\"
+          "
+          ;;
+        "12")
+          TMUX+="
+            \\; split-window -h \"$2\"
+            \\; split-window -v \"$3\"
+          "
+          ;;
+        "21")
+          TMUX+="
+            \\; split-window -h -d \"$3\"
+            \\; split-window -v \"$2\"
+          "
+          ;;
+        "111")
+          TMUX+="
+            \\; split-window -h -p66 \"$2\"
+            \\; split-window -h \"$3\"
+          "
+          ;;
+      esac
+      ;;
+    4)
+      case "$LAYOUT" in
+        "4")
+          TMUX+="
+            \\; split-window -v -d \"$3\"
+            \\; split-window -v \"$2\"
+            \\; select-pane -D
+            \\; split-window -v \"$4\"
+          "
+          ;;
+        "22")
+          TMUX+="
+            \\; split-window -h -d \"$3\"
+            \\; split-window -v \"$2\"
+            \\; select-pane -R
+            \\; split-window -v \"$4\"
+          "
+          ;;
+        "13")
+          TMUX+="
+            \\; split-window -h \"$2\"
+            \\; split-window -v -p66 \"$3\"
+            \\; split-window -v \"$4\"
+          "
+          ;;
+        "31")
+          TMUX+="
+            \\; split-window -h -d \"$4\"
+            \\; split-window -v -p66 \"$2\"
+            \\; split-window -v \"$3\"
+          "
+          ;;
+        "112")
+          TMUX+="
+            \\; split-window -h -p66 \"$2\"
+            \\; split-window -h \"$3\"
+            \\; split-window -v \"$4\"
+          "
+          ;;
+        "121")
+          TMUX+="
+            \\; split-window -h -p66 \"$2\"
+            \\; split-window -h -d \"$4\"
+            \\; split-window -v \"$3\"
+          "
+          ;;
+        "211")
+          TMUX+="
+            \\; split-window -h -p66 -d \"$3\"
+            \\; split-window -v \"$2\"
+            \\; select-pane -R
+            \\; split-window -h \"$4\"
+          "
+          ;;
+        "1111")
+          TMUX+="
+            \\; split-window -h -d \"$3\"
+            \\; split-window -h \"$2\"
+            \\; select-pane -R
+            \\; split-window -h \"$4\"
+          "
+          ;;
+      esac
+      ;;
+    5)
+      case "$LAYOUT" in
+        "5")
+          TMUX+="
+            \\; split-window -v -p80 \"$2\"
+            \\; split-window -v -d \"$4\"
+            \\; split-window -v \"$3\"
+            \\; select-pane -D
+            \\; split-window -v \"$5\"
+          "
+          ;;
+        "14")
+          TMUX+="
+            \\; split-window -h \"$2\"
+            \\; split-window -v -d \"$4\"
+            \\; split-window -v \"$3\"
+            \\; select-pane -D
+            \\; split-window -v \"$5\"
+          "
+          ;;
+        "23")
+          TMUX+="
+            \\; split-window -h -d \"$3\"
+            \\; split-window -v \"$2\"
+            \\; select-pane -R
+            \\; split-window -v -p66 \"$4\"
+            \\; split-window -v \"$5\"
+          "
+          ;;
+        "32")
+          TMUX+="
+            \\; split-window -h -d \"$4\"
+            \\; split-window -v -p66 \"$2\"
+            \\; split-window -v \"$3\"
+            \\; select-pane -R
+            \\; split-window -v \"$5\"
+          "
+          ;;
+        "41")
+          TMUX+="
+            \\; split-window -h -d \"$5\"
+            \\; split-window -v -d \"$3\"
+            \\; split-window -v \"$2\"
+            \\; select-pane -D
+            \\; split-window -v \"$4\"
+          "
+          ;;
+        "113")
+          TMUX+="
+            \\; split-window -h -p66 \"$2\"
+            \\; split-window -h \"$3\"
+            \\; split-window -v -p66 \"$4\"
+            \\; split-window -v \"$5\"
+          "
+          ;;
+        "122")
+          TMUX+="
+            \\; split-window -h -p66 \"$2\"
+            \\; split-window -h -d \"$4\"
+            \\; split-window -v \"$3\"
+            \\; select-pane -R
+            \\; split-window -v \"$5\"
+          "
+          ;;
+        "131")
+          TMUX+="
+            \\; split-window -h -p66 \"$2\"
+            \\; split-window -h -d \"$5\"
+            \\; split-window -v -p66 \"$3\"
+            \\; split-window -v \"$4\"
+          "
+          ;;
+        "212")
+          TMUX+="
+            \\; split-window -h -d -p66 \"$3\"
+            \\; split-window -v \"$2\"
+            \\; select-pane -R
+            \\; split-window -h \"$4\"
+            \\; split-window -v \"$5\"
+          "
+          ;;
+        "221")
+          TMUX+="
+            \\; split-window -h -d -p66 \"$3\"
+            \\; split-window -v \"$2\"
+            \\; select-pane -R
+            \\; split-window -h -d \"$5\"
+            \\; split-window -v \"$4\"
+          "
+          ;;
+        "311")
+          TMUX+="
+            \\; split-window -h -d -p66 \"$4\"
+            \\; split-window -v -p66 \"$2\"
+            \\; split-window -v \"$3\"
+            \\; select-pane -R
+            \\; split-window -h \"$5\"
+          "
+          ;;
+        "1112")
+          TMUX+="
+            \\; split-window -h -d \"$3\"
+            \\; split-window -h \"$2\"
+            \\; select-pane -R
+            \\; split-window -h \"$4\"
+            \\; split-window -v \"$5\"
+          "
+          ;;
+        "1121")
+          TMUX+="
+            \\; split-window -h -d \"$3\"
+            \\; split-window -h \"$2\"
+            \\; select-pane -R
+            \\; split-window -h -d \"$5\"
+            \\; split-window -v \"$4\"
+          "
+          ;;
+        "1211")
+          TMUX+="
+            \\; split-window -h -d \"$4\"
+            \\; split-window -h \"$2\"
+            \\; split-window -v \"$3\"
+            \\; select-pane -R
+            \\; split-window -h \"$5\"
+          "
+          ;;
+        "2111")
+          TMUX+="
+            \\; split-window -h -d \"$4\"
+            \\; split-window -h -d \"$3\"
+            \\; split-window -v \"$2\"
+            \\; select-pane -R
+            \\; select-pane -R
+            \\; split-window -h \"$5\"
+          "
+          ;;
+        "11111")
+          TMUX+="
+            \\; split-window -h -p80 \"$2\"
+            \\; split-window -h -d \"$4\"
+            \\; split-window -h \"$3\"
+            \\; select-pane -R
+            \\; split-window -h \"$5\"
+          "
+          ;;
+      esac
+      ;;
+    6)
+      case "$LAYOUT" in
+        "6")
+          TMUX+="
+            \\; split-window -v -p80 \"$2\"
+            \\; split-window -v -d \"$4\"
+            \\; split-window -v \"$3\"
+            \\; select-pane -D
+            \\; split-window -v \"$5\"
+          "
+          ;;
+        "15")
+          TMUX+="
+            \\; split-window -h -d \"$3\"
+            \\; split-window -v \"$2\"
+            \\; select-pane -R
+            \\; split-window -v \"$4\"
+          "
+          ;;
+        "24")
+          TMUX+="
+            \\; split-window -h -d \"$3\"
+            \\; split-window -v \"$2\"
+            \\; select-pane -R
+            \\; split-window -v \"$4\"
+          "
+          ;;
+        "33")
+          TMUX+="
+            \\; split-window -h -d \"$3\"
+            \\; split-window -v \"$2\"
+            \\; select-pane -R
+            \\; split-window -v \"$4\"
+          "
+          ;;
+        "42")
+          TMUX+="
+            \\; split-window -h -d \"$3\"
+            \\; split-window -v \"$2\"
+            \\; select-pane -R
+            \\; split-window -v \"$4\"
+          "
+          ;;
+        "51")
+          TMUX+="
+            \\; split-window -h -d \"$3\"
+            \\; split-window -v \"$2\"
+            \\; select-pane -R
+            \\; split-window -v \"$4\"
+          "
+          ;;
+        "114")
+          TMUX+="
+            \\; split-window -h -p66 \"$2\"
+            \\; split-window -h \"$3\"
+            \\; split-window -v \"$4\"
+          "
+          ;;
+        "123")
+          TMUX+="
+            \\; split-window -h -p66 \"$2\"
+            \\; split-window -h \"$3\"
+            \\; split-window -v \"$4\"
+          "
+          ;;
+        "132")
+          TMUX+="
+            \\; split-window -h -p66 \"$2\"
+            \\; split-window -h \"$3\"
+            \\; split-window -v \"$4\"
+          "
+          ;;
+        "141")
+          TMUX+="
+            \\; split-window -h -p66 \"$2\"
+            \\; split-window -h \"$3\"
+            \\; split-window -v \"$4\"
+          "
+          ;;
+        "213")
+          TMUX+="
+            \\; split-window -h -p66 \"$2\"
+            \\; split-window -h \"$3\"
+            \\; split-window -v \"$4\"
+          "
+          ;;
+        "222")
+          TMUX+="
+            \\; split-window -h -p66 \"$2\"
+            \\; split-window -h \"$3\"
+            \\; split-window -v \"$4\"
+          "
+          ;;
+        "231")
+          TMUX+="
+            \\; split-window -h -p66 \"$2\"
+            \\; split-window -h \"$3\"
+            \\; split-window -v \"$4\"
+          "
+          ;;
+        "312")
+          TMUX+="
+            \\; split-window -h -p66 \"$2\"
+            \\; split-window -h \"$3\"
+            \\; split-window -v \"$4\"
+          "
+          ;;
+        "321")
+          TMUX+="
+            \\; split-window -h -p66 \"$2\"
+            \\; split-window -h \"$3\"
+            \\; split-window -v \"$4\"
+          "
+          ;;
+        "411")
+          TMUX+="
+            \\; split-window -h -p66 \"$2\"
+            \\; split-window -h \"$3\"
+            \\; split-window -v \"$4\"
+          "
+          ;;
+        "1113")
+          TMUX+="
+            \\; split-window -h -p66 \"$2\"
+            \\; split-window -h -d \"$4\"
+            \\; split-window -v \"$3\"
+          "
+          ;;
+        "1122")
+          TMUX+="
+            \\; split-window -h -p66 \"$2\"
+            \\; split-window -h -d \"$4\"
+            \\; split-window -v \"$3\"
+          "
+          ;;
+        "1131")
+          TMUX+="
+            \\; split-window -h -p66 \"$2\"
+            \\; split-window -h -d \"$4\"
+            \\; split-window -v \"$3\"
+          "
+          ;;
+        "1212")
+          TMUX+="
+            \\; split-window -h -p66 \"$2\"
+            \\; split-window -h -d \"$4\"
+            \\; split-window -v \"$3\"
+          "
+          ;;
+        "1221")
+          TMUX+="
+            \\; split-window -h -p66 \"$2\"
+            \\; split-window -h -d \"$4\"
+            \\; split-window -v \"$3\"
+          "
+          ;;
+        "1311")
+          TMUX+="
+            \\; split-window -h -p66 \"$2\"
+            \\; split-window -h -d \"$4\"
+            \\; split-window -v \"$3\"
+          "
+          ;;
+        "2112")
+          TMUX+="
+            \\; split-window -h -p66 \"$2\"
+            \\; split-window -h -d \"$4\"
+            \\; split-window -v \"$3\"
+          "
+          ;;
+        "2121")
+          TMUX+="
+            \\; split-window -h -p66 \"$2\"
+            \\; split-window -h -d \"$4\"
+            \\; split-window -v \"$3\"
+          "
+          ;;
+        "2211")
+          TMUX+="
+            \\; split-window -h -p66 \"$2\"
+            \\; split-window -h -d \"$4\"
+            \\; split-window -v \"$3\"
+          "
+          ;;
+        "3111")
+          TMUX+="
+            \\; split-window -h -p66 \"$2\"
+            \\; split-window -h -d \"$4\"
+            \\; split-window -v \"$3\"
+          "
+          ;;
+        "11112")
+          TMUX+="
+            \\; split-window -h -p66 \"$2\"
+            \\; split-window -h -d \"$4\"
+            \\; split-window -v \"$3\"
+          "
+          ;;
+        "11121")
+          TMUX+="
+            \\; split-window -h -p66 \"$2\"
+            \\; split-window -h -d \"$4\"
+            \\; split-window -v \"$3\"
+          "
+          ;;
+        "11211")
+          TMUX+="
+            \\; split-window -h -p66 \"$2\"
+            \\; split-window -h -d \"$4\"
+            \\; split-window -v \"$3\"
+          "
+          ;;
+        "12111")
+          TMUX+="
+            \\; split-window -h -p66 \"$2\"
+            \\; split-window -h -d \"$4\"
+            \\; split-window -v \"$3\"
+          "
+          ;;
+        "21111")
+          TMUX+="
+            \\; split-window -h -p66 \"$2\"
+            \\; split-window -h -d \"$4\"
+            \\; split-window -v \"$3\"
+          "
+          ;;
+        "111111")
+          TMUX+="
+            \\; split-window -h -p66 \"$2\"
+            \\; split-window -h -d \"$4\"
+            \\; split-window -v \"$3\"
+          "
+          ;;
+      esac
+      ;;
+  esac
+fi
+
+# TODO: allow kill existing session, reattach, or throw
+tmux kill-session -t $SESSION_NAME || true
+
+echo $TMUX
+eval $TMUX
