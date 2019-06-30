@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+
+SESSION="$1"
+shift
+
+# if 1st arg is valid layout...
+if [[ $1 =~ ^[0-9]+$ ]]; then
+  LAYOUT="$1"
+  shift
+
+  # if layout contains zero...
+  if [[ $LAYOUT =~ "0" ]]; then
+    echo "layout column cannot be set to zero"
+    exit 1
+  fi
+fi
+
+# if 2nd arg is valid orientation...
+ORIENTATION=$(echo "$1" | awk '{print tolower($0)}')
+if [[ $ORIENTATION = "ltr" ]]; then
+  shift
+elif [[ $ORIENTATION = "ttb" ]]; then
+  shift
+else
+  ORIENTATION="ttb"  # default
+fi
+
+NUM_COMMANDS="$#"
+
+# if layout is not set, generate a default for number of commands
+if [[ -z $LAYOUT ]]; then
+  SQUARE=$(bc <<< "scale=0; sqrt($NUM_COMMANDS)")
+  SQUARE=${SQUARE%.*}  # floor
+  QUOTIENT=$(( $NUM_COMMANDS / $SQUARE ))
+  QUOTIENT=${QUOTIENT%.*}  # floor
+  REMAINDER=$(( $NUM_COMMANDS % $SQUARE ))
+  LAYOUT=$(printf "%0.s$SQUARE" $(seq 1 $QUOTIENT))
+  if (( $REMAINDER > 0 )); then
+    LAYOUT="$REMAINDER$LAYOUT"
+  fi
+fi
+
+# if number of commands does not match sum of layout string digits...
+LAYOUT_SUM=0
+for (( i = 0; i < ${#LAYOUT}; i++ )); do
+  (( LAYOUT_SUM += ${LAYOUT:i:1} ))
+done
+if (( $NUM_COMMANDS != $LAYOUT_SUM )); then
+  echo "layout does not match number of commands provided"
+  exit 1
+fi
+
+DIR="$(cd "$(dirname "$0")" && pwd)"
+eval $($DIR/../build-command.py "$SESSION" "$LAYOUT" "$ORIENTATION" "$@")
