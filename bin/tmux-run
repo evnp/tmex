@@ -3,6 +3,19 @@
 SESSION="$1"
 shift
 
+# if 2nd arg is valid behavior...
+BEHAVIOR=$(echo "$1" | awk '{print tolower($0)}')
+if [[ $BEHAVIOR = "replace-existing" ]]; then
+  shift
+elif [[ $BEHAVIOR = "attach-existing" ]]; then
+  shift
+elif [[ $BEHAVIOR = "error-existing" ]]; then
+  shift
+else
+  BEHAVIOR="replace-existing"  # default
+fi
+echo $BEHAVIOR
+
 # if 1st arg is valid layout...
 if [[ $1 =~ ^[0-9]+$ ]]; then
   LAYOUT="$1"
@@ -40,15 +53,30 @@ if [[ -z $LAYOUT ]]; then
   fi
 fi
 
-# if number of commands does not match sum of layout string digits...
+# if number of commands exceeds sum of layout string digits...
 LAYOUT_SUM=0
 for (( i = 0; i < ${#LAYOUT}; i++ )); do
   (( LAYOUT_SUM += ${LAYOUT:i:1} ))
 done
-if (( $NUM_COMMANDS != $LAYOUT_SUM )); then
+if (( $NUM_COMMANDS > $LAYOUT_SUM )); then
   echo "layout does not match number of commands provided"
   exit 1
 fi
 
+if [[ $BEHAVIOR = "attach-existing" ]]; then
+  tmux has-session -t $SESSION 2>/dev/null
+  if [ $? == 0 ]; then  # if session exists...
+    tmux attach-session -t $SESSION
+    exit 0
+  fi
+elif [[ $BEHAVIOR = "replace-existing" ]]; then
+  tmux kill-session -t "$SESSION" || true  # ignore 'session does not exist' error
+fi
+
+# tmux window options
+OPTIONS="{
+  \"remain-on-exit\": \"on\"
+}"
+
 DIR="$(cd "$(dirname "$0")" && pwd)"
-eval $($DIR/../build-command.py "$SESSION" "$LAYOUT" "$ORIENTATION" "$@")
+eval $($DIR/../layout.py "$SESSION" "$OPTIONS" "$LAYOUT" "$ORIENTATION" "$@")
