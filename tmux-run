@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
 
-usage="usage: tmux-run <session-name> \\
-  [-h|--help] \\
-  [[-l|--layout=]{number}] \\              # [default: generated to match number of commands provided] each digit represents number of panes in column
-  [[-o|--orientation=]ttb|ltr] \\          # [default: ttb (top-to-bottom)] transpose layout if orientation=ltr (left-to-right)
-  [[-e|--exists=]replace|attach|error] \\  # [default: replace] exists when session already exists
-  [--extra=\"tmux cmd a ; tmux cmd b\"] \\   # extra tmux commands to be executed after window and panes are created
-  [\"shell command 1\"] \\                   # shell commands that will be executed in each pane
-  [\"shell command 2\"] \\
+usage='usage: tmux-run <session-name> \
+  [-h|--help] \
+  [[-l|--layout=]{number}] \              # [default: generated to match number of commands provided] each digit represents number of panes in column
+  [[-o|--orientation=]ttb|ltr] \          # [default: ttb (top-to-bottom)] transpose layout if orientation=ltr (left-to-right)
+  [[-e|--exists=]replace|attach|error] \  # [default: replace] exists when session already exists
+  [--extra="tmux cmd A ; tmux cmd B"] \   # extra tmux commands to be executed after window and panes are created
+  ["shell command 1"] \                   # shell commands that will be executed in each pane
+  ["shell command 2"] \
   ...
-  [\"shell command N\"] \\                   # number of shell commands N must not exceed sum of layout
-"
+  ["shell command N"]                     # number of shell commands N must not exceed sum of layout
+'
 
 # --help
 if [[ $1 =~ ^(--help|-h)$ ]]; then
@@ -33,11 +33,12 @@ session="$1"
 shift
 
 # 2nd arg: layout (string of digits)
-if [[ $1 =~ ^--layout= ]] || [[ $1 =~ ^(--layout=|-l)?[0-9]+$ ]]; then
+if [[ $1 =~ ^--layout= ]] || [[ $1 =~ ^(--layout|-l)?=?[0-9]+$ ]]; then
   layout="$1"
   shift
-  layout="${layout#"--layout="}"  # remove prefix (if necessary)
+  layout="${layout#"--layout"}"  # remove prefix (if necessary)
   layout="${layout#"-l"}"
+  layout="${layout#"="}"
   # if layout invalid, exit with error
   if ! [[ $layout =~ ^[0-9]+$ ]]; then
     echo "invalid input: --layout=$layout cannot contain non-numeric characters"
@@ -54,11 +55,12 @@ fi
 
 # 3rd arg: orientation [ltr|ttb] default:ttb
 orientation=$(echo "$1" | awk '{print tolower($0)}')
-if [[ $1 =~ ^--orientation= ]] || [[ $1 =~ ^(--orientation=|-o)?(ttb|ltr)$ ]]; then
+if [[ $1 =~ ^--orientation= ]] || [[ $1 =~ ^(--orientation|-o)?=?(ttb|ltr)$ ]]; then
   orientation="$1"
   shift
-  orientation="${orientation#"--orientation="}"  # remove prefix (if necessary)
+  orientation="${orientation#"--orientation"}"  # remove prefix (if necessary)
   orientation="${orientation#"-o"}"
+  orientation="${orientation#"="}"
   if ! [[ $orientation =~ ^(ttb|ltr)$ ]]; then
     echo "invalid input: --orientation must be [ttb|ltr]"
     echo "$usage"
@@ -71,11 +73,12 @@ if [[ -z $orientation ]]; then
 fi
 
 # 4th arg: exists [replace|attach|error] default:replace
-if [[ $1 =~ ^--exists= ]] || [[ $1 =~ ^(--exists=|-e)?(replace|attach|error)$ ]]; then
+if [[ $1 =~ ^--exists= ]] || [[ $1 =~ ^(--exists|-e)?=?(replace|attach|error)$ ]]; then
   exists="$1"
   shift
-  exists="${exists#"--exists="}"  # remove prefix (if necessary)
+  exists="${exists#"--exists"}"  # remove prefix (if necessary)
   exists="${exists#"-e"}"
+  exists="${exists#"="}"
   if ! [[ $exists =~ ^(replace|attach|error)$ ]]; then
     echo "invalid input: --exists must be [replace|attach|error]"
     echo "$usage"
@@ -88,10 +91,11 @@ if [[ -z $exists ]]; then
 fi
 
 # 5th arg: extra
-if [[ $1 =~ ^--extra= ]]; then
+if [[ $1 =~ ^--extra=? ]]; then
   extra="$1"
   shift
-  extra="${extra#"--extra="}"  # remove prefix
+  extra="${extra#"--extra"}"  # remove prefix
+  extra="${extra#"="}"
 fi
 
 numcmds="$#"
