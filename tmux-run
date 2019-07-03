@@ -2,7 +2,7 @@
 
 usage='usage: tmux-run <session-name> \
   [-h|--help] \
-  [[-l|--layout=]{number}] \              # [default: generated to match number of commands provided] each digit represents number of panes in column
+  [[-l|--layout=]{integer}] \             # [default: generated to match number of commands provided] each digit represents number of panes in column
   [[-o|--orientation=]ttb|ltr] \          # [default: ttb (top-to-bottom)] transpose layout if orientation=ltr (left-to-right)
   [[-e|--exists=]replace|attach|error] \  # [default: replace] exists when session already exists
   [--extra="tmux cmd A ; tmux cmd B"] \   # extra tmux commands to be executed after window and panes are created
@@ -21,86 +21,95 @@ orientation=""  # optional - ttb (top-to-bottom, default) or ltr (left-to-right)
 exists=""       # optional - attach/replace/error exists when session exists
 extra=""        # optional - extra commands to be executed after layout commands
                 #            e.g. extra="set-window-option remain-on-exit off"
+cmds=""         # optional - list of commands to be executed in resulting panes
 
 # tmux command that will be constructed and executed:
 tmuxcmd=""
 
-# -h|--help
-if [[ "$1" =~ ^(--help|-h)$ ]]; then
-  echo "${usage}"
-  exit 0
-fi
-
-# 1st arg: session name
-session="$1"
-shift
-
-# 2nd arg: layout (string of digits)
-layout=$(echo "$1" | awk '{print tolower($0)}')
-if [[ "${layout}" =~ ^--layout= ]] || [[ "${layout}" =~ ^(--layout|-l)?=?[0-9]+$ ]]; then
-  shift
-  layout="${layout#--layout}"  # remove prefix (if necessary)
-  layout="${layout#-l}"
-  layout="${layout#=}"
-  # if layout invalid, exit with error
-  if ! [[ "${layout}" =~ ^[0-9]+$ ]]; then
-    echo "invalid input: --layout=${layout} cannot contain non-numeric characters"
+function processargs () {
+  # -h|--help
+  if [[ "$1" =~ ^(--help|-h)$ ]]; then
     echo "${usage}"
-    exit 1
+    exit 0
   fi
-  # if layout contains zero, exit with error
-  if [[ "${layout}" =~ 0 ]]; then
-    echo "invalid input: --layout=${layout} column cannot be set to zero"
+
+  # 1st arg: session name
+  session="$1"
+  shift
+  if [[ -z "${session}" ]]; then
     echo "${usage}"
-    exit 1
+    exit 0
   fi
-else
-  layout=""
-fi
 
-# 3rd arg: orientation [ltr|ttb] default:ttb
-orientation=$(echo "$1" | awk '{print tolower($0)}')
-if [[ "${orientation}" =~ ^--orientation= ]] || [[ "${orientation}" =~ ^(--orientation|-o)?=?(ttb|ltr)$ ]]; then
-  shift
-  orientation="${orientation#--orientation}"  # remove prefix (if necessary)
-  orientation="${orientation#-o}"
-  orientation="${orientation#=}"
-  if ! [[ $orientation =~ ^(ttb|ltr)$ ]]; then
-    echo "invalid input: --orientation=${orientation} must be [ttb|ltr]"
-    echo "$usage"
-    exit 1
+  # 2nd arg: layout (string of digits)
+  layout=$(echo "$1" | awk '{print tolower($0)}')
+  if [[ "${layout}" =~ ^--layout= ]] || [[ "${layout}" =~ ^(--layout|-l)?=?[0-9]+$ ]]; then
+    shift
+    layout="${layout#--layout}"  # remove prefix (if necessary)
+    layout="${layout#-l}"
+    layout="${layout#=}"
+    # if layout invalid, exit with error
+    if ! [[ "${layout}" =~ ^[0-9]+$ ]]; then
+      echo "invalid input: --layout=${layout} cannot contain non-numeric characters"
+      echo "${usage}"
+      exit 1
+    fi
+    # if layout contains zero, exit with error
+    if [[ "${layout}" =~ 0 ]]; then
+      echo "invalid input: --layout=${layout} column cannot be set to zero"
+      echo "${usage}"
+      exit 1
+    fi
+  else
+    layout=""
   fi
-else
-  # default
-  orientation="ttb"
-fi
 
-# 4th arg: exists [replace|attach|error] default:replace
-exists=$(echo "$1" | awk '{print tolower($0)}')
-if [[ "${exists}" =~ ^--exists= ]] || [[ "${exists}" =~ ^(--exists|-e)?=?(replace|attach|error)$ ]]; then
-  shift
-  exists="${exists#--exists}"  # remove prefix (if necessary)
-  exists="${exists#-e}"
-  exists="${exists#=}"
-  if ! [[ $exists =~ ^(replace|attach|error)$ ]]; then
-    echo "invalid input: --exists=${exists} must be [replace|attach|error]"
-    echo "$usage"
-    exit 1
+  # 3rd arg: orientation [ltr|ttb] default:ttb
+  orientation=$(echo "$1" | awk '{print tolower($0)}')
+  if [[ "${orientation}" =~ ^--orientation= ]] || [[ "${orientation}" =~ ^(--orientation|-o)?=?(ttb|ltr)$ ]]; then
+    shift
+    orientation="${orientation#--orientation}"  # remove prefix (if necessary)
+    orientation="${orientation#-o}"
+    orientation="${orientation#=}"
+    if ! [[ $orientation =~ ^(ttb|ltr)$ ]]; then
+      echo "invalid input: --orientation=${orientation} must be [ttb|ltr]"
+      echo "$usage"
+      exit 1
+    fi
+  else
+    # default
+    orientation="ttb"
   fi
-else
-  # default
-  exists="replace"
-fi
 
-# 5th arg: extra
-extra=$(echo "$1" | awk '{print tolower($0)}')
-if [[ "${extra}" =~ ^--extra=? ]]; then
-  shift
-  extra="${extra#--extra}"  # remove prefix
-  extra="${extra#=}"
-else
-  extra=""
-fi
+  # 4th arg: exists [replace|attach|error] default:replace
+  exists=$(echo "$1" | awk '{print tolower($0)}')
+  if [[ "${exists}" =~ ^--exists= ]] || [[ "${exists}" =~ ^(--exists|-e)?=?(replace|attach|error)$ ]]; then
+    shift
+    exists="${exists#--exists}"  # remove prefix (if necessary)
+    exists="${exists#-e}"
+    exists="${exists#=}"
+    if ! [[ $exists =~ ^(replace|attach|error)$ ]]; then
+      echo "invalid input: --exists=${exists} must be [replace|attach|error]"
+      echo "$usage"
+      exit 1
+    fi
+  else
+    # default
+    exists="replace"
+  fi
+
+  # 5th arg: extra
+  extra=$(echo "$1" | awk '{print tolower($0)}')
+  if [[ "${extra}" =~ ^--extra=? ]]; then
+    shift
+    extra="${extra#--extra}"  # remove prefix
+    extra="${extra#=}"
+  else
+    extra=""
+  fi
+
+  cmds=( "$@" )
+}
 
 function generatelayout () {
   # generate a default layout based on specified size:
@@ -260,22 +269,24 @@ function main () {
   # construct and execute a tmux command that runs a set of commands inside a layout
 
   # params:
-  # $@ cmds [array<string>] list of commands to be executed in resulting panes
+  # $@ args [array<any>] arguments passed to script
 
   # references:
+  # ${session}
   # ${layout}
   # ${orientation}
   # ${exists}
   # ${extra}
+  # ${cmds}
 
   # modifies:
   # ${tmuxcmd}
 
-  local cmds
+  processargs "$@"
+
   local numcmds
 
   # begin to construct tmux command
-  cmds=( "$@" )
   numcmds="${#cmds[@]}"
   tmuxcmd+="tmux new-session -s \"${session}\" \"${cmds[0]}\""
 
