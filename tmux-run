@@ -12,12 +12,6 @@ usage='usage: tmux-run <session-name> \
   ["shell command N"]                     # number of shell commands N must not exceed sum of layout
 '
 
-# --help
-if [[ $1 =~ ^(--help|-h)$ ]]; then
-  echo "$usage"
-  exit 0
-fi
-
 # parse args into vars:
 session=""      # required - session name
 layout=""       # optional - string of digits defining a custom layout
@@ -28,176 +22,290 @@ exists=""       # optional - attach/replace/error exists when session exists
 extra=""        # optional - extra commands to be executed after layout commands
                 #            e.g. extra="set-window-option remain-on-exit off"
 
+# tmux command that will be constructed and executed:
+tmuxcmd=""
+
+# -h|--help
+if [[ "$1" =~ ^(--help|-h)$ ]]; then
+  echo "${usage}"
+  exit 0
+fi
+
 # 1st arg: session name
 session="$1"
 shift
 
 # 2nd arg: layout (string of digits)
-if [[ $1 =~ ^--layout= ]] || [[ $1 =~ ^(--layout|-l)?=?[0-9]+$ ]]; then
-  layout="$1"
+layout=$(echo "$1" | awk '{print tolower($0)}')
+if [[ "${layout}" =~ ^--layout= ]] || [[ "${layout}" =~ ^(--layout|-l)?=?[0-9]+$ ]]; then
   shift
-  layout="${layout#"--layout"}"  # remove prefix (if necessary)
-  layout="${layout#"-l"}"
-  layout="${layout#"="}"
+  layout="${layout#--layout}"  # remove prefix (if necessary)
+  layout="${layout#-l}"
+  layout="${layout#=}"
   # if layout invalid, exit with error
-  if ! [[ $layout =~ ^[0-9]+$ ]]; then
-    echo "invalid input: --layout=$layout cannot contain non-numeric characters"
-    echo "$usage"
+  if ! [[ "${layout}" =~ ^[0-9]+$ ]]; then
+    echo "invalid input: --layout=${layout} cannot contain non-numeric characters"
+    echo "${usage}"
     exit 1
   fi
   # if layout contains zero, exit with error
-  if [[ $layout =~ 0 ]]; then
-    echo "invalid input: --layout=$layout column cannot be set to zero"
-    echo "$usage"
+  if [[ "${layout}" =~ 0 ]]; then
+    echo "invalid input: --layout=${layout} column cannot be set to zero"
+    echo "${usage}"
     exit 1
   fi
+else
+  layout=""
 fi
 
 # 3rd arg: orientation [ltr|ttb] default:ttb
 orientation=$(echo "$1" | awk '{print tolower($0)}')
-if [[ $1 =~ ^--orientation= ]] || [[ $1 =~ ^(--orientation|-o)?=?(ttb|ltr)$ ]]; then
-  orientation="$1"
+if [[ "${orientation}" =~ ^--orientation= ]] || [[ "${orientation}" =~ ^(--orientation|-o)?=?(ttb|ltr)$ ]]; then
   shift
-  orientation="${orientation#"--orientation"}"  # remove prefix (if necessary)
-  orientation="${orientation#"-o"}"
-  orientation="${orientation#"="}"
+  orientation="${orientation#--orientation}"  # remove prefix (if necessary)
+  orientation="${orientation#-o}"
+  orientation="${orientation#=}"
   if ! [[ $orientation =~ ^(ttb|ltr)$ ]]; then
-    echo "invalid input: --orientation must be [ttb|ltr]"
+    echo "invalid input: --orientation=${orientation} must be [ttb|ltr]"
     echo "$usage"
     exit 1
   fi
-fi
-if [[ -z $orientation ]]; then
+else
   # default
   orientation="ttb"
 fi
 
 # 4th arg: exists [replace|attach|error] default:replace
-if [[ $1 =~ ^--exists= ]] || [[ $1 =~ ^(--exists|-e)?=?(replace|attach|error)$ ]]; then
-  exists="$1"
+exists=$(echo "$1" | awk '{print tolower($0)}')
+if [[ "${exists}" =~ ^--exists= ]] || [[ "${exists}" =~ ^(--exists|-e)?=?(replace|attach|error)$ ]]; then
   shift
-  exists="${exists#"--exists"}"  # remove prefix (if necessary)
-  exists="${exists#"-e"}"
-  exists="${exists#"="}"
+  exists="${exists#--exists}"  # remove prefix (if necessary)
+  exists="${exists#-e}"
+  exists="${exists#=}"
   if ! [[ $exists =~ ^(replace|attach|error)$ ]]; then
-    echo "invalid input: --exists must be [replace|attach|error]"
+    echo "invalid input: --exists=${exists} must be [replace|attach|error]"
     echo "$usage"
     exit 1
   fi
-fi
-if [[ -z $exists ]]; then
+else
   # default
   exists="replace"
 fi
 
 # 5th arg: extra
-if [[ $1 =~ ^--extra=? ]]; then
-  extra="$1"
+extra=$(echo "$1" | awk '{print tolower($0)}')
+if [[ "${extra}" =~ ^--extra=? ]]; then
   shift
-  extra="${extra#"--extra"}"  # remove prefix
-  extra="${extra#"="}"
+  extra="${extra#--extra}"  # remove prefix
+  extra="${extra#=}"
+else
+  extra=""
 fi
 
-numcmds="$#"
+function generatelayout () {
+  # generate a default layout based on specified size:
+  # size:1 -> layout:"1"
+  # size:2 -> layout:"11"
+  # size:3 -> layout:"12"
+  # size:4 -> layout:"22"
+  # size:5 -> layout:"122"
+  # size:6 -> layout:"222"
+  # size:7 -> layout:"1222"
+  # size:8 -> layout:"233"
+  # ...
 
-# if layout is not set, generate a default for number of commands:
-# numcmds:1 -> layout:"1"
-# numcmds:2 -> layout:"11"
-# numcmds:3 -> layout:"12"
-# numcmds:4 -> layout:"22"
-# numcmds:5 -> layout:"122"
-# numcmds:6 -> layout:"222"
-# numcmds:7 -> layout:"1222"
-# numcmds:8 -> layout:"233"
-# ...
-if [[ -z $layout ]]; then
-  root=$( bc <<< "scale=0; sqrt($numcmds+1)" )
+  # params:
+  # $1 size [integer] size of layout
+
+  # modifies:
+  # ${layout}
+
+  local size
+  local root
+  local quot
+  local rmdr
+
+  size="$1"
+  shift
+
+  root=$( bc <<< "scale=0; sqrt( ${size} + 1 )" )
   root=${root%.*}  # floor
-  quot=$(( $numcmds / $root ))
+  quot=$(( ${size} / ${root} ))
   quot=${quot%.*}  # floor
-  rmdr=$(( $numcmds % $root ))
-  layout=$( printf "%0.s$root" $( seq 1 $quot ) )
-  if (( $rmdr > 0 )); then
-    layout="$rmdr$layout"
+  rmdr=$(( ${size} % ${root} ))
+  layout=$( printf "%0.s${root}" $( seq 1 "${quot}" ) )
+  if (( "${rmdr}" > 0 )); then
+    layout="${rmdr}${layout}"
   fi
-fi
+}
 
-# if number of commands exceeds sum of layout string digits, exit with error
-layoutsum=0
-for (( i = 0; i < ${#layout}; i++ )); do (( layoutsum += ${layout:i:1} )); done
-if (( $numcmds > $layoutsum )); then
-  echo "invalid input: --layout=$layout is too small for number of commands provided"
-  echo "$usage"
-  exit 1
-fi
+function validatelayout () {
+  # ensure layout is large enough to contain specified size
 
-if [[ $exists == "attach" ]]; then
-  tmux has-session -t $session 2>/dev/null
-  if [ $? == 0 ]; then  # if session exists, re-attach
-    tmux attach-session -t $session
-    exit 0
+  # params:
+  # $1 size [integer] minimum size of layout
+
+  local size
+  local layoutsum
+
+  size="$1"
+  shift
+
+  # if size exceeds sum of layout string digits, exit with error
+  layoutsum=0
+  for (( i = 0; i < "${#layout}"; i++ )); do (( layoutsum+="${layout:i:1}" )); done
+  if (( "${size}" > "${layoutsum}" )); then
+    echo "invalid input: --layout=${layout} is too small for number of commands provided"
+    echo "${usage}"
+    exit 1
   fi
-elif [[ $exists == "replace" ]]; then
-  tmux kill-session -t "$session" || true  # ignore 'session does not exist' error
-fi
+}
 
-cmds=("$@")
-tmuxcmd="tmux new-session -s \"$session\" \"${cmds[0]}\""
+function splitpane () {
+  # construct a set of tmux split-window and select-pane commands that will split
+  # the current pane into `numpanes` equally-sized separate panes
 
-splitpane () {
-  local direction="$1"
+  # params:
+  # $1 direction [string "v"|"h"] direction to split current pane (vertical or horizontal)
+  # $2 numpanes  [integer]        number of panes to split current pane into
+  # $@ cmds      [array<string>]  list of commands to be executed in resulting panes
+
+  # modifies:
+  # ${tmuxcmd}
+
+  local direction
+  local numpanes
+  local cmds
+  local percentage
+  local half
+  local flag
+
+  direction="$1"
   shift
-  local numpanes="$1"
+  numpanes="$1"
   shift
-  local cmds=( "$@" )
+  cmds=( "$@" )
 
-  if (( $numpanes >= 2 )); then
-    if (( $numpanes == 2 )); then
-      tmuxcmd+=" \\; split-window -$direction \"${cmds[1]}\""
-    elif (( $numpanes % 2 > 0 )); then
+  if (( "${numpanes}" >= 2 )); then
+    if (( "${numpanes}" == 2 )); then
+      tmuxcmd+=" \\; split-window -${direction} \"${cmds[1]}\""
+    elif (( "${numpanes}" % 2 > 0 )); then
       # percentage = round(100 - (100 / $numpanes))
-      local percentage=$(( 100 - ( ( 100 + ( $numpanes / 2 ) ) / $numpanes ) ))
-      tmuxcmd+=" \\; split-window -$direction -p$percentage \"${cmds[1]}\""
-      splitpane $direction $(( $numpanes - 1 )) "${cmds[@]:1}"
+      percentage=$(( 100 - ( ( 100 + ( ${numpanes} / 2 ) ) / ${numpanes} ) ))
+      tmuxcmd+=" \\; split-window -${direction} -p${percentage} \"${cmds[1]}\""
+      splitpane "${direction}" "$(( ${numpanes} - 1 ))" "${cmds[@]:1}"
     else
-      local half=$(( $numpanes / 2 ))
-      tmuxcmd+=" \\; split-window -$direction -d \"${cmds[$half]}\""
-      splitpane $direction $half "${cmds[@]:0:half}"  # 1st half of commands
-      [[ $direction == "v" ]] && flag="D" || flag="R"
-      tmuxcmd+=" \\; select-pane -$flag"
-      splitpane $direction $half "${cmds[@]:half}"    # 2nd half of commands
+      half=$(( ${numpanes} / 2 ))
+      tmuxcmd+=" \\; split-window -$direction -d \"${cmds[${half}]}\""
+      splitpane "${direction}" "${half}" "${cmds[@]:0:${half}}"  # 1st half of cmds
+      [[ "${direction}" == "v" ]] && flag="D" || flag="R"
+      tmuxcmd+=" \\; select-pane -${flag}"
+      splitpane "${direction}" "${half}" "${cmds[@]:${half}}"    # 2nd half of cmds
     fi
   fi
 }
 
-# construct initial set of column panes (or row panes if orientation="ltr")
-topcmds=()
-colsum=0
-numcols=${#layout}
-for (( i = 0; i < $numcols; i++ )); do
-  col=${layout:i:1}
-  topcmds+=( "${cmds[$colsum]}" )
-  (( colsum+=$col ))
-done
-[[ $orientation == "ltr" ]] && direction="v" || direction="h"
-splitpane $direction $numcols "${topcmds[@]}"
+function splitwindow () {
+  # construct a set of tmux split-window and select-pane commands that will split
+  # the current window into `numpanes` equally-sized separate panes according to layout
 
-# select first column pane (or row pane if orientation="ltr")
-tmuxcmd+=" \\; select-pane -t0"
+  # params:
+  # $@ cmds [array<string>] list of commands to be executed in resulting panes
 
-# split each column pane as specified by layout (or row panes if orientation="ltr")
-colsum=0
-for (( i = 0; i < ${#layout}; i++ )); do
-  col=${layout:i:1}
-  [[ $orientation == "ltr" ]] && direction="h" || direction="v"
-  splitpane $direction $col "${cmds[@]:$colsum:col}"
-  [[ $orientation == "ltr" ]] && flag="D" || flag="R"
-  tmuxcmd+=" \\; select-pane -$flag"
-  (( colsum+=$col ))
-done
+  # references:
+  # ${layout}
+  # ${orientation}
 
-# append extra tmux commands as specified by `extra` arg
-tmuxcmd+=" \\; set-window-option remain-on-exit on"
-tmuxcmd+=" \\; ${extra//;/\\\\;}"  # escape semicolons - replace ";" with "\\;"
+  # modifies:
+  # ${tmuxcmd}
 
-eval $tmuxcmd
+  local cmds
+  local topcmds
+  local col
+  local colsum
+  local numcols
+  local direction
+  local flag
+
+  cmds=( "$@" )
+
+  # construct initial set of column panes (or row panes if orientation="ltr")
+  topcmds=()
+  colsum=0
+  numcols="${#layout}"
+  for (( i = 0; i < "${numcols}"; i++ )); do
+    col=${layout:${i}:1}
+    topcmds+=( "${cmds[${colsum}]}" )
+    (( colsum+=$col ))
+  done
+  [[ "${orientation}" == "ltr" ]] && direction="v" || direction="h"
+  splitpane "${direction}" "${numcols}" "${topcmds[@]}"
+
+  # select first column pane (or row pane if orientation="ltr")
+  tmuxcmd+=" \\; select-pane -t0"
+
+  # split each column pane as specified by layout (or row panes if orientation="ltr")
+  colsum=0
+  for (( i = 0; i < "${#layout}"; i++ )); do
+    col=${layout:${i}:1}
+    [[ "${orientation}" == "ltr" ]] && direction="h" || direction="v"
+    splitpane "${direction}" "${col}" "${cmds[@]:${colsum}:${col}}"
+    [[ "${orientation}" == "ltr" ]] && flag="D" || flag="R"
+    tmuxcmd+=" \\; select-pane -$flag"
+    (( colsum+=${col} ))
+  done
+}
+
+function main () {
+  # construct and execute a tmux command that runs a set of commands inside a layout
+
+  # params:
+  # $@ cmds [array<string>] list of commands to be executed in resulting panes
+
+  # references:
+  # ${layout}
+  # ${orientation}
+  # ${exists}
+  # ${extra}
+
+  # modifies:
+  # ${tmuxcmd}
+
+  local cmds
+  local numcmds
+
+  # begin to construct tmux command
+  cmds=( "$@" )
+  numcmds="${#cmds[@]}"
+  tmuxcmd+="tmux new-session -s \"${session}\" \"${cmds[0]}\""
+
+  # if layout is not specified, generate a default
+  if [[ -z "${layout}" ]]; then
+    generatelayout "${numcmds}"
+  fi
+
+  # ensure layout is large enough to contain commands provided
+  validatelayout "${numcmds}"
+
+  # append layout commands onto tmuxcmd
+  splitwindow "${cmds[@]}"
+
+  # append extra tmux commands as specified by `extra` arg onto tmuxcmd
+  tmuxcmd+=" \\; set-window-option remain-on-exit on"
+  tmuxcmd+=" \\; ${extra//;/\\\\;}"  # escape semicolons - replace ";" with "\\;"
+
+  # either attach to an existing session or kill it based on specified behavior
+  if [[ "${exists}" == "attach" ]]; then
+    tmux has-session -t "${session}" 2>/dev/null
+    if [ "$?" == 0 ]; then  # if session exists, re-attach
+      tmux attach-session -t "${session}"
+      exit 0
+    fi
+  elif [[ $exists == "replace" ]]; then
+    tmux kill-session -t "${session}" || true  # ignore 'session does not exist' error
+  fi
+
+  eval "${tmuxcmd}"
+}
+
+main "$@"
