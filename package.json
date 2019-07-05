@@ -1,6 +1,6 @@
 {
   "name": "tmux-run",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "tmux wrapper for simpler package.json scripts",
   "main": "tmux-run",
   "scripts": {

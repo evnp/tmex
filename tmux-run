@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 
-usage='usage: tmux-run <session-name> \
+usage='usage: tmux-run <session-name> \          # session name required, all other args optional
   [-h|--help] \
-  [[-l|--layout=]{integer}] \             # [default: generated to match number of commands provided] each digit represents number of panes in column
+  [[-l|--layout=]{integer}] \             # [default: generated for # of cmds] each digit represents number of panes in column
   [[-o|--orientation=]ttb|ltr] \          # [default: ttb (top-to-bottom)] transpose layout if orientation=ltr (left-to-right)
-  [[-e|--exists=]replace|attach|error] \  # [default: replace] exists when session already exists
+  [[-e|--exists=]replace|attach|error] \  # [default: replace] replace, attach, or error when session already exists
   [--extra="tmux cmd A ; tmux cmd B"] \   # extra tmux commands to be executed after window and panes are created
   ["shell command 1"] \                   # shell commands that will be executed in each pane
   ["shell command 2"] \
