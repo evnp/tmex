@@ -16,7 +16,7 @@ package.json
   ...
 }
 ```
-into beautiful tmux layouts
+into terse, sensible tmux layouts
 ```
 package.json
 {
@@ -25,7 +25,7 @@ package.json
     "watch": "parcel index.html",
     "server": "python -m http.server",
     "typecheck" "tsc --watch --noEmit",
-    "start": "tmux-run $npm_package_name 'npm run watch' 'npm run server' 'npm run typecheck'",
+    "start": "tmux-run $npm_package_name -n watch server typecheck",
   }
   ...
 }
@@ -88,6 +88,18 @@ Shorthand:
 ```
 tmux-run <sessionname> 1224 ltr "cmd a" "cmd b" "cmd c" etc...
 ```
+Tailor-made for simplifying package.json scripts in npm modules via `--npm|-n` flag:
+```
+tmux-run $npm_package_name -n foo bar baz
+>>>
++---------------------------+
+| npm run foo | npm run bar |
+|             |             |
+|             +-------------+
+|             | npm run baz |
+|             |             |
++-------------+-------------+
+```
 
 Full options list (also accessible via `tmux-run --help`):
 ```
@@ -97,6 +109,7 @@ tmux-run <session-name> \                 # session name required, all other arg
   [[-o|--orientation=]ttb|ltr] \          # [default: ttb (top-to-bottom)] transpose layout if orientation=ltr (left-to-right)
   [[-e|--exists=]replace|attach|error] \  # [default: replace] replace, attach, or error when session already exists
   [--extra="tmux cmd A ; tmux cmd B"] \   # extra tmux commands to be executed after window and panes are created
+  [-n|--npm] \                            # if set, prefix each command with "npm run" for package.json scripts
   ["shell command 1"] \                   # shell commands that will be executed in each pane
   ["shell command 2"] \
   ...

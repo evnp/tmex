@@ -6,6 +6,7 @@ usage='usage: tmux-run <session-name> \          # session name required, all ot
   [[-o|--orientation=]ttb|ltr] \          # [default: ttb (top-to-bottom)] transpose layout if orientation=ltr (left-to-right)
   [[-e|--exists=]replace|attach|error] \  # [default: replace] replace, attach, or error when session already exists
   [--extra="tmux cmd A ; tmux cmd B"] \   # extra tmux commands to be executed after window and panes are created
+  [-n|--npm] \                            # if set, prefix each command with "npm run" for package.json scripts
   ["shell command 1"] \                   # shell commands that will be executed in each pane
   ["shell command 2"] \
   ...
@@ -21,6 +22,7 @@ orientation=""  # optional - ttb (top-to-bottom, default) or ltr (left-to-right)
 exists=""       # optional - attach/replace/error exists when session exists
 extra=""        # optional - extra commands to be executed after layout commands
                 #            e.g. extra="set-window-option remain-on-exit off"
+npm=""          # optional - if set, prefix each command with "npm run" for package.json scripts
 cmds=""         # optional - list of commands to be executed in resulting panes
 
 # tmux command that will be constructed and executed:
@@ -42,9 +44,9 @@ function processargs () {
   fi
 
   # 2nd arg: layout (string of digits)
-  layout=$(echo "$1" | awk '{print tolower($0)}')
-  if [[ "${layout}" =~ ^--layout= ]] || [[ "${layout}" =~ ^(--layout|-l)?=?[0-9]+$ ]]; then
+  if [[ "$1" =~ ^--layout= ]] || [[ "$1" =~ ^(--layout|-l)?=?[0-9]+$ ]]; then
     shift
+    layout="$1"
     layout="${layout#--layout}"  # remove prefix (if necessary)
     layout="${layout#-l}"
     layout="${layout#=}"
@@ -60,14 +62,12 @@ function processargs () {
       echo "${usage}"
       exit 1
     fi
-  else
-    layout=""
   fi
 
   # 3rd arg: orientation [ltr|ttb] default:ttb
-  orientation=$(echo "$1" | awk '{print tolower($0)}')
-  if [[ "${orientation}" =~ ^--orientation= ]] || [[ "${orientation}" =~ ^(--orientation|-o)?=?(ttb|ltr)$ ]]; then
+  if [[ "$1" =~ ^--orientation= ]] || [[ "$1" =~ ^(--orientation|-o)?=?(ttb|ltr)$ ]]; then
     shift
+    orientation="$1"
     orientation="${orientation#--orientation}"  # remove prefix (if necessary)
     orientation="${orientation#-o}"
     orientation="${orientation#=}"
@@ -82,9 +82,9 @@ function processargs () {
   fi
 
   # 4th arg: exists [replace|attach|error] default:replace
-  exists=$(echo "$1" | awk '{print tolower($0)}')
-  if [[ "${exists}" =~ ^--exists= ]] || [[ "${exists}" =~ ^(--exists|-e)?=?(replace|attach|error)$ ]]; then
+  if [[ "$1" =~ ^--exists= ]] || [[ "$1" =~ ^(--exists|-e)?=?(replace|attach|error)$ ]]; then
     shift
+    exists="$1"
     exists="${exists#--exists}"  # remove prefix (if necessary)
     exists="${exists#-e}"
     exists="${exists#=}"
@@ -99,13 +99,17 @@ function processargs () {
   fi
 
   # 5th arg: extra
-  extra=$(echo "$1" | awk '{print tolower($0)}')
-  if [[ "${extra}" =~ ^--extra=? ]]; then
+  if [[ "$1" =~ ^--extra=? ]]; then
     shift
+    extra="$1"
     extra="${extra#--extra}"  # remove prefix
     extra="${extra#=}"
-  else
-    extra=""
+  fi
+
+  # 6th arg: npm
+  if [[ "$1" =~ ^(-n)$ ]]; then
+    shift
+    npm="true"
   fi
 
   cmds=( "$@" )
@@ -282,12 +286,20 @@ function main () {
   # modifies:
   # ${tmuxcmd}
 
-  processargs "$@"
-
   local numcmds
 
-  # begin to construct tmux command
+  processargs "$@"
+
   numcmds="${#cmds[@]}"
+
+  # if npm option is set, prefix commands "npm run ..."
+  if [[ -n "${npm}" ]]; then
+    for (( i = 0; i < "${#cmds[@]}"; i++ )); do
+      cmds[i]="npm run ${cmds[i]}"
+    done
+  fi
+
+  # begin to construct tmux command
   tmuxcmd+="tmux new-session -s \"${session}\" \"${cmds[0]}\""
 
   # if layout is not specified, generate a default
