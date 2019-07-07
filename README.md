@@ -6,6 +6,7 @@ Turn monstrous npm script compositions
 ```
 package.json
 {
+  "name": "special-project"
   "scripts": {
     ..
     "watch": "parcel index.html",
@@ -20,12 +21,13 @@ into terse, sensible tmux layouts
 ```
 package.json
 {
+  "name": "special-project"
   "scripts": {
     ..
     "watch": "parcel index.html",
     "server": "python -m http.server",
     "typecheck" "tsc --watch --noEmit",
-    "start": "tmux-run $npm_package_name -n watch server typecheck",
+    "start": "tmux-run -n watch server typecheck",
   }
   ...
 }
@@ -40,6 +42,7 @@ Sane defaults. Layouts with any number of panes. The above splits into:
 |           | npm run   |
 |           | typecheck |
 +-----------+-----------+
+session : special-project
 ```
 
 Given 8 commands, tmux-run generates this layout:
@@ -90,7 +93,7 @@ tmux-run <sessionname> 1224 ltr "cmd a" "cmd b" "cmd c" etc...
 ```
 Tailor-made for simplifying package.json scripts in npm modules via `--npm|-n` flag:
 ```
-tmux-run $npm_package_name -n foo bar baz
+tmux-run -n foo bar baz
 >>>
 +---------------------------+
 | npm run foo | npm run bar |
@@ -99,17 +102,19 @@ tmux-run $npm_package_name -n foo bar baz
 |             | npm run baz |
 |             |             |
 +-------------+-------------+
+session : special-project
 ```
+Session name defaults to `$npm_package_name` if `--npm` option is set. This will expand to match the `name` field set in `package.json`.
 
 Full options list (also accessible via `tmux-run --help`):
 ```
-tmux-run <session-name> \                 # session name required, all other args optional
+tmux-run <session-name> \                 # session name required unless --npm set; all other args optional
   [-h|--help] \
+  [-n|--npm] \                            # if set, prefix each command with "npm run" for package.json scripts
   [[-l|--layout=]{integer}] \             # [default: generated for # cmds] each digit represents number of panes in column
   [[-o|--orientation=]ttb|ltr] \          # [default: ttb (top-to-bottom)] transpose layout if orientation=ltr (left-to-right)
   [[-e|--exists=]replace|attach|error] \  # [default: replace] replace, attach, or error when session already exists
   [--extra="tmux cmd A ; tmux cmd B"] \   # extra tmux commands to be executed after window and panes are created
-  [-n|--npm] \                            # if set, prefix each command with "npm run" for package.json scripts
   ["shell command 1"] \                   # shell commands that will be executed in each pane
   ["shell command 2"] \
   ...
