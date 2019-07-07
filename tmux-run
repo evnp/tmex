@@ -53,6 +53,7 @@ function processargs () {
   if [[ "$1" =~ ^--layout= ]] || [[ "$1" =~ ^(--layout|-l)?=?[0-9]+$ ]]; then
     shift
     layout="$1"
+    shift
     layout="${layout#--layout}"  # remove prefix (if necessary)
     layout="${layout#-l}"
     layout="${layout#=}"
@@ -72,8 +73,8 @@ function processargs () {
 
   # 4th arg: orientation [ltr|ttb] default:ttb
   if [[ "$1" =~ ^--orientation= ]] || [[ "$1" =~ ^(--orientation|-o)?=?(ttb|ltr)$ ]]; then
-    shift
     orientation="$1"
+    shift
     orientation="${orientation#--orientation}"  # remove prefix (if necessary)
     orientation="${orientation#-o}"
     orientation="${orientation#=}"
@@ -89,8 +90,8 @@ function processargs () {
 
   # 5th arg: exists [replace|attach|error] default:replace
   if [[ "$1" =~ ^--exists= ]] || [[ "$1" =~ ^(--exists|-e)?=?(replace|attach|error)$ ]]; then
-    shift
     exists="$1"
+    shift
     exists="${exists#--exists}"  # remove prefix (if necessary)
     exists="${exists#-e}"
     exists="${exists#=}"
@@ -106,8 +107,8 @@ function processargs () {
 
   # 6th arg: extra
   if [[ "$1" =~ ^--extra=? ]]; then
-    shift
     extra="$1"
+    shift
     extra="${extra#--extra}"  # remove prefix
     extra="${extra#=}"
   fi
