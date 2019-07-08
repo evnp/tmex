@@ -329,7 +329,8 @@ function main () {
     tmux kill-session -t "${session}" || true  # ignore 'session does not exist' error
   fi
 
-  eval "${tmuxcmd}"
+  # execute constructed tmux command
+  bash -c "${tmuxcmd}"
 }
 
 main "$@"
