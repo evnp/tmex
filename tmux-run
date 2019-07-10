@@ -29,7 +29,7 @@ argnpm=""          # optional - if set, prefix each command with "npm run" for p
 argcmds=""         # optional - list of commands to be executed in resulting panes
 
 # tmux command that will be constructed and executed:
-tmuxcmd=""
+tmuxargs=()
 
 function processargs () {
   # -h|--help
@@ -46,7 +46,7 @@ function processargs () {
   if [[ "${argsession}" =~ ^(--npm|-n)$ ]]; then
     # allow ommission of session name if --npm is set
     argnpm="true"
-    argsession="\$npm_package_name"
+    argsession="${npm_package_name-}"  # default to avoid 'unbound local variable' issues
   elif [[ "$1" =~ ^(--npm|-n)$ ]]; then
     argnpm="true"
     shift
@@ -202,7 +202,7 @@ function selectpane () {
   # $3 repeat    [integer]           number of times the select-pane operation will be repeated
 
   # modifies:
-  # ${tmuxcmd}
+  # ${tmuxargs}
 
   local direction
   local flags
@@ -221,7 +221,7 @@ function selectpane () {
   [[ "${direction}" == "v" ]] && flag="${flags:0:1}" || flag="${flags:1:1}"
 
   for (( idx = 0; idx < repeat; idx++ )); do
-    tmuxcmd+=" \\; select-pane -${flag}"
+    tmuxargs+=( ";" "select-pane" "-${flag}" )
   done
 }
 
@@ -235,7 +235,7 @@ function split1d () {
   # $@ cmds      [array<string>]  list of commands to be executed in resulting panes
 
   # modifies:
-  # ${tmuxcmd}
+  # ${tmuxargs}
 
   local direction
   local numpanes
@@ -253,15 +253,15 @@ function split1d () {
 
   if (( numpanes >= 2 )); then
     if (( numpanes == 2 )); then
-      tmuxcmd+=" \\; split-window -${direction} \"${cmds[1]-}\""
+      tmuxargs+=( ";" "split-window" "-${direction}" "${cmds[1]-}" )
     elif (( numpanes % 2 > 0 )); then
       # percentage = round(100 - (100 / $numpanes))
       percentage=$(( 100 - ( ( 100 + ( numpanes / 2 ) ) / numpanes ) ))
-      tmuxcmd+=" \\; split-window -${direction} -p${percentage} \"${cmds[1]-}\""
+      tmuxargs+=( ";" "split-window" "-${direction}" "-p${percentage}" "${cmds[1]-}" )
       split1d "${direction}" "$(( numpanes - 1 ))" "${cmds[@]:1}"
     else
       half=$(( numpanes / 2 ))
-      tmuxcmd+=" \\; split-window -$direction -d \"${cmds[${half}]}\""
+      tmuxargs+=( ";" "split-window" "-${direction}" "-d" "${cmds[${half}]}" )
       split1d "${direction}" "${half}" "${cmds[@]:0:${half}}"  # 1st half of cmds
       selectpane "${direction}" "DR" 1
       split1d "${direction}" "${half}" "${cmds[@]:${half}}"    # 2nd half of cmds
@@ -279,7 +279,7 @@ function split2d () {
   # $@ cmds      [array<string>]  list of commands to be executed in resulting panes
 
   # modifies:
-  # ${tmuxcmd}
+  # ${tmuxargs}
 
   local direction
   local layout
@@ -405,7 +405,7 @@ function main () {
   # ${argcmds}
 
   # modifies:
-  # ${tmuxcmd}
+  # ${tmuxargs}
 
   local idx
   local flag
@@ -423,8 +423,8 @@ function main () {
     done
   fi
 
-  # begin to construct tmux command
-  tmuxcmd+="tmux new-session -s \"${argsession}\" \"${argcmds[0]}\""
+  # begin to construct tmux arguments
+  tmuxargs+=( "new-session" "-s" "${argsession}" "${argcmds[0]}" )
 
   # if layout is not specified, generate a default
   if [[ -z "${arglayout}" ]]; then
@@ -434,27 +434,28 @@ function main () {
   # ensure layout is large enough to contain commands provided
   validatelayout "${numcmds}"
 
-  # append layout commands onto tmuxcmd
+  # append layout commands onto tmuxargs
   [[ "${argorientation}" == "ltr" ]] && flag="v" || flag="h"
   split2d "${flag}" "${arglayout}" "${argcmds[@]}"
 
-  # append extra tmux commands as specified by `extra` arg onto tmuxcmd
-  tmuxcmd+=" \\; set-window-option remain-on-exit on"
-  tmuxcmd+=" \\; ${argextra//;/\\\\;}"  # escape semicolons - replace ";" with "\\;"
+  # append extra tmux commands as specified by `extra` arg onto tmuxargs
+  tmuxargs+=( ";" "set-window-option" "remain-on-exit" "on" ";" )
+  for arg in ${argextra}; do
+    tmuxargs+=( "${arg}" )
+  done
 
   # either attach to an existing session or kill it based on specified behavior
   if [[ "${argexists}" == "attach" ]]; then
-    if bash -c "tmux has-session -t \"${argsession}\"" 2>/dev/null; then  # if session exists, re-attach
-      bash -c "tmux attach-session -t \"${argsession}\""
+    if tmux has-session -t "${argsession}" 2>/dev/null; then  # if session exists, re-attach
+      tmux attach-session -t "${argsession}"
       exit 0
     fi
   elif [[ "${argexists}" == "replace" ]]; then
-    bash -c "tmux kill-session -t \"${argsession}\"" || true  # ignore 'session does not exist' error
+    tmux kill-session -t "${argsession}" || true  # ignore 'session does not exist' error
   fi
 
   # execute constructed tmux command
-  bash -c "${tmuxcmd}"
-  #echo "${tmuxcmd}"
+  tmux "${tmuxargs[@]}"
 }
 
 main "$@"
