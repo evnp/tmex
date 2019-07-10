@@ -1,15 +1,18 @@
 #!/usr/bin/env bash
 
+# sanity - exit on any error; no unbound variables
+set -euxo pipefail
+
 usage='usage: tmux-run <session-name> \          # session name required unless --npm set; all other args optional
-  [-h|--help] \
+  [-h|--help] \                           #
   [-n|--npm] \                            # if set, prefix each command with "npm run" for package.json scripts
   [[-l|--layout=]{integer}] \             # [default: generated for # of cmds] each digit represents number of panes in column
   [[-o|--orientation=]ttb|ltr] \          # [default: ttb (top-to-bottom)] transpose layout if orientation=ltr (left-to-right)
   [[-e|--exists=]replace|attach|error] \  # [default: replace] replace, attach, or error when session already exists
   [--extra="tmux cmd A ; tmux cmd B"] \   # extra tmux commands to be executed after window and panes are created
   ["shell command 1"] \                   # shell commands that will be executed in each pane
-  ["shell command 2"] \
-  ...
+  ["shell command 2"] \                   #
+  ...                                     #
   ["shell command N"]                     # number of shell commands N must not exceed sum of layout
 '
 
@@ -43,21 +46,21 @@ function processargs () {
   if [[ "${argsession}" =~ ^(--npm|-n)$ ]]; then
     # allow ommission of session name if --npm is set
     argnpm="true"
-    argsession="$npm_package_name"
+    argsession="\$npm_package_name"
   elif [[ "$1" =~ ^(--npm|-n)$ ]]; then
     argnpm="true"
     shift
   fi
 
   # 3rd arg: layout (string of digits)
-  if [[ "$1" =~ ^--layout= ]] || [[ "$1" =~ ^(--layout|-l)?=?[][0-9]+$ ]]; then
+  if [[ "$1" =~ ^--layout= ]] || [[ "$1" =~ ^(--layout|-l)?=?[][\)\(0-9]+$ ]]; then
     arglayout="$1"
     shift
     arglayout="${arglayout#--layout}"  # remove prefix (if necessary)
     arglayout="${arglayout#-l}"
     arglayout="${arglayout#=}"
     # if layout invalid, exit with error
-    if ! [[ "${arglayout}" =~ ^[][0-9]+$ ]]; then
+    if ! [[ "${arglayout}" =~ ^[][\)\(0-9]+$ ]]; then
       echo "invalid input: --layout=${arglayout} must contain only numeric characters and brackets"
       echo "${usage}"
       exit 1
@@ -144,11 +147,11 @@ function generatelayout () {
 
   root=$( bc <<< "scale=0; sqrt( ${size} + 1 )" )
   root=${root%.*}  # floor
-  quot=$(( ${size} / ${root} ))
+  quot=$(( size / root ))
   quot=${quot%.*}  # floor
-  rmdr=$(( ${size} % ${root} ))
+  rmdr=$(( size % root ))
   arglayout=$( printf "%0.s${root}" $( seq 1 "${quot}" ) )
-  if (( "${rmdr}" > 0 )); then
+  if (( rmdr > 0 )); then
     arglayout="${rmdr}${arglayout}"
   fi
 }
@@ -167,17 +170,23 @@ function validatelayout () {
   local idx
   local char
   local layoutsizesum
+  local waitforclosingbrace
 
   layoutsizesum=0
-  for (( idx = 0; "${idx}" < "${#arglayout}"; idx++ )); do
+  waitforclosingbrace=false
+  for (( idx = 0; idx < ${#arglayout}; idx++ )); do
     char="${arglayout:${idx}:1}"
-    if [[ "${char}" =~ [0-9] ]]; then
+    if [[ "${char}" = "(" ]]; then
+      waitforclosingbrace=true
+    elif [[ "${char}" = ")" ]]; then
+      waitforclosingbrace=false
+    elif [[ "${waitforclosingbrace}" == false && "${char}" =~ [0-9] ]]; then
       (( layoutsizesum+="${char}" ))
     fi
   done
 
   # if size exceeds sum of layout string digits, exit with error
-  if (( "${minsize}" > "${layoutsizesum}" )); then
+  if (( minsize > layoutsizesum )); then
     echo "invalid input: --layout=${arglayout} is too small for number of commands provided"
     echo "${usage}"
     exit 1
@@ -190,7 +199,7 @@ function selectpane () {
   # params:
   # $1 direction [string "v"|"h"]    direction to split current pane (vertical or horizontal)
   # $2 flags     [string]            pair of flags that will be used based on direction
-  # $3 repeat    [integer default=1] number of times the select-pane operation will be repeated
+  # $3 repeat    [integer]           number of times the select-pane operation will be repeated
 
   # modifies:
   # ${tmuxcmd}
@@ -209,13 +218,9 @@ function selectpane () {
   local idx
   local flag
 
-  if [[ -z "${repeat}" ]]; then
-    repeat=1
-  fi
-
   [[ "${direction}" == "v" ]] && flag="${flags:0:1}" || flag="${flags:1:1}"
 
-  for (( idx = 0; "${idx}" < "${repeat}"; idx++ )); do
+  for (( idx = 0; idx < repeat; idx++ )); do
     tmuxcmd+=" \\; select-pane -${flag}"
   done
 }
@@ -246,19 +251,19 @@ function split1d () {
   local half
   local flag
 
-  if (( "${numpanes}" >= 2 )); then
-    if (( "${numpanes}" == 2 )); then
-      tmuxcmd+=" \\; split-window -${direction} \"${cmds[1]}\""
-    elif (( "${numpanes}" % 2 > 0 )); then
+  if (( numpanes >= 2 )); then
+    if (( numpanes == 2 )); then
+      tmuxcmd+=" \\; split-window -${direction} \"${cmds[1]-}\""
+    elif (( numpanes % 2 > 0 )); then
       # percentage = round(100 - (100 / $numpanes))
-      percentage=$(( 100 - ( ( 100 + ( ${numpanes} / 2 ) ) / ${numpanes} ) ))
-      tmuxcmd+=" \\; split-window -${direction} -p${percentage} \"${cmds[1]}\""
-      split1d "${direction}" "$(( ${numpanes} - 1 ))" "${cmds[@]:1}"
+      percentage=$(( 100 - ( ( 100 + ( numpanes / 2 ) ) / numpanes ) ))
+      tmuxcmd+=" \\; split-window -${direction} -p${percentage} \"${cmds[1]-}\""
+      split1d "${direction}" "$(( numpanes - 1 ))" "${cmds[@]:1}"
     else
-      half=$(( ${numpanes} / 2 ))
+      half=$(( numpanes / 2 ))
       tmuxcmd+=" \\; split-window -$direction -d \"${cmds[${half}]}\""
       split1d "${direction}" "${half}" "${cmds[@]:0:${half}}"  # 1st half of cmds
-      selectpane "${direction}" "DR"
+      selectpane "${direction}" "DR" 1
       split1d "${direction}" "${half}" "${cmds[@]:${half}}"    # 2nd half of cmds
     fi
   fi
@@ -284,7 +289,11 @@ function split2d () {
   shift
   layout="$1"
   shift
-  cmds=( "$@" )
+  if (( ${#@} > 0 )); then
+    cmds=( "$@" )
+  else
+    cmds=()
+  fi
 
   local idx
   local char
@@ -306,32 +315,33 @@ function split2d () {
   depth=0
   sublayouts=()
   sublayoutsizes=()
-  for (( idx = 0; "${idx}" < "${#layout}"; idx++ )); do
+  for (( idx = 0; idx < ${#layout}; idx++ )); do
     char="${layout:${idx}:1}"
 
     if [[ "${char}" == "]" ]]; then
-      (( depth-=1 ))
+      (( depth -= 1 ))
     fi
 
     if (( "${depth}" > 0 )); then
       sublayouts[$(( ${#sublayouts[@]} - 1 ))]+="${char}"
 
       if [[ "${char}" =~ [0-9] ]]; then
-        (( sublayoutsizes[$(( ${#sublayoutsizes[@]} - 1 ))]+=${char} ))
+        (( sublayoutsizes[$(( ${#sublayoutsizes[@]} - 1 ))] += char ))
       fi
     fi
 
     if [[ "${char}" == "[" ]]; then
-      if (( "${depth}" == 0 )); then
+      if (( depth == 0 )); then
         sublayouts+=( "" )
         sublayoutsizes+=( 0 )
       fi
-      (( depth+=1 ))
+      (( depth += 1 ))
     fi
 
-    if [[ "${char}" =~ [0-9] ]] && (( "${depth}" == 0 )); then
+    if [[ "${char}" =~ [0-9] ]] && (( depth == 0 )); then
+      sublayout=$( printf '%0.s1' $( seq 1 "${char}" ) ) # "111..1" str len == char
+      sublayouts+=( "${sublayout}" )
       sublayoutsizes+=( "${char}" )
-      sublayouts+=( $( printf "%0.s1" $( seq 1 "${char}" ) ) )
     fi
   done
 
@@ -340,24 +350,30 @@ function split2d () {
   # construct initial set of panes
   initialcmds=()
   initialcmdidx=0
-  for (( i = 0; i < "${numsublayouts}"; i++ )); do
-    sublayoutsize="${sublayoutsizes[${i}]}"
-    initialcmds+=( "${cmds[${initialcmdidx}]}" )
-    (( initialcmdidx+="${sublayoutsize}" ))
+
+  #echo 'COMMANDS'
+  #echo "${cmds[@]}"
+  #echo "${initialcmdidx}"
+  #echo "${initialcmds}"
+
+  for (( idx = 0; idx < numsublayouts; idx++ )); do
+    sublayoutsize="${sublayoutsizes[${idx}]}"
+    initialcmds+=( "${cmds[${initialcmdidx}]-}" )
+    (( initialcmdidx += sublayoutsize ))
   done
   split1d "${direction}" "${numsublayouts}" "${initialcmds[@]}"
 
   # select first pane
-  selectpane "${direction}" "UL" $(( ${numsublayouts} - 1 ))
+  selectpane "${direction}" "UL" $(( numsublayouts - 1 ))
 
   # split each pane as specified by layout
   initialcmdidx=0
-  for (( idx = 0; "${idx}" < "${numsublayouts}"; idx++ )); do
+  for (( idx = 0; idx < numsublayouts; idx++ )); do
     sublayout="${sublayouts[${idx}]}"
     sublayoutsize="${sublayoutsizes[${idx}]}"
 
-    if (( ${idx} > 0 )); then
-      selectpane "${direction}" "DR"
+    if (( idx > 0 )); then
+      selectpane "${direction}" "DR" 1
     fi
 
     [[ "${direction}" == "v" ]] && flag="h" || flag="v"
@@ -365,12 +381,12 @@ function split2d () {
 
     # if layout contains only columns of 1, we can split 1-dimensional
     if [[ "${sublayout}" =~ ^1+$ ]]; then
-      split1d "${flag}" "${sublayoutsize}" "${subcmds[@]}"
+      split1d "${flag}" "${sublayoutsize}" "${subcmds[@]-}"
     else
-      split2d "${flag}" "${sublayout}" "${subcmds[@]}"
+      split2d "${flag}" "${sublayout}" "${subcmds[@]-}"
     fi
 
-    (( initialcmdidx+="${sublayoutsize}" ))
+    (( initialcmdidx += sublayoutsize ))
   done
 }
 
@@ -401,7 +417,7 @@ function main () {
 
   # if npm option is set, prefix commands "npm run ..."
   if [[ -n "${argnpm}" ]]; then
-    for (( idx = 0; "${idx}" < "${#argcmds[@]}"; idx++ )); do
+    for (( idx = 0; idx < ${#argcmds[@]}; idx++ )); do
       argcmds[idx]="npm run ${argcmds[idx]}"
       #argcmds["${idx}"]="echo \"${argcmds[${idx}]}\" && sleep 1000"
     done
@@ -428,13 +444,12 @@ function main () {
 
   # either attach to an existing session or kill it based on specified behavior
   if [[ "${argexists}" == "attach" ]]; then
-    tmux has-session -t "${argsession}" 2>/dev/null
-    if [ "$?" == 0 ]; then  # if session exists, re-attach
-      tmux attach-session -t "${argsession}"
+    if bash -c "tmux has-session -t \"${argsession}\"" 2>/dev/null; then  # if session exists, re-attach
+      bash -c "tmux attach-session -t \"${argsession}\""
       exit 0
     fi
   elif [[ "${argexists}" == "replace" ]]; then
-    tmux kill-session -t "${argsession}" || true  # ignore 'session does not exist' error
+    bash -c "tmux kill-session -t \"${argsession}\"" || true  # ignore 'session does not exist' error
   fi
 
   # execute constructed tmux command
