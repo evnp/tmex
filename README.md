@@ -87,6 +87,22 @@ tmux-run <sessionname> --layout=1224 --orientation=ltr
 +-----+-----+-----+-----+
 ```
 
+Layouts may be arbitrarily complex via sublayouts [xyz] and custom sizing {xyz}:
+```
+tmux-run <sessionname> --layout=1[2{13}1]5{41111}
+>>>                                 |      |
+         +--------------------------+      |
++-----+--|--+-----+-----+                  |
+|     |  |        |     |                  |
+|     | 1|3       |     | 4----------------+
+|     |  |        |     | |
+|     +--+--------+-----+ 1
+|     |           +-----+ 1
+|     |           +-----+ 1
+|     |           +-----+ 1
++-----+-----------+-----+
+```
+
 Shorthand:
 ```
 tmux-run <sessionname> 1224 ltr "cmd a" "cmd b" "cmd c" etc...
@@ -108,15 +124,15 @@ Session name defaults to `$npm_package_name` if `--npm` option is set. This will
 
 Full options list (also accessible via `tmux-run --help`):
 ```
-tmux-run <session-name> \                 # session name required unless --npm set; all other args optional
-  [-h|--help] \
-  [-n|--npm] \                            # if set, prefix each command with "npm run" for package.json scripts
-  [[-l|--layout=]{integer}] \             # [default: generated for # cmds] each digit represents number of panes in column
-  [[-o|--orientation=]ttb|ltr] \          # [default: ttb (top-to-bottom)] transpose layout if orientation=ltr (left-to-right)
-  [[-e|--exists=]replace|attach|error] \  # [default: replace] replace, attach, or error when session already exists
-  [--extra="tmux cmd A ; tmux cmd B"] \   # extra tmux commands to be executed after window and panes are created
-  ["shell command 1"] \                   # shell commands that will be executed in each pane
-  ["shell command 2"] \
-  ...
-  ["shell command N"]                     # number of shell commands N must not exceed sum of layout
+tmux-run <session-name> \            # session name required unless --npm set; all other args optional
+  [-h|--help] \                             #
+  [-n|--npm] \                              # if set, prefix each command with "npm run" for package.json scripts
+  [[-l|--layout=]<1-9,[,],{,}>] \           # [default: generated for # of cmds] each digit represents number of panes in column
+  [[-o|--orientation=]<ttb|ltr>] \          # [default: ttb (top-to-bottom)] transpose layout if orientation=ltr (left-to-right)
+  [[-e|--exists=]<replace|attach|error>] \  # [default: replace] replace, attach, or error when session already exists
+  [--extra="tmux cmd A ; tmux cmd B"] \     # extra tmux commands to be executed after window and panes are created
+  ["shell command 1"] \                     # shell commands that will be executed in each pane
+  ["shell command 2"] \                     #
+  ...                                       #
+  ["shell command N"]                       # number of shell commands N must not exceed sum of layout
 ```
