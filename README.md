@@ -124,7 +124,7 @@ Session name defaults to `$npm_package_name` if `--npm` option is set. This will
 
 Full options list (also accessible via `tmux-run --help`):
 ```
-tmux-run <session-name> \            # session name required unless --npm set; all other args optional
+tmux-run <session-name> \                   # session name required unless --npm set; all other args optional
   [-h|--help] \                             #
   [-n|--npm] \                              # if set, prefix each command with "npm run" for package.json scripts
   [[-l|--layout=]<1-9,[,],{,}>] \           # [default: generated for # of cmds] each digit represents number of panes in column
