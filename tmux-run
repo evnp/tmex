@@ -1,42 +1,94 @@
 #!/usr/bin/env bash
 
+# tmux-run 0.0.10
+
 # sanity - exit on any error; no unbound variables
 set -euo pipefail
 
 function processargs () {
-  # -h|--help
-  if [[ "${1-}" =~ ^(--help|-h)$ ]]; then
+  local args
+  local argidx
+  local arg
+  local idx
+  local char
+
+  args=( "$@" )
+  argidx=0
+
+  # session name
+  argsession="${args[argidx]-}"
+
+  if [[ "${argsession}" =~ ^(--(help|npm|print|version)|-[hnpv]+)$ ]]; then
+    argsession=""
+  else
+    (( argidx++ ))
+  fi
+
+  # flags
+  while true; do
+    arg="${args[argidx]-}"
+    if [[ "${arg}" =~ ^--(help|npm|print|version)$ ]]; then
+      (( argidx++ ))
+      arg="${arg#--}"  # remove "--" prefix
+      case "${arg}" in
+        "help")    arghelp=true;;
+        "npm")     argnpm=true;;
+        "print")   argprint=true;;
+        "version") argversion=true;;
+      esac
+    elif [[ "${arg}" =~ ^-[hnpv]+$ ]]; then
+      (( argidx++ ))
+      arg="${arg#-}"  # remove "-" prefix
+      for (( idx = 0; idx < ${#arg}; idx++ )); do
+        char="${arg:idx:1}"
+        case "${char}" in
+          "h") arghelp=true;;
+          "n") argnpm=true;;
+          "p") argprint=true;;
+          "v") argversion=true;;
+        esac
+      done
+    else
+      break
+    fi
+  done
+
+  if [[ "${arghelp}" == true ]]; then
     echo "${usage}"
     exit 0
   fi
 
-  # 1st arg: session name
-  argsession="${1-}"
-  shift
-
-  # 2nd arg: npm
-  if [[ "${argsession}" =~ ^(--npm|-n)$ ]]; then
-    # allow ommission of session name if --npm is set
-    argnpm="true"
-    argsession="${npm_package_name-}"  # default to avoid 'unbound local variable' issues
-  elif [[ "${1-}" =~ ^(--npm|-n)$ ]]; then
-    argnpm="true"
-    shift
+  if [[ "${argversion}" == true ]]; then
+    echo "${version}"
+    exit 0
   fi
 
-  # 3rd arg: layout (string of digits)
-  if [[ "${1-}" =~ ^--layout= ]] || [[ "${1-}" =~ ^(--layout|-l)?=?[][}{0-9]+$ ]]; then
-    arglayout="${1-}"
-    shift
+  # allow ommission of session name if --npm is set
+  if [[ -z "${argsession}" ]]; then
+    if [[ "${argnpm}" == true ]]; then
+      argsession="${npm_package_name-}"  # default to avoid 'unbound local variable' issues
+    else
+      echo "invalid input: session name required unless --npm flag is set (in which case session will default to npm package name)"
+      echo "${usage}"
+      exit 1
+    fi
+  fi
+
+  # layout (string of digits)
+  arg="${args[argidx]-}"
+  if [[ "${arg}" =~ ^--layout= || "${arg}" =~ ^(--layout|-l)?=?[][}{0-9]+$ ]]; then
+    (( argidx++ ))
+    arglayout="${arg}"
     arglayout="${arglayout#--layout}"  # remove prefix (if necessary)
     arglayout="${arglayout#-l}"
     arglayout="${arglayout#=}"
   fi
 
-  # 4th arg: orientation [ltr|ttb] default:ttb
-  if [[ "${1-}" =~ ^--orientation= ]] || [[ "${1-}" =~ ^(--orientation|-o)?=?(ttb|ltr)$ ]]; then
-    argorientation="${1-}"
-    shift
+  # orientation [ltr|ttb] default:ttb
+  arg="${args[argidx]-}"
+  if [[ "${arg}" =~ ^--orientation= || "${arg}" =~ ^(--orientation|-o)?=?(ttb|ltr)$ ]]; then
+    (( argidx++ ))
+    argorientation="${arg}"
     argorientation="${argorientation#--orientation}"  # remove prefix (if necessary)
     argorientation="${argorientation#-o}"
     argorientation="${argorientation#=}"
@@ -50,10 +102,11 @@ function processargs () {
     argorientation="ttb"
   fi
 
-  # 5th arg: exists [replace|attach|error] default:replace
-  if [[ "${1-}" =~ ^--exists= ]] || [[ "${1-}" =~ ^(--exists|-e)?=?(replace|attach|error)$ ]]; then
-    argexists="${1-}"
-    shift
+  # exists [replace|attach|error] default:replace
+  arg="${args[argidx]-}"
+  if [[ "${arg}" =~ ^--exists= || "${arg}" =~ ^(--exists|-e)?=?(replace|attach|error)$ ]]; then
+    (( argidx++ ))
+    argexists="${arg}"
     argexists="${argexists#--exists}"  # remove prefix (if necessary)
     argexists="${argexists#-e}"
     argexists="${argexists#=}"
@@ -67,15 +120,16 @@ function processargs () {
     argexists="replace"
   fi
 
-  # 6th arg: extra
-  if [[ "${1-}" =~ ^--extra=? ]]; then
-    argextra="${1-}"
-    shift
+  # extra
+  arg="${args[argidx]-}"
+  if [[ "${arg}" =~ ^--extra=? ]]; then
+    (( argidx++ ))
+    argextra="${arg}"
     argextra="${argextra#--extra}"  # remove prefix
     argextra="${argextra#=}"
   fi
 
-  argcmds=( "$@" )
+  argcmds=( "${args[@]:argidx}" )  # rest of args
 }
 
 function generatelayout () {
@@ -457,6 +511,8 @@ function main () {
   local flag
   local numcmds
 
+  version="$( head -n 3 < "$0" | tail -1 )"
+  version="${version#\# }"  # remove "# " prefix
   usage='
 usage: tmux-run <session-name> \            # session name required unless --npm set; all other args optional
   [-h|--help] \                             #
@@ -470,9 +526,14 @@ usage: tmux-run <session-name> \            # session name required unless --npm
   ...                                       #
   ["shell command N"]                       # number of shell commands N must not exceed sum of layout
   '
+  usage="${version}${usage}"
 
   # parse args into vars:
   argsession=""      # required - session name
+  arghelp=""         # optional - if set, display usage message and exit
+  argnpm=""          # optional - if set, prefix each command with "npm run" for package.json scripts
+  argprint=""        # optional - if set, print final tmux command to console instead of executing it
+  argversion=""      # optional - if set, display version and exit
   arglayout=""       # optional - string of digits defining a custom layout
                   #            each digit represents num of panes in each column
   argorientation=""  # optional - ttb (top-to-bottom, default) or ltr (left-to-right)
@@ -480,7 +541,6 @@ usage: tmux-run <session-name> \            # session name required unless --npm
   argexists=""       # optional - attach/replace/error exists when session exists
   argextra=""        # optional - extra commands to be executed after layout commands
                   #            e.g. extra="set-window-option remain-on-exit off"
-  argnpm=""          # optional - if set, prefix each command with "npm run" for package.json scripts
   argcmds=""         # optional - list of commands to be executed in resulting panes
 
   # tmux command that will be constructed and executed:
@@ -528,8 +588,12 @@ usage: tmux-run <session-name> \            # session name required unless --npm
     tmux kill-session -t "${argsession}" || true  # ignore 'session does not exist' error
   fi
 
-  # execute constructed tmux command
-  tmux "${tmuxargs[@]}"
+  if [[ "${argprint}" == true ]]; then
+    echo "${tmuxargs[@]}"
+  else
+    # execute constructed tmux command
+    tmux "${tmuxargs[@]}"
+  fi
 }
 
 main "$@"
