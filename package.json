@@ -1,14 +1,23 @@
 {
   "name": "tmux-run",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "tmux wrapper for simpler package.json scripts",
   "main": "tmux-run",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "bats test.bats",
+    "testn": "clear && npm run test | bats-notify",
+    "testw": "npm run test && fswatch -0 -o -r . | xargs -0 -n1 npm run test",
+    "testnw": "npm run testn && fswatch -0 -o -r . | xargs -0 -n1 npm run testn"
   },
   "bin": {
     "tmux-run": "tmux-run"
   },
   "author": "Evan Purcer <evanpurcer@gmail.com> (http://evnp.ca)",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "bats": "1.1.0",
+    "bats-assert": "2.0.0",
+    "bats-support": "0.3.0",
+    "bats-notify": "1.0.0"
+  }
 }

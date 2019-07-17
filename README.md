@@ -1,5 +1,10 @@
 tmux-run
 ========
+[![build status](https://img.shields.io/travis/evnp/tmux-run/master.svg)](https://travis-ci.org/evnp/tmux-run)
+[![latest release](https://img.shields.io/github/release/evnp/tmux-run.svg)](https://github.com/evnp/tmux-run/releases/latest)
+[![npm package](https://img.shields.io/npm/v/tmux-run.svg)](https://www.npmjs.com/package/tmux-run)
+[![license](https://img.shields.io/github/license/evnp/tmux-run.svg)](https://github.com/evnp/tmux-run/blob/master/LICENSE.md)
+
 A minimalist layout wrapper for running commands in tmux
 
 Turn monstrous npm script compositions
@@ -136,3 +141,18 @@ tmux-run <session-name> \                   # session name required unless --npm
   ...                                       #
   ["shell command N"]                       # number of shell commands N must not exceed sum of layout
 ```
+
+Running Tests
+-------------
+Run once:
+```
+npm install
+npm run test
+```
+Use `fswatch` to re-run tests on file changes:
+```
+brew install fswatch
+npm install
+npm run testw
+```
+For non-OSX, replace `brew install fswatch` with package manager of choice - see [fswatch docs](https://github.com/emcrisostomo/fswatch#getting-fswatch).k
