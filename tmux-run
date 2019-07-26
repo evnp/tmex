@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# tmux-run 0.0.10
+# tmux-run 1.0.0
 
 # sanity - exit on any error; no unbound variables
 set -euo pipefail
@@ -18,7 +18,7 @@ function processargs () {
   # session name
   argsession="${args[argidx]-}"
 
-  if [[ "${argsession}" =~ ^(--(help|npm|print|version)|-[hnpv]+)$ ]]; then
+  if [[ "${argsession}" =~ ^(--(help|npm|print|reattach|transpose|version)|-[hnprtv]+)$ ]]; then
     argsession=""
   else
     (( argidx++ )) || true
@@ -27,16 +27,29 @@ function processargs () {
   # flags
   while true; do
     arg="${args[argidx]-}"
-    if [[ "${arg}" =~ ^--(help|npm|print|version)$ ]]; then
+    if [[ "${arg}" =~ ^(-l|--layout) ]]; then
+      (( argidx++ )) || true
+      if [[ "${arg}" == "-l" || "${arg}" == "--layout" ]]; then
+        arg="${args[argidx]-}"
+        (( argidx++ )) || true
+      fi
+      arglayout="${arg}"
+      arglayout="${arglayout#--layout}"  # remove possible prefixes (if necessary)
+      arglayout="${arglayout#-l}"
+      arglayout="${arglayout#=}"
+
+    elif [[ "${arg}" =~ ^--(help|npm|print|reattach|transpose|version)$ ]]; then
       (( argidx++ )) || true
       arg="${arg#--}"  # remove "--" prefix
       case "${arg}" in
-        "help")    arghelp=true;;
-        "npm")     argnpm=true;;
-        "print")   argprint=true;;
-        "version") argversion=true;;
+        "help")      arghelp=true;;
+        "npm")       argnpm=true;;
+        "print")     argprint=true;;
+        "reattach")  argreattach=true;;
+        "transpose") argtranspose=true;;
+        "version")   argversion=true;;
       esac
-    elif [[ "${arg}" =~ ^-[hnpv]+$ ]]; then
+    elif [[ "${arg}" =~ ^-[hnprtv]+$ ]]; then
       (( argidx++ )) || true
       arg="${arg#-}"  # remove "-" prefix
       for (( idx = 0; idx < ${#arg}; idx++ )); do
@@ -45,6 +58,8 @@ function processargs () {
           "h") arghelp=true;;
           "n") argnpm=true;;
           "p") argprint=true;;
+          "r") argreattach=true;;
+          "t") argtranspose=true;;
           "v") argversion=true;;
         esac
       done
@@ -53,8 +68,23 @@ function processargs () {
     fi
   done
 
+  # if next arg is a valid layout, use it as layout instead of shell command
+  arg="${args[argidx]-}"
+  if [[ -z "${arglayout}" && "${arg}" =~ ^[][}{1-9]+$ ]]; then
+    if ! [[ "${arg}" =~ ^{ && "${arg}" =~ {[^}{]*[^1-9][^}{]*} ]]; then
+      (( argidx++ )) || true
+      arglayout="${arg}"
+    fi
+  fi
+
+  # use rest of args as shell commands
+  argcmds=( "${args[@]:argidx}" )
+
   if [[ "${arghelp}" == true ]]; then
+    echo "${version}"
+    echo ""
     echo "${usage}"
+    echo "${help}"
     exit 0
   fi
 
@@ -68,68 +98,13 @@ function processargs () {
     if [[ "${argnpm}" == true ]]; then
       argsession="${npm_package_name-}"  # default to avoid 'unbound local variable' issues
     else
-      echo "invalid input: session name required unless --npm flag is set (in which case session will default to npm package name)"
+      echo ""
+      echo "Invalid input: session name required unless --npm flag is set (in which case session will default to npm package name)"
+      echo ""
       echo "${usage}"
       exit 1
     fi
   fi
-
-  # layout (string of digits)
-  arg="${args[argidx]-}"
-  if [[ "${arg}" =~ ^--layout= || "${arg}" =~ ^(--layout|-l)?=?[][}{0-9]+$ ]]; then
-    (( argidx++ )) || true
-    arglayout="${arg}"
-    arglayout="${arglayout#--layout}"  # remove prefix (if necessary)
-    arglayout="${arglayout#-l}"
-    arglayout="${arglayout#=}"
-  fi
-
-  # orientation [ltr|ttb] default:ttb
-  arg="${args[argidx]-}"
-  if [[ "${arg}" =~ ^--orientation= || "${arg}" =~ ^(--orientation|-o)?=?(ttb|ltr)$ ]]; then
-    (( argidx++ )) || true
-    argorientation="${arg}"
-    argorientation="${argorientation#--orientation}"  # remove prefix (if necessary)
-    argorientation="${argorientation#-o}"
-    argorientation="${argorientation#=}"
-    if ! [[ "${argorientation}" =~ ^(ttb|ltr)$ ]]; then
-      echo "invalid input: --orientation=${argorientation} must be [ttb|ltr]"
-      echo "${usage}"
-      exit 1
-    fi
-  else
-    # default
-    argorientation="ttb"
-  fi
-
-  # exists [replace|attach|error] default:replace
-  arg="${args[argidx]-}"
-  if [[ "${arg}" =~ ^--exists= || "${arg}" =~ ^(--exists|-e)?=?(replace|attach|error)$ ]]; then
-    (( argidx++ )) || true
-    argexists="${arg}"
-    argexists="${argexists#--exists}"  # remove prefix (if necessary)
-    argexists="${argexists#-e}"
-    argexists="${argexists#=}"
-    if ! [[ "${argexists}" =~ ^(replace|attach|error)$ ]]; then
-      echo "invalid input: --exists=${argexists} must be [replace|attach|error]"
-      echo "${usage}"
-      exit 1
-    fi
-  else
-    # default
-    argexists="replace"
-  fi
-
-  # extra
-  arg="${args[argidx]-}"
-  if [[ "${arg}" =~ ^--extra=? ]]; then
-    (( argidx++ )) || true
-    argextra="${arg}"
-    argextra="${argextra#--extra}"  # remove prefix
-    argextra="${argextra#=}"
-  fi
-
-  argcmds=( "${args[@]:argidx}" )  # rest of args
 }
 
 function generatelayout () {
@@ -188,28 +163,36 @@ function validatelayout () {
 
   # if layout contains characters other than 0-9, [, ], {, }, exit with error
   if ! [[ "${arglayout}" =~ ^[][}{0-9]+$ ]]; then
-    echo "invalid input: --layout=${arglayout} must contain only numeric characters and [ ] { } brackets"
+    echo ""
+    echo "Invalid input: --layout=${arglayout} must contain only numeric characters and [ ] { } brackets"
+    echo ""
     echo "${usage}"
     exit 1
   fi
 
   # if layout contains zero, exit with error
   if [[ "${arglayout}" =~ 0 ]]; then
-    echo "invalid input: --layout=${arglayout} column cannot be set to zero"
+    echo ""
+    echo "Invalid input: --layout=${arglayout} column cannot be set to zero"
+    echo ""
     echo "${usage}"
     exit 1
   fi
 
-  # if layout starts with ( ) brackets, exit with error
+  # if layout starts with { } brackets, exit with error
   if [[ "${arglayout}" =~ ^{ ]]; then
-    echo "invalid input: --layout=${arglayout} cannot begin with { } brackets"
+    echo ""
+    echo "Invalid input: --layout=${arglayout} cannot begin with { } brackets"
+    echo ""
     echo "${usage}"
     exit 1
   fi
 
-  # if layout contains non-numeric characters within ( ) brackets, exit with error
+  # if layout contains non-numeric characters within { } brackets, exit with error
   if [[ "${arglayout}" =~ {[^}{]*[^0-9][^}{]*} ]]; then
-    echo "invalid input: --layout=${arglayout} cannot include non-numeric characters within { } brackets"
+    echo ""
+    echo "Invalid input: --layout=${arglayout} cannot include non-numeric characters within { } brackets"
+    echo ""
     echo "${usage}"
     exit 1
   fi
@@ -229,7 +212,9 @@ function validatelayout () {
 
   # if size exceeds sum of layout string digits, exit with error
   if (( minsize > layoutsizesum )); then
-    echo "invalid input: --layout=${arglayout} is too small for number of commands provided"
+    echo ""
+    echo "Invalid input: --layout=${arglayout} is too small for number of commands provided"
+    echo ""
     echo "${usage}"
     exit 1
   fi
@@ -509,11 +494,13 @@ function main () {
   local usage
 
   local argsession
-  local arglayout
-  local argorientation
-  local argexists
-  local argextra
+  local arghelp
+  local argversion
   local argnpm
+  local argprint
+  local argreattach
+  local argtranspose
+  local arglayout
   local argcmds
 
   local tmuxargs
@@ -524,37 +511,58 @@ function main () {
   local numcmds
   local output
 
+  local version
+  local usage
+  local help
+
   version="$( head -n 3 < "$0" | tail -1 )"
   version="${version#\# }"  # remove "# " prefix
-  usage='
-usage: tmux-run <session-name> \            # session name required unless --npm set; all other args optional
-  [-h|--help] \                             #
-  [-n|--npm] \                              # if set, prefix each command with "npm run" for package.json scripts
-  [[-l|--layout=]<1-9,[,],{,}>] \           # [default: generated for # of cmds] each digit represents number of panes in column
-  [[-o|--orientation=]<ttb|ltr>] \          # [default: ttb (top-to-bottom)] transpose layout if orientation=ltr (left-to-right)
-  [[-e|--exists=]<replace|attach|error>] \  # [default: replace] replace, attach, or error when session already exists
-  [--extra="tmux cmd A ; tmux cmd B"] \     # extra tmux commands to be executed after window and panes are created
-  ["shell command 1"] \                     # shell commands that will be executed in each pane
-  ["shell command 2"] \                     #
-  ...                                       #
-  ["shell command N"]                       # number of shell commands N must not exceed sum of layout
-  '
-  usage="${version}${usage}"
+  usage='Usage: tmux-run <session-name> \  - session name required unless --npm set; all other args optional
+  [-h|--help]
+  [-v|--version] \
+  [-n|--npm] \                    -n, --npm         if set, prefix each command with "npm run" for package.json scripts
+  [-t|--transpose] \              -t, --transpose   build layout in left-to-right orientation instead of top-to-bottom
+  [-r|--reattach] \               -r, --reattach    if tmux session already exists, re-attach to it instead of replacing it
+  [-p|--print] \                  -p, --print       emit command as string of tmux args instead of invoking tmux directly
+  [[-l|--layout] <1-9,[,],{,}>] \ -l, --layout      layout string, each digit represents number of panes in column
+  ["shell command 1"] \
+  ["shell command 2"] \           - shell commands that will be executed in each pane
+  ...                               number of shell commands N must not exceed sum of layout
+  ["shell command N"]
+'
+  help='-l, --layout
+  If no layout is provided, a default will be generated to match the number of commands provided.
+  Otherwise, layout must be a string of digits 1-9, and [ ] { } chars. Each digit divides a column into a number of panes, e.g.
+    $ tmux-run -n --layout=1224
+  This layout produces 1 pane in the first column, 2 panes in the 2nd and 3rd columns, and 4 panes in the 4th column.
+  [ ] and { } delineate sub-layouts and custom sizing. e.g.
+    $ tmux-run -n --layout=1[2{34}5]6
+  The layout contains the sub-layout 2{34}5 which will be constructed within the second column.
+  The sub-layout specifies 3/4 sizing ratio for the 2 panes in its first row.
+
+-n, --npm
+  If set, each command is prefixed with "npm run " for tersely chaining npm script commands, and env var $npm_package_name
+  will be used as the session name if it is ommitted ($npm_package_name refers to the `name` field provided in package.json).
+    $ tmux-run -n build test
+    >>> tmux new-session -s mypackagename "npm run build" ; split-window -h "npm run test"
+
+-p, --print
+  To pass additional commands to tmux, invoke tmux-run with -p to emit tmux args instead of invoking tmux directly, e.g.
+    $ tmux $( tmux-run -n build test ) set-window-option remain-on-exit off \; set-window-option mode-keys vi
+
+For more information, see https://github.com/evnp/tmux-run
+'
 
   # parse args into vars:
-  argsession=""      # required - session name
-  arghelp=""         # optional - if set, display usage message and exit
-  argnpm=""          # optional - if set, prefix each command with "npm run" for package.json scripts
-  argprint=""        # optional - if set, print final tmux command to console instead of executing it
-  argversion=""      # optional - if set, display version and exit
-  arglayout=""       # optional - string of digits defining a custom layout
-                  #            each digit represents num of panes in each column
-  argorientation=""  # optional - ttb (top-to-bottom, default) or ltr (left-to-right)
-                  #            if ltr, transpose layout into rows instead of columns
-  argexists=""       # optional - attach/replace/error exists when session exists
-  argextra=""        # optional - extra commands to be executed after layout commands
-                  #            e.g. extra="set-window-option remain-on-exit off"
-  argcmds=""         # optional - list of commands to be executed in resulting panes
+  argsession=""   # required - session name
+  arghelp=""      # optional - if set, display usage message and exit
+  argversion=""   # optional - if set, display version and exit
+  argnpm=""       # optional - if set, prefix each command with "npm run" for package.json scripts
+  argprint=""     # optional - if set, print final tmux command to console instead of executing it
+  argreattach=""  # optional - if set, re-attach to existing tmux session isntead of replacing it
+  argtranspose="" # optional - if set, layout in left-to-right instead of top-to-bottom orientation
+  arglayout=""    # optional - string of digits defining a custom layout
+  argcmds=""      # optional - list of commands to be executed in resulting panes
 
   # tmux command that will be constructed and executed:
   tmuxargs=()
@@ -586,14 +594,11 @@ usage: tmux-run <session-name> \            # session name required unless --npm
   validatelayout "${numcmds}"
 
   # append layout commands onto tmuxargs
-  [[ "${argorientation}" == "ltr" ]] && flag="v" || flag="h"
+  [[ "${argtranspose}" ]] && flag="v" || flag="h"
   split2d "${flag}" "${arglayout}" "" "${argcmds[@]-}"
 
-  # append extra tmux commands as specified by `extra` arg onto tmuxargs
+  # set remain-on-exit on - more of a sane default since user will see when a command failed
   tmuxargs+=( ";" "set-window-option" "remain-on-exit" "on" ";" )
-  for arg in ${argextra}; do
-    tmuxargs+=( "${arg}" )
-  done
 
   if [[ "${argprint}" == true ]]; then
     output=""

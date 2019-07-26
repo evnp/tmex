@@ -7,15 +7,15 @@ dir=$BATS_TEST_DIRNAME
 
 @test "./tmux-run --print" {
   run $dir/tmux-run --print
-  assert_output -p "invalid input: session name required"
-  assert_output -p "usage:"
+  assert_output -p "Invalid input: session name required"
+  assert_output -p "Usage:"
   assert_failure
 }
 
 @test "./tmux-run -p" {
   run $dir/tmux-run -p
-  assert_output -p "invalid input: session name required"
-  assert_output -p "usage:"
+  assert_output -p "Invalid input: session name required"
+  assert_output -p "Usage:"
   assert_failure
 }
 
@@ -33,13 +33,13 @@ dir=$BATS_TEST_DIRNAME
 
 @test "./tmux-run --help" {
   run $dir/tmux-run --help
-  assert_output -p "usage:"
+  assert_output -p "Usage:"
   assert_success
 }
 
 @test "./tmux-run -h" {
   run $dir/tmux-run -h
-  assert_output -p "usage:"
+  assert_output -p "Usage:"
   assert_success
 }
 
@@ -159,6 +159,27 @@ layout_1234="
   assert_success
 }
 
+@test "./tmux-run testsessionname -p -l 1234" {
+  run $dir/tmux-run testsessionname -p -l 1234
+  assert_output -p "new-session -s testsessionname"
+  assert_layout "${layout_1234}"
+  assert_success
+}
+
+@test "./tmux-run testsessionname -l1234 -p" {
+  run $dir/tmux-run testsessionname -l1234 -p
+  assert_output -p "new-session -s testsessionname"
+  assert_layout "${layout_1234}"
+  assert_success
+}
+
+@test "./tmux-run testsessionname -l 1234 -p" {
+  run $dir/tmux-run testsessionname -l 1234 -p
+  assert_output -p "new-session -s testsessionname"
+  assert_layout "${layout_1234}"
+  assert_success
+}
+
 @test "./tmux-run testsessionname -p --layout=1234" {
   run $dir/tmux-run testsessionname -p --layout=1234
   assert_output -p "new-session -s testsessionname"
@@ -166,7 +187,14 @@ layout_1234="
   assert_success
 }
 
-layout_1234_ltr="
+@test "./tmux-run testsessionname -p --layout 1234" {
+  run $dir/tmux-run testsessionname -p --layout 1234
+  assert_output -p "new-session -s testsessionname"
+  assert_layout "${layout_1234}"
+  assert_success
+}
+
+layout_1234_transposed="
   split-window -v -p50 -d
   split-window -v -p50
    select-pane -D
@@ -186,21 +214,21 @@ layout_1234_ltr="
   split-window -h -p50
 "
 
-@test "./tmux-run testsessionname -p 1234 ltr" {
-  run $dir/tmux-run testsessionname -p 1234 ltr
-  assert_layout "${layout_1234_ltr}"
+@test "./tmux-run testsessionname -pt 1234" {
+  run $dir/tmux-run testsessionname -pt 1234
+  assert_layout "${layout_1234_transposed}"
   assert_success
 }
 
-@test "./tmux-run testsessionname -p -l1234 -oltr" {
-  run $dir/tmux-run testsessionname -p -l1234 -oltr
-  assert_layout "${layout_1234_ltr}"
+@test "./tmux-run testsessionname -p -l1234 -t" {
+  run $dir/tmux-run testsessionname -p -l1234 -t
+  assert_layout "${layout_1234_transposed}"
   assert_success
 }
 
-@test "./tmux-run testsessionname --print --layout=1234 --orientation=ltr" {
-  run $dir/tmux-run testsessionname --print --layout=1234 --orientation=ltr
-  assert_layout "${layout_1234_ltr}"
+@test "./tmux-run testsessionname --print --layout=1234 --transpose" {
+  run $dir/tmux-run testsessionname --print --layout=1234 --transpose
+  assert_layout "${layout_1234_transposed}"
   assert_success
 }
 
@@ -228,7 +256,7 @@ layout_123456="
   split-window -v -p50
 "
 
-@test "./tmux-run testsessionname -p 1[2{34}5]6 " {
+@test "./tmux-run testsessionname -p 1[2{34}5]6" {
   run $dir/tmux-run testsessionname -p 1[2{34}5]6
   assert_output -p "new-session -s testsessionname"
   assert_layout "${layout_123456}"
@@ -242,8 +270,36 @@ layout_123456="
   assert_success
 }
 
+@test "./tmux-run testsessionname -p -l 1[2{34}5]6" {
+  run $dir/tmux-run testsessionname -p -l 1[2{34}5]6
+  assert_output -p "new-session -s testsessionname"
+  assert_layout "${layout_123456}"
+  assert_success
+}
+
+@test "./tmux-run testsessionname -l1[2{34}5]6 -p" {
+  run $dir/tmux-run testsessionname -l1[2{34}5]6 -p
+  assert_output -p "new-session -s testsessionname"
+  assert_layout "${layout_123456}"
+  assert_success
+}
+
+@test "./tmux-run testsessionname -l 1[2{34}5]6 -p" {
+  run $dir/tmux-run testsessionname -l 1[2{34}5]6 -p
+  assert_output -p "new-session -s testsessionname"
+  assert_layout "${layout_123456}"
+  assert_success
+}
+
 @test "./tmux-run testsessionname -p --layout=1[2{34}5]6" {
   run $dir/tmux-run testsessionname -p --layout=1[2{34}5]6
+  assert_output -p "new-session -s testsessionname"
+  assert_layout "${layout_123456}"
+  assert_success
+}
+
+@test "./tmux-run testsessionname -p --layout 1[2{34}5]6" {
+  run $dir/tmux-run testsessionname -p --layout 1[2{34}5]6
   assert_output -p "new-session -s testsessionname"
   assert_layout "${layout_123456}"
   assert_success
@@ -273,20 +329,20 @@ layout_123456_ltr="
   split-window -h -p50
 "
 
-@test "./tmux-run testsessionname -p 1[2{34}5]6 ltr" {
-  run $dir/tmux-run testsessionname -p 1[2{34}5]6 ltr
+@test "./tmux-run testsessionname -pt 1[2{34}5]6" {
+  run $dir/tmux-run testsessionname -pt 1[2{34}5]6
   assert_layout "${layout_123456_ltr}"
   assert_success
 }
 
-@test "./tmux-run testsessionname -p -l1[2{34}5]6 -oltr" {
-  run $dir/tmux-run testsessionname -p -l1[2{34}5]6 -oltr
+@test "./tmux-run testsessionname -p -l1[2{34}5]6 -t" {
+  run $dir/tmux-run testsessionname -p -l1[2{34}5]6 -t
   assert_layout "${layout_123456_ltr}"
   assert_success
 }
 
-@test "./tmux-run testsessionname --print --layout=1[2{34}5]6 --orientation=ltr" {
-  run $dir/tmux-run testsessionname --print --layout=1[2{34}5]6 --orientation=ltr
+@test "./tmux-run testsessionname --print --layout=1[2{34}5]6 --transpose" {
+  run $dir/tmux-run testsessionname --print --layout=1[2{34}5]6 --transpose
   assert_layout "${layout_123456_ltr}"
   assert_success
 }
@@ -560,14 +616,5 @@ layout_123456_ltr="
     split-window -v -p67 \"npm run h\"
     split-window -v -p50 \"npm run i\"
   "
-  assert_success
-}
-
-@test "./tmux-run testsessionname -p --extra=\"set-window-option remain-on-exit off\"" {
-  run $dir/tmux-run testsessionname -p
-  assert_output -p "set-window-option remain-on-exit on"
-  assert_success
-  run $dir/tmux-run testsessionname -p --extra="set-window-option remain-on-exit off"
-  assert_output -p "set-window-option remain-on-exit off"
   assert_success
 }
