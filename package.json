@@ -1,8 +1,8 @@
 {
-  "name": "tmux-run",
-  "version": "1.0.0",
+  "name": "tmex",
+  "version": "1.0.1",
   "description": "tmux wrapper for simpler package.json scripts",
-  "main": "tmux-run",
+  "main": "tmex",
   "scripts": {
     "test": "bats test.bats",
     "testn": "clear && npm run test | bats-notify",
@@ -10,10 +10,15 @@
     "testnw": "npm run testn && fswatch -0 -o -r . | xargs -0 -n1 npm run testn"
   },
   "bin": {
-    "tmux-run": "tmux-run"
+    "tmex": "tmex"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/evnp/tmex.git"
+  },
+  "homepage": "https://github.com/evnp/tmex",
   "author": "Evan Purcer <evanpurcer@gmail.com> (http://evnp.ca)",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "bats": "1.1.0",
     "bats-assert": "2.0.0",

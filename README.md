@@ -1,14 +1,14 @@
-tmux-run
+tmex
 ========
-[![build status](https://img.shields.io/travis/evnp/tmux-run/master.svg)](https://travis-ci.org/evnp/tmux-run)
-[![latest release](https://img.shields.io/github/release/evnp/tmux-run.svg)](https://github.com/evnp/tmux-run/releases/latest)
-[![npm package](https://img.shields.io/npm/v/tmux-run.svg)](https://www.npmjs.com/package/tmux-run)
-[![license](https://img.shields.io/github/license/evnp/tmux-run.svg)](https://github.com/evnp/tmux-run/blob/master/LICENSE.md)
+[![build status](https://img.shields.io/travis/evnp/tmex/master.svg)](https://travis-ci.org/evnp/tmex)
+[![latest release](https://img.shields.io/github/release/evnp/tmex.svg)](https://github.com/evnp/tmex/releases/latest)
+[![npm package](https://img.shields.io/npm/v/tmex.svg)](https://www.npmjs.com/package/tmex)
+[![license](https://img.shields.io/github/license/evnp/tmex.svg)](https://github.com/evnp/tmex/blob/master/LICENSE.md)
 
-A minimalist tmux layout manager with zero dependencies.
+A minimalist tmux layout manager - one shell script, zero dependencies.
 
-Manage your entire build pipeline in one view, without extra configuration or yamls. Take the below `start` script:
-```
+Manage all your services in one view, without extra configuration files, yaml, etc. Take the `start` script below:
+```diff
 package.json
 {
   "name": "special-project"
@@ -17,28 +17,13 @@ package.json
     "watch": "parcel index.html",
     "server": "python -m http.server",
     "typecheck" "tsc --watch --noEmit",
-    "start": "tmux new-session -s $npm_package_name 'npm run watch' \\; split-window 'npm run server' \\; split-window 'npm run typecheck'",
+-   "start": "tmux new-session -s $npm_package_name 'npm run watch' \\; split-window 'npm run server' \\; split-window 'npm run typecheck'"
++   "start": "tmex -n watch server typecheck"
   }
   ...
 }
 ```
-With `tmux-run`, script compositions are much easier to grok:
-```
-package.json
-{
-  "name": "special-project"
-  "scripts": {
-    ..
-    "watch": "parcel index.html",
-    "server": "python -m http.server",
-    "typecheck" "tsc --watch --noEmit",
-    "start": "tmux-run -n watch server typecheck",
-  }
-  ...
-}
-```
-
-Sane defaults. Layouts with any number of panes. The above splits into:
+With tmex, `npm run start` composes `watch`, `server`, and `typecheck` into a single view with ease:
 ```
 +-----------+-----------+
 | npm run   | npm run   |
@@ -49,8 +34,7 @@ Sane defaults. Layouts with any number of panes. The above splits into:
 +-----------+-----------+
 session : special-project
 ```
-
-Given 8 commands, tmux-run generates this layout:
+Sane defaults. Layouts with any number of panes. Given 8 commands, tmex generates:
 ```
 +-------+-------+-------+
 | cmd 1 | cmd 3 | cmd 6 |
@@ -61,9 +45,28 @@ Given 8 commands, tmux-run generates this layout:
 +-------+-------+-------+
 ```
 
-Layouts are fully customizable via simple arg listing number of panes in each column:
+Install
+-------
+Install as a build tool in a package:
 ```
-tmux-run <sessionname> --layout=1224
+npm install --save-dev tmex
+```
+Install globally for use with any set of `package.json` scripts or arbitrary commands:
+```
+npm install -g tmex
+```
+or sans-npm:
+```
+curl -o ~/bin/tmex https://raw.githubusercontent.com/evnp/tmex/master/tmex && chmod +x ~/bin/tmex
+# or /usr/local/bin or other bin of your choice
+```
+[tmex](https://raw.githubusercontent.com/evnp/tmex/master/tmex) has no external dependencies, but always read code before downloading to ensure it contains nothing unexpected.
+
+Custom layouts
+--------------
+Layouts are fully customizable via arg listing number of panes in each column:
+```
+tmex <sessionname> --layout=1224
 >>>                             |
    1-----2-----2-----4----------+
 +-----+-----+-----+-----+
@@ -77,27 +80,27 @@ tmux-run <sessionname> --layout=1224
 +-----+-----+-----+-----+
 ```
 
-Left-to-right layout instead of top-to-bottom:
+Transpose layout left-to-right instead of top-to-bottom:
 ```
-tmux-run <sessionname> --layout=1224 --transpose
+tmex <sessionname> --layout=1224 --transpose
 >>>                             |
 +-----------------------+       |
 |           a           | 1-----+
-|-----------+-----------+ |
++-----------+-----------+ |
 |     b     |     c     | 2
-|-----------+-----------+ |
++-----------+-----------+ |
 |     d     |     e     | 2
-|-----+-----+-----+-----+ |
++-----+-----+-----+-----+ |
 |  f  |  g  |  h  |  i  | 4
 +-----+-----+-----+-----+
 ```
 
 Layouts may be arbitrarily complex via sublayouts [xyz] and custom sizing {xyz}:
 ```
-tmux-run <sessionname> --layout=1[2{13}1]5{41111}
+tmex <sessionname> --layout=1[2{13}1]5{41111}
 >>>                                 |      |
          +--------------------------+      |
-+-----+--|--+-----+-----+                  |
++-----+--|--------+-----+                  |
 |     |  |        |     |                  |
 |     | 1|3       |     | 4----------------+
 |     |  |        |     | |
@@ -108,28 +111,28 @@ tmux-run <sessionname> --layout=1[2{13}1]5{41111}
 +-----+-----------+-----+
 ```
 
-Shorthand:
+Shorthand
+---------
 ```
-tmux-run <sessionname> 1224 "cmd a" "cmd b" "cmd c" etc...
+tmex <sessionname> 1224 "cmd a" "cmd b" "cmd c" etc...
 ```
-Tailor-made for simplifying package.json scripts in npm modules via `--npm|-n` flag:
+Tailor-made for simplifying package.json scripts in npm modules via `--npm|-n` flag. Session name defaults to `$npm_package_name` if `--npm` option is set. This will expand to match the `name` field set in `package.json`.
 ```
-tmux-run -n foo bar baz
+tmex -n watch server typecheck
 >>>
-+---------------------------+
-| npm run foo | npm run bar |
-|             |             |
-|             +-------------+
-|             | npm run baz |
-|             |             |
-+-------------+-------------+
++-----------+-----------+
+| npm run   | npm run   |
+| watch     | server    |
+|           +-----------+
+|           | npm run   |
+|           | typecheck |
++-----------+-----------+
 session : special-project
 ```
-Session name defaults to `$npm_package_name` if `--npm` option is set. This will expand to match the `name` field set in `package.json`.
 
-Full options list (also accessible via `tmux-run --help`):
+Full options list (also accessible via `tmex --help`):
 ```
-tmux-run <session-name> \  - session name required unless --npm set; all other args optional
+tmex <session-name> \             - session name required unless --npm set; all other args optional
   [-h|--help]
   [-v|--version] \
   [-n|--npm] \                    -n, --npm         if set, prefix each command with "npm run" for package.json scripts
@@ -156,4 +159,4 @@ brew install fswatch
 npm install
 npm run testw
 ```
-For non-OSX, replace `brew install fswatch` with package manager of choice - see [fswatch docs](https://github.com/emcrisostomo/fswatch#getting-fswatch).k
+Non-OSX: replace `brew install fswatch` with package manager of choice (see [fswatch docs](https://github.com/emcrisostomo/fswatch#getting-fswatch))

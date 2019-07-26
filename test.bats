@@ -5,80 +5,80 @@ load './node_modules/bats-assert/load'
 
 dir=$BATS_TEST_DIRNAME
 
-@test "./tmux-run --print" {
-  run $dir/tmux-run --print
+@test "./tmex --print" {
+  run $dir/tmex --print
   assert_output -p "Invalid input: session name required"
   assert_output -p "Usage:"
   assert_failure
 }
 
-@test "./tmux-run -p" {
-  run $dir/tmux-run -p
+@test "./tmex -p" {
+  run $dir/tmex -p
   assert_output -p "Invalid input: session name required"
   assert_output -p "Usage:"
   assert_failure
 }
 
-@test "./tmux-run testsessionname --print" {
-  run $dir/tmux-run testsessionname --print
+@test "./tmex testsessionname --print" {
+  run $dir/tmex testsessionname --print
   assert_output -p "new-session -s testsessionname"
   assert_success
 }
 
-@test "./tmux-run testsessionname -p" {
-  run $dir/tmux-run testsessionname -p
+@test "./tmex testsessionname -p" {
+  run $dir/tmex testsessionname -p
   assert_output -p "new-session -s testsessionname"
   assert_success
 }
 
-@test "./tmux-run --help" {
-  run $dir/tmux-run --help
+@test "./tmex --help" {
+  run $dir/tmex --help
   assert_output -p "Usage:"
   assert_success
 }
 
-@test "./tmux-run -h" {
-  run $dir/tmux-run -h
+@test "./tmex -h" {
+  run $dir/tmex -h
   assert_output -p "Usage:"
   assert_success
 }
 
-@test "./tmux-run --version" {
-  run $dir/tmux-run --version
-  assert_output -p "tmux-run"
+@test "./tmex --version" {
+  run $dir/tmex --version
+  assert_output -p "tmex"
   assert_success
 }
 
-@test "./tmux-run -v" {
-  run $dir/tmux-run -v
-  assert_output -p "tmux-run"
+@test "./tmex -v" {
+  run $dir/tmex -v
+  assert_output -p "tmex"
   assert_success
 }
 
-@test "./tmux-run --print --npm" {
+@test "./tmex --print --npm" {
   npm_package_name="testpackagename"
-  run $dir/tmux-run --print --npm
+  run $dir/tmex --print --npm
   assert_output -p "new-session -s testpackagename"
   assert_success
 }
 
-@test "./tmux-run -pn" {
+@test "./tmex -pn" {
   npm_package_name="testpackagename"
-  run $dir/tmux-run -pn
+  run $dir/tmex -pn
   assert_output -p "new-session -s testpackagename"
   assert_success
 }
 
-@test "./tmux-run testsessionname --print --npm" {
+@test "./tmex testsessionname --print --npm" {
   npm_package_name="testpackagename"
-  run $dir/tmux-run testsessionname --print --npm
+  run $dir/tmex testsessionname --print --npm
   assert_output -p "new-session -s testsessionname"
   assert_success
 }
 
-@test "./tmux-run testsessionname -pn" {
+@test "./tmex testsessionname -pn" {
   npm_package_name="testpackagename"
-  run $dir/tmux-run testsessionname -pn
+  run $dir/tmex testsessionname -pn
   assert_output -p "new-session -s testsessionname"
   assert_success
 }
@@ -145,50 +145,50 @@ layout_1234="
   split-window -v -p50
 "
 
-@test "./tmux-run testsessionname -p 1234" {
-  run $dir/tmux-run testsessionname -p 1234
+@test "./tmex testsessionname -p 1234" {
+  run $dir/tmex testsessionname -p 1234
   assert_output -p "new-session -s testsessionname"
   assert_layout "${layout_1234}"
   assert_success
 }
 
-@test "./tmux-run testsessionname -p -l1234" {
-  run $dir/tmux-run testsessionname -p -l1234
+@test "./tmex testsessionname -p -l1234" {
+  run $dir/tmex testsessionname -p -l1234
   assert_output -p "new-session -s testsessionname"
   assert_layout "${layout_1234}"
   assert_success
 }
 
-@test "./tmux-run testsessionname -p -l 1234" {
-  run $dir/tmux-run testsessionname -p -l 1234
+@test "./tmex testsessionname -p -l 1234" {
+  run $dir/tmex testsessionname -p -l 1234
   assert_output -p "new-session -s testsessionname"
   assert_layout "${layout_1234}"
   assert_success
 }
 
-@test "./tmux-run testsessionname -l1234 -p" {
-  run $dir/tmux-run testsessionname -l1234 -p
+@test "./tmex testsessionname -l1234 -p" {
+  run $dir/tmex testsessionname -l1234 -p
   assert_output -p "new-session -s testsessionname"
   assert_layout "${layout_1234}"
   assert_success
 }
 
-@test "./tmux-run testsessionname -l 1234 -p" {
-  run $dir/tmux-run testsessionname -l 1234 -p
+@test "./tmex testsessionname -l 1234 -p" {
+  run $dir/tmex testsessionname -l 1234 -p
   assert_output -p "new-session -s testsessionname"
   assert_layout "${layout_1234}"
   assert_success
 }
 
-@test "./tmux-run testsessionname -p --layout=1234" {
-  run $dir/tmux-run testsessionname -p --layout=1234
+@test "./tmex testsessionname -p --layout=1234" {
+  run $dir/tmex testsessionname -p --layout=1234
   assert_output -p "new-session -s testsessionname"
   assert_layout "${layout_1234}"
   assert_success
 }
 
-@test "./tmux-run testsessionname -p --layout 1234" {
-  run $dir/tmux-run testsessionname -p --layout 1234
+@test "./tmex testsessionname -p --layout 1234" {
+  run $dir/tmex testsessionname -p --layout 1234
   assert_output -p "new-session -s testsessionname"
   assert_layout "${layout_1234}"
   assert_success
@@ -214,20 +214,20 @@ layout_1234_transposed="
   split-window -h -p50
 "
 
-@test "./tmux-run testsessionname -pt 1234" {
-  run $dir/tmux-run testsessionname -pt 1234
+@test "./tmex testsessionname -pt 1234" {
+  run $dir/tmex testsessionname -pt 1234
   assert_layout "${layout_1234_transposed}"
   assert_success
 }
 
-@test "./tmux-run testsessionname -p -l1234 -t" {
-  run $dir/tmux-run testsessionname -p -l1234 -t
+@test "./tmex testsessionname -p -l1234 -t" {
+  run $dir/tmex testsessionname -p -l1234 -t
   assert_layout "${layout_1234_transposed}"
   assert_success
 }
 
-@test "./tmux-run testsessionname --print --layout=1234 --transpose" {
-  run $dir/tmux-run testsessionname --print --layout=1234 --transpose
+@test "./tmex testsessionname --print --layout=1234 --transpose" {
+  run $dir/tmex testsessionname --print --layout=1234 --transpose
   assert_layout "${layout_1234_transposed}"
   assert_success
 }
@@ -256,50 +256,50 @@ layout_123456="
   split-window -v -p50
 "
 
-@test "./tmux-run testsessionname -p 1[2{34}5]6" {
-  run $dir/tmux-run testsessionname -p 1[2{34}5]6
+@test "./tmex testsessionname -p 1[2{34}5]6" {
+  run $dir/tmex testsessionname -p 1[2{34}5]6
   assert_output -p "new-session -s testsessionname"
   assert_layout "${layout_123456}"
   assert_success
 }
 
-@test "./tmux-run testsessionname -p -l1[2{34}5]6" {
-  run $dir/tmux-run testsessionname -p -l1[2{34}5]6
+@test "./tmex testsessionname -p -l1[2{34}5]6" {
+  run $dir/tmex testsessionname -p -l1[2{34}5]6
   assert_output -p "new-session -s testsessionname"
   assert_layout "${layout_123456}"
   assert_success
 }
 
-@test "./tmux-run testsessionname -p -l 1[2{34}5]6" {
-  run $dir/tmux-run testsessionname -p -l 1[2{34}5]6
+@test "./tmex testsessionname -p -l 1[2{34}5]6" {
+  run $dir/tmex testsessionname -p -l 1[2{34}5]6
   assert_output -p "new-session -s testsessionname"
   assert_layout "${layout_123456}"
   assert_success
 }
 
-@test "./tmux-run testsessionname -l1[2{34}5]6 -p" {
-  run $dir/tmux-run testsessionname -l1[2{34}5]6 -p
+@test "./tmex testsessionname -l1[2{34}5]6 -p" {
+  run $dir/tmex testsessionname -l1[2{34}5]6 -p
   assert_output -p "new-session -s testsessionname"
   assert_layout "${layout_123456}"
   assert_success
 }
 
-@test "./tmux-run testsessionname -l 1[2{34}5]6 -p" {
-  run $dir/tmux-run testsessionname -l 1[2{34}5]6 -p
+@test "./tmex testsessionname -l 1[2{34}5]6 -p" {
+  run $dir/tmex testsessionname -l 1[2{34}5]6 -p
   assert_output -p "new-session -s testsessionname"
   assert_layout "${layout_123456}"
   assert_success
 }
 
-@test "./tmux-run testsessionname -p --layout=1[2{34}5]6" {
-  run $dir/tmux-run testsessionname -p --layout=1[2{34}5]6
+@test "./tmex testsessionname -p --layout=1[2{34}5]6" {
+  run $dir/tmex testsessionname -p --layout=1[2{34}5]6
   assert_output -p "new-session -s testsessionname"
   assert_layout "${layout_123456}"
   assert_success
 }
 
-@test "./tmux-run testsessionname -p --layout 1[2{34}5]6" {
-  run $dir/tmux-run testsessionname -p --layout 1[2{34}5]6
+@test "./tmex testsessionname -p --layout 1[2{34}5]6" {
+  run $dir/tmex testsessionname -p --layout 1[2{34}5]6
   assert_output -p "new-session -s testsessionname"
   assert_layout "${layout_123456}"
   assert_success
@@ -329,32 +329,32 @@ layout_123456_transposed="
   split-window -h -p50
 "
 
-@test "./tmux-run testsessionname -pt 1[2{34}5]6" {
-  run $dir/tmux-run testsessionname -pt 1[2{34}5]6
+@test "./tmex testsessionname -pt 1[2{34}5]6" {
+  run $dir/tmex testsessionname -pt 1[2{34}5]6
   assert_layout "${layout_123456_transposed}"
   assert_success
 }
 
-@test "./tmux-run testsessionname -p -l1[2{34}5]6 -t" {
-  run $dir/tmux-run testsessionname -p -l1[2{34}5]6 -t
+@test "./tmex testsessionname -p -l1[2{34}5]6 -t" {
+  run $dir/tmex testsessionname -p -l1[2{34}5]6 -t
   assert_layout "${layout_123456_transposed}"
   assert_success
 }
 
-@test "./tmux-run testsessionname --print --layout=1[2{34}5]6 --transpose" {
-  run $dir/tmux-run testsessionname --print --layout=1[2{34}5]6 --transpose
+@test "./tmex testsessionname --print --layout=1[2{34}5]6 --transpose" {
+  run $dir/tmex testsessionname --print --layout=1[2{34}5]6 --transpose
   assert_layout "${layout_123456_transposed}"
   assert_success
 }
 
-@test "./tmux-run testsessionname -p a" {
-  run $dir/tmux-run testsessionname -p a
+@test "./tmex testsessionname -p a" {
+  run $dir/tmex testsessionname -p a
   assert_layout ""
   assert_success
 }
 
-@test "./tmux-run testsessionname -p a b" {
-  run $dir/tmux-run testsessionname -p a b
+@test "./tmex testsessionname -p a b" {
+  run $dir/tmex testsessionname -p a b
   assert_layout "
     split-window -h -p50 b
      select-pane -L
@@ -363,8 +363,8 @@ layout_123456_transposed="
   assert_success
 }
 
-@test "./tmux-run testsessionname -p a b c" {
-  run $dir/tmux-run testsessionname -p a b c
+@test "./tmex testsessionname -p a b c" {
+  run $dir/tmex testsessionname -p a b c
   assert_layout "
     split-window -h -p50 b
      select-pane -L
@@ -374,8 +374,8 @@ layout_123456_transposed="
   assert_success
 }
 
-@test "./tmux-run testsessionname -p a b c d" {
-  run $dir/tmux-run testsessionname -p a b c d
+@test "./tmex testsessionname -p a b c d" {
+  run $dir/tmex testsessionname -p a b c d
   assert_layout "
     split-window -h -p50 c
      select-pane -L
@@ -386,8 +386,8 @@ layout_123456_transposed="
   assert_success
 }
 
-@test "./tmux-run testsessionname -p a b c d e" {
-  run $dir/tmux-run testsessionname -p a b c d e
+@test "./tmex testsessionname -p a b c d e" {
+  run $dir/tmex testsessionname -p a b c d e
   assert_layout "
     split-window -h -p67 b
     split-window -h -p50 d
@@ -401,8 +401,8 @@ layout_123456_transposed="
   assert_success
 }
 
-@test "./tmux-run testsessionname -p a b c d e f" {
-  run $dir/tmux-run testsessionname -p a b c d e f
+@test "./tmex testsessionname -p a b c d e f" {
+  run $dir/tmex testsessionname -p a b c d e f
   assert_layout "
     split-window -h -p67 c
     split-window -h -p50 e
@@ -417,8 +417,8 @@ layout_123456_transposed="
   assert_success
 }
 
-@test "./tmux-run testsessionname -p a b c d e f g" {
-  run $dir/tmux-run testsessionname -p a b c d e f g
+@test "./tmex testsessionname -p a b c d e f g" {
+  run $dir/tmex testsessionname -p a b c d e f g
   assert_layout "
     split-window -h -p50 -d d
     split-window -h -p50 b
@@ -437,8 +437,8 @@ layout_123456_transposed="
   assert_success
 }
 
-@test "./tmux-run testsessionname -p a b c d e f g h" {
-  run $dir/tmux-run testsessionname -p a b c d e f g h
+@test "./tmex testsessionname -p a b c d e f g h" {
+  run $dir/tmex testsessionname -p a b c d e f g h
   assert_layout "
     split-window -h -p67 c
     split-window -h -p50 f
@@ -455,8 +455,8 @@ layout_123456_transposed="
   assert_success
 }
 
-@test "./tmux-run testsessionname -p a b c d e f g h i" {
-  run $dir/tmux-run testsessionname -p a b c d e f g h i
+@test "./tmex testsessionname -p a b c d e f g h i" {
+  run $dir/tmex testsessionname -p a b c d e f g h i
   assert_layout "
     split-window -h -p67 d
     split-window -h -p50 g
@@ -474,17 +474,17 @@ layout_123456_transposed="
   assert_success
 }
 
-@test "./tmux-run -p --npm a" {
+@test "./tmex -p --npm a" {
   npm_package_name="testpackagename"
-  run $dir/tmux-run -p --npm a
+  run $dir/tmex -p --npm a
   assert_output -p "new-session -s testpackagename \"npm run a\""
   assert_layout ""
   assert_success
 }
 
-@test "./tmux-run -p --npm a b" {
+@test "./tmex -p --npm a b" {
   npm_package_name="testpackagename"
-  run $dir/tmux-run -p --npm a b
+  run $dir/tmex -p --npm a b
   assert_output -p "new-session -s testpackagename \"npm run a\""
   assert_layout "
     split-window -h -p50 \"npm run b\"
@@ -494,9 +494,9 @@ layout_123456_transposed="
   assert_success
 }
 
-@test "./tmux-run -p --npm a b c" {
+@test "./tmex -p --npm a b c" {
   npm_package_name="testpackagename"
-  run $dir/tmux-run -p --npm a b c
+  run $dir/tmex -p --npm a b c
   assert_output -p "new-session -s testpackagename \"npm run a\""
   assert_layout "
     split-window -h -p50 \"npm run b\"
@@ -507,9 +507,9 @@ layout_123456_transposed="
   assert_success
 }
 
-@test "./tmux-run -p --npm a b c d" {
+@test "./tmex -p --npm a b c d" {
   npm_package_name="testpackagename"
-  run $dir/tmux-run -p --npm a b c d
+  run $dir/tmex -p --npm a b c d
   assert_output -p "new-session -s testpackagename"
   assert_output -p "new-session -s testpackagename \"npm run a\""
   assert_layout "
@@ -522,9 +522,9 @@ layout_123456_transposed="
   assert_success
 }
 
-@test "./tmux-run -p --npm a b c d e" {
+@test "./tmex -p --npm a b c d e" {
   npm_package_name="testpackagename"
-  run $dir/tmux-run -p --npm a b c d e
+  run $dir/tmex -p --npm a b c d e
   assert_output -p "new-session -s testpackagename \"npm run a\""
   assert_layout "
     split-window -h -p67 \"npm run b\"
@@ -539,9 +539,9 @@ layout_123456_transposed="
   assert_success
 }
 
-@test "./tmux-run -p --npm a b c d e f" {
+@test "./tmex -p --npm a b c d e f" {
   npm_package_name="testpackagename"
-  run $dir/tmux-run -p --npm a b c d e f
+  run $dir/tmex -p --npm a b c d e f
   assert_output -p "new-session -s testpackagename \"npm run a\""
   assert_layout "
     split-window -h -p67 \"npm run c\"
@@ -557,9 +557,9 @@ layout_123456_transposed="
   assert_success
 }
 
-@test "./tmux-run -p --npm a b c d e f g" {
+@test "./tmex -p --npm a b c d e f g" {
   npm_package_name="testpackagename"
-  run $dir/tmux-run -p --npm a b c d e f g
+  run $dir/tmex -p --npm a b c d e f g
   assert_output -p "new-session -s testpackagename \"npm run a\""
   assert_layout "
     split-window -h -p50 -d \"npm run d\"
@@ -579,9 +579,9 @@ layout_123456_transposed="
   assert_success
 }
 
-@test "./tmux-run -p --npm a b c d e f g h" {
+@test "./tmex -p --npm a b c d e f g h" {
   npm_package_name="testpackagename"
-  run $dir/tmux-run -p --npm a b c d e f g h
+  run $dir/tmex -p --npm a b c d e f g h
   assert_output -p "new-session -s testpackagename \"npm run a\""
   assert_layout "
     split-window -h -p67 \"npm run c\"
@@ -599,9 +599,9 @@ layout_123456_transposed="
   assert_success
 }
 
-@test "./tmux-run -p --npm a b c d e f g h i" {
+@test "./tmex -p --npm a b c d e f g h i" {
   npm_package_name="testpackagename"
-  run $dir/tmux-run -p --npm a b c d e f g h i
+  run $dir/tmex -p --npm a b c d e f g h i
   assert_output -p "new-session -s testpackagename \"npm run a\""
   assert_layout "
     split-window -h -p67 \"npm run d\"
@@ -620,9 +620,9 @@ layout_123456_transposed="
   assert_success
 }
 
-@test "./tmux-run -pn 1234 a b c d e f g h i j" {
+@test "./tmex -pn 1234 a b c d e f g h i j" {
   npm_package_name="testpackagename"
-  run $dir/tmux-run -pn 1234 a b c d e f g h i j
+  run $dir/tmex -pn 1234 a b c d e f g h i j
   assert_output -p "new-session -s testpackagename \"npm run a\""
   assert_layout "
     split-window -h -p50 -d \"npm run d\"
@@ -646,9 +646,9 @@ layout_123456_transposed="
   assert_success
 }
 
-@test "./tmux-run -pn 1[2{34}5]6 a b c d e f g h i j" {
+@test "./tmex -pn 1[2{34}5]6 a b c d e f g h i j" {
   npm_package_name="testpackagename"
-  run $dir/tmux-run -pn 1[2{34}5]6 a b c d e f g h i j
+  run $dir/tmex -pn 1[2{34}5]6 a b c d e f g h i j
   assert_output -p "new-session -s testpackagename \"npm run a\""
   assert_layout "
     split-window -h -p67 \"npm run b\"
@@ -676,12 +676,12 @@ layout_123456_transposed="
   assert_success
 }
 
-@test "./tmux-run -pn 1234 a b c d e f g h i j k" {
-  run $dir/tmux-run -pn 1234 a b c d e f g h i j k
+@test "./tmex -pn 1234 a b c d e f g h i j k" {
+  run $dir/tmex -pn 1234 a b c d e f g h i j k
   assert_output -p "Invalid input: --layout=1234 is too small for number of commands provided"
 }
 
-@test "./tmux-run -pn 1[2{34}5]6 a b c d e f g h i j k l m n o" {
-  run $dir/tmux-run -pn 1[2{34}5]6 a b c d e f g h i j k l m n o
+@test "./tmex -pn 1[2{34}5]6 a b c d e f g h i j k l m n o" {
+  run $dir/tmex -pn 1[2{34}5]6 a b c d e f g h i j k l m n o
   assert_output -p "Invalid input: --layout=1[2{34}5]6 is too small for number of commands provided"
 }
