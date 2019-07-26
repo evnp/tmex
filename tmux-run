@@ -94,16 +94,16 @@ function processargs () {
   fi
 
   # allow ommission of session name if --npm is set
+  if [[ -z "${argsession}" && "${argnpm}" == true ]]; then
+    argsession="${npm_package_name-}"  # default to avoid 'unbound local variable' issues
+  fi
+
   if [[ -z "${argsession}" ]]; then
-    if [[ "${argnpm}" == true ]]; then
-      argsession="${npm_package_name-}"  # default to avoid 'unbound local variable' issues
-    else
-      echo ""
-      echo "Invalid input: session name required unless --npm flag is set (in which case session will default to npm package name)"
-      echo ""
-      echo "${usage}"
-      exit 1
-    fi
+    echo ""
+    echo "Invalid input: session name required"
+    echo ""
+    echo "${usage}"
+    exit 1
   fi
 }
 
@@ -612,15 +612,13 @@ For more information, see https://github.com/evnp/tmux-run
     echo "${output}"
   else
     # either attach to an existing session or kill it based on specified behavior
-    if [[ "${argexists}" == "attach" ]]; then
-      # if session exists, re-attach
-      if tmux has-session -t "${argsession}" 2>/dev/null; then
+    if tmux has-session -t "${argsession}" 2>/dev/null; then
+      if [[ "${argreattach}" == true ]]; then
         tmux attach-session -t "${argsession}"
         exit 0
+      else
+        tmux kill-session -t "${argsession}"
       fi
-    elif [[ "${argexists}" == "replace" ]]; then
-      # ignore 'session does not exist' error
-      tmux kill-session -t "${argsession}" || true
     fi
 
     # execute constructed tmux command

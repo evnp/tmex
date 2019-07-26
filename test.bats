@@ -305,7 +305,7 @@ layout_123456="
   assert_success
 }
 
-layout_123456_ltr="
+layout_123456_transposed="
   split-window -v -p67
   split-window -v -p50
    select-pane -U
@@ -331,19 +331,19 @@ layout_123456_ltr="
 
 @test "./tmux-run testsessionname -pt 1[2{34}5]6" {
   run $dir/tmux-run testsessionname -pt 1[2{34}5]6
-  assert_layout "${layout_123456_ltr}"
+  assert_layout "${layout_123456_transposed}"
   assert_success
 }
 
 @test "./tmux-run testsessionname -p -l1[2{34}5]6 -t" {
   run $dir/tmux-run testsessionname -p -l1[2{34}5]6 -t
-  assert_layout "${layout_123456_ltr}"
+  assert_layout "${layout_123456_transposed}"
   assert_success
 }
 
 @test "./tmux-run testsessionname --print --layout=1[2{34}5]6 --transpose" {
   run $dir/tmux-run testsessionname --print --layout=1[2{34}5]6 --transpose
-  assert_layout "${layout_123456_ltr}"
+  assert_layout "${layout_123456_transposed}"
   assert_success
 }
 
@@ -477,7 +477,7 @@ layout_123456_ltr="
 @test "./tmux-run -p --npm a" {
   npm_package_name="testpackagename"
   run $dir/tmux-run -p --npm a
-  assert_output -p "new-session -s testpackagename"
+  assert_output -p "new-session -s testpackagename \"npm run a\""
   assert_layout ""
   assert_success
 }
@@ -485,7 +485,7 @@ layout_123456_ltr="
 @test "./tmux-run -p --npm a b" {
   npm_package_name="testpackagename"
   run $dir/tmux-run -p --npm a b
-  assert_output -p "new-session -s testpackagename"
+  assert_output -p "new-session -s testpackagename \"npm run a\""
   assert_layout "
     split-window -h -p50 \"npm run b\"
      select-pane -L
@@ -497,7 +497,7 @@ layout_123456_ltr="
 @test "./tmux-run -p --npm a b c" {
   npm_package_name="testpackagename"
   run $dir/tmux-run -p --npm a b c
-  assert_output -p "new-session -s testpackagename"
+  assert_output -p "new-session -s testpackagename \"npm run a\""
   assert_layout "
     split-window -h -p50 \"npm run b\"
      select-pane -L
@@ -511,6 +511,7 @@ layout_123456_ltr="
   npm_package_name="testpackagename"
   run $dir/tmux-run -p --npm a b c d
   assert_output -p "new-session -s testpackagename"
+  assert_output -p "new-session -s testpackagename \"npm run a\""
   assert_layout "
     split-window -h -p50 \"npm run c\"
      select-pane -L
@@ -524,7 +525,7 @@ layout_123456_ltr="
 @test "./tmux-run -p --npm a b c d e" {
   npm_package_name="testpackagename"
   run $dir/tmux-run -p --npm a b c d e
-  assert_output -p "new-session -s testpackagename"
+  assert_output -p "new-session -s testpackagename \"npm run a\""
   assert_layout "
     split-window -h -p67 \"npm run b\"
     split-window -h -p50 \"npm run d\"
@@ -541,7 +542,7 @@ layout_123456_ltr="
 @test "./tmux-run -p --npm a b c d e f" {
   npm_package_name="testpackagename"
   run $dir/tmux-run -p --npm a b c d e f
-  assert_output -p "new-session -s testpackagename"
+  assert_output -p "new-session -s testpackagename \"npm run a\""
   assert_layout "
     split-window -h -p67 \"npm run c\"
     split-window -h -p50 \"npm run e\"
@@ -559,7 +560,7 @@ layout_123456_ltr="
 @test "./tmux-run -p --npm a b c d e f g" {
   npm_package_name="testpackagename"
   run $dir/tmux-run -p --npm a b c d e f g
-  assert_output -p "new-session -s testpackagename"
+  assert_output -p "new-session -s testpackagename \"npm run a\""
   assert_layout "
     split-window -h -p50 -d \"npm run d\"
     split-window -h -p50 \"npm run b\"
@@ -581,7 +582,7 @@ layout_123456_ltr="
 @test "./tmux-run -p --npm a b c d e f g h" {
   npm_package_name="testpackagename"
   run $dir/tmux-run -p --npm a b c d e f g h
-  assert_output -p "new-session -s testpackagename"
+  assert_output -p "new-session -s testpackagename \"npm run a\""
   assert_layout "
     split-window -h -p67 \"npm run c\"
     split-window -h -p50 \"npm run f\"
@@ -601,7 +602,7 @@ layout_123456_ltr="
 @test "./tmux-run -p --npm a b c d e f g h i" {
   npm_package_name="testpackagename"
   run $dir/tmux-run -p --npm a b c d e f g h i
-  assert_output -p "new-session -s testpackagename"
+  assert_output -p "new-session -s testpackagename \"npm run a\""
   assert_layout "
     split-window -h -p67 \"npm run d\"
     split-window -h -p50 \"npm run g\"
@@ -617,4 +618,70 @@ layout_123456_ltr="
     split-window -v -p50 \"npm run i\"
   "
   assert_success
+}
+
+@test "./tmux-run -pn 1234 a b c d e f g h i j" {
+  npm_package_name="testpackagename"
+  run $dir/tmux-run -pn 1234 a b c d e f g h i j
+  assert_output -p "new-session -s testpackagename \"npm run a\""
+  assert_layout "
+    split-window -h -p50 -d \"npm run d\"
+    split-window -h -p50 \"npm run b\"
+    select-pane -R
+    split-window -h -p50 \"npm run g\"
+    select-pane -L
+    select-pane -L
+    select-pane -L
+    select-pane -R
+    split-window -v -p50 \"npm run c\"
+    select-pane -R
+    split-window -v -p67 \"npm run e\"
+    split-window -v -p50 \"npm run f\"
+    select-pane -R
+    split-window -v -p50 -d \"npm run i\"
+    split-window -v -p50 \"npm run h\"
+    select-pane -D
+    split-window -v -p50 \"npm run j\"
+  "
+  assert_success
+}
+
+@test "./tmux-run -pn 1[2{34}5]6 a b c d e f g h i j" {
+  npm_package_name="testpackagename"
+  run $dir/tmux-run -pn 1[2{34}5]6 a b c d e f g h i j
+  assert_output -p "new-session -s testpackagename \"npm run a\""
+  assert_layout "
+    split-window -h -p67 \"npm run b\"
+    split-window -h -p50 \"npm run i\"
+    select-pane -L
+    select-pane -L
+    select-pane -R
+    split-window -v -p50 \"npm run d\"
+    select-pane -U
+    split-window -h -p57 \"npm run c\"
+    select-pane -D
+    split-window -h -p80 \"npm run e\"
+    split-window -h -p50 -d \"npm run g\"
+    split-window -h -p50 \"npm run f\"
+    select-pane -R
+    split-window -h -p50 \"npm run h\"
+    select-pane -R
+    split-window -v -p50 -d
+    split-window -v -p67 \"npm run j\"
+    split-window -v -p50
+    select-pane -D
+    split-window -v -p67
+    split-window -v -p50
+  "
+  assert_success
+}
+
+@test "./tmux-run -pn 1234 a b c d e f g h i j k" {
+  run $dir/tmux-run -pn 1234 a b c d e f g h i j k
+  assert_output -p "Invalid input: --layout=1234 is too small for number of commands provided"
+}
+
+@test "./tmux-run -pn 1[2{34}5]6 a b c d e f g h i j k l m n o" {
+  run $dir/tmux-run -pn 1[2{34}5]6 a b c d e f g h i j k l m n o
+  assert_output -p "Invalid input: --layout=1[2{34}5]6 is too small for number of commands provided"
 }
