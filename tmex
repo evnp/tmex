@@ -96,6 +96,12 @@ function processargs () {
   # allow ommission of session name if --npm is set
   if [[ -z "${argsession}" && "${argnpm}" == true ]]; then
     argsession="${npm_package_name-}"  # default to avoid 'unbound local variable' issues
+
+    # if env var is undefined we're probably running manually instead of from an npm script;
+    # try and pull package name from npm env manually
+    if [[ -z "${argsession}" ]]; then
+      argsession="$( cut -d "=" -f 2 <<< "$( npm run env 2> /dev/null | grep "npm_package_name" )" )"
+    fi
   fi
 
   if [[ -z "${argsession}" ]]; then
@@ -575,7 +581,9 @@ For more information, see https://github.com/evnp/tmex
   # if npm option is set, prefix commands "npm run ..."
   if [[ -n "${argnpm}" ]]; then
     for (( idx = 0; idx < ${#argcmds[@]}; idx++ )); do
-      argcmds[idx]="npm run ${argcmds[idx]}"
+      if ! [[ "${argcmds[idx]}" =~ ^npm[[:space:]] ]]; then
+        argcmds[idx]="npm run ${argcmds[idx]}"
+      fi
     done
   fi
 
