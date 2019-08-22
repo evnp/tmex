@@ -18,7 +18,7 @@ function processargs () {
   # session name
   argsession="${args[argidx]-}"
 
-  if [[ "${argsession}" =~ ^(--(help|npm|print|reattach|transpose|version)|-[hnprtv]+)$ ]]; then
+  if [[ "${argsession}" =~ ^(--(help|npm|print|reattach|shellless|transpose|version)|-[hnprstv]+)$ ]]; then
     argsession=""
   else
     (( argidx++ )) || true
@@ -38,7 +38,7 @@ function processargs () {
       arglayout="${arglayout#-l}"
       arglayout="${arglayout#=}"
 
-    elif [[ "${arg}" =~ ^--(help|npm|print|reattach|transpose|version)$ ]]; then
+    elif [[ "${arg}" =~ ^--(help|npm|print|reattach|shellless|transpose|version)$ ]]; then
       (( argidx++ )) || true
       arg="${arg#--}"  # remove "--" prefix
       case "${arg}" in
@@ -46,10 +46,11 @@ function processargs () {
         "npm")       argnpm=true;;
         "print")     argprint=true;;
         "reattach")  argreattach=true;;
+        "shellless") argshellless=true;;
         "transpose") argtranspose=true;;
         "version")   argversion=true;;
       esac
-    elif [[ "${arg}" =~ ^-[hnprtv]+$ ]]; then
+    elif [[ "${arg}" =~ ^-[hnprstv]+$ ]]; then
       (( argidx++ )) || true
       arg="${arg#-}"  # remove "-" prefix
       for (( idx = 0; idx < ${#arg}; idx++ )); do
@@ -59,6 +60,7 @@ function processargs () {
           "n") argnpm=true;;
           "p") argprint=true;;
           "r") argreattach=true;;
+          "s") argshellless=true;;
           "t") argtranspose=true;;
           "v") argversion=true;;
         esac
@@ -128,7 +130,7 @@ function generatelayout () {
   # params:
   # $1 size [integer] size of layout
 
-  # modifies:
+  # modifies external:
   # ${arglayout}
 
   local size
@@ -235,7 +237,7 @@ function selectpane () {
   # $2 flags     [string]         pair of flags that will be used based on direction
   # $3 repeat    [integer]        repeat select-pane operation N times
 
-  # modifies:
+  # modifies external:
   # ${tmuxargs}
 
   local direction
@@ -269,11 +271,15 @@ function split1d () {
   # $3 sizing    [string]         relative sizing of panes
   # $@ cmds      [array<string>]  list of commands to be executed in resulting panes
 
-  # modifies:
+  # references external:
+  # ${argshellless}
+
+  # modifies external:
   # ${tmuxargs}
 
   local direction
   local numpanes
+  local sizing
   local cmds
 
   direction="$1"
@@ -328,7 +334,11 @@ function split1d () {
     tmuxargs+=( ";" "split-window" "-${direction}" "-p${percentage}" "-d" )
     cmd="${cmds[${half}]-}"
     if [[ -n "${cmd}" ]]; then
-      tmuxargs+=( "${cmd}" )
+      if [[ "${argshellless}" == true ]]; then
+        tmuxargs+=( "${cmd}" )
+      else
+        tmuxargs+=( ";" "send-keys" "${cmd}" "Enter" )
+      fi
     fi
 
     # keep splitting - 1st half of panes, then select pane at middle, then 2nd half
@@ -348,7 +358,11 @@ function split1d () {
     tmuxargs+=( ";" "split-window" "-${direction}" "-p${percentage}" )
     cmd="${cmds[1]-}"
     if [[ -n "${cmd}" ]]; then
-      tmuxargs+=( "${cmd}" )
+      if [[ "${argshellless}" == true ]]; then
+        tmuxargs+=( "${cmd}" )
+      else
+        tmuxargs+=( ";" "send-keys" "${cmd}" "Enter" )
+      fi
     fi
 
     # if more than 2 panes, keep splitting
@@ -368,7 +382,7 @@ function split2d () {
   # $3 sizing    [string]         relative sizing of panes
   # $@ cmds      [array<string>]  list of commands to be executed in resulting panes
 
-  # modifies:
+  # modifies external:
   # ${tmuxargs}
 
   local direction
@@ -505,6 +519,7 @@ function main () {
   local argnpm
   local argprint
   local argreattach
+  local argshellless
   local argtranspose
   local arglayout
   local argcmds
@@ -526,11 +541,12 @@ function main () {
   usage='Usage: tmex <session-name>         - session name required unless --npm set; all other args optional
   [-h|--help]
   [-v|--version]
-  [-n|--npm]                       -n, --npm         if set, prefix each command with "npm run" for package.json scripts
-  [-t|--transpose]                 -t, --transpose   build layout in left-to-right orientation instead of top-to-bottom
-  [-r|--reattach]                  -r, --reattach    if tmux session already exists, re-attach to it instead of replacing it
-  [-p|--print]                     -p, --print       emit command as string of tmux args instead of invoking tmux directly
   [[-l|--layout] <1-9,[,],{,}>]    -l, --layout      layout string, each digit represents number of panes in column
+  [-t|--transpose]                 -t, --transpose   build layout in left-to-right orientation instead of top-to-bottom
+  [-n|--npm]                       -n, --npm         if set, prefix each command with "npm run" for package.json scripts
+  [-p|--print]                     -p, --print       emit command as string of tmux args instead of invoking tmux directly
+  [-r|--reattach]                  -r, --reattach    if tmux session already exists, re-attach to it instead of replacing it
+  [-s|--shellless]                 -s, --shellless   if set, invoke commands directly with tmux instead of running inside shell
   ["shell command 1"]
   ["shell command 2"]              - shell commands that will be executed in each pane
   ...                               number of shell commands N must not exceed sum of layout
@@ -569,6 +585,7 @@ For more information, see https://github.com/evnp/tmex
   argreattach=""  # optional - if set, re-attach to existing tmux session isntead of replacing it
   argtranspose="" # optional - if set, layout in left-to-right instead of top-to-bottom orientation
   arglayout=""    # optional - string of digits defining a custom layout
+  argshellless="" # optional - if set, execute commands standalone instead of in a shell
   argcmds=""      # optional - list of commands to be executed in resulting panes
 
   # tmux command that will be constructed and executed:
@@ -591,7 +608,11 @@ For more information, see https://github.com/evnp/tmex
   tmuxargs+=( "new-session" "-s" "${argsession}" )
   cmd="${argcmds[0]-}"
   if [[ -n "${cmd}" ]]; then
-    tmuxargs+=( "${cmd}" )
+    if [[ "${argshellless}" == true ]]; then
+      tmuxargs+=( "${cmd}" )
+    else
+      tmuxargs+=( ";" "send-keys" "${cmd}" "Enter" )
+    fi
   fi
 
   # if layout is not specified, generate a default
@@ -606,8 +627,11 @@ For more information, see https://github.com/evnp/tmex
   [[ "${argtranspose}" ]] && flag="v" || flag="h"
   split2d "${flag}" "${arglayout}" "" "${argcmds[@]-}"
 
+  # if running shell-less, command exit will kill tmux pane which makes troubleshooting hard
   # set remain-on-exit on - more of a sane default since user will see when a command failed
-  tmuxargs+=( ";" "set-window-option" "remain-on-exit" "on" ";" )
+  if [[ "${argshellless}" == true ]]; then
+    tmuxargs+=( ";" "set-window-option" "remain-on-exit" "on" ";" )
+  fi
 
   if [[ "${argprint}" == true ]]; then
     output=""
