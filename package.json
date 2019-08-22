@@ -4,7 +4,8 @@
   "description": "tmux wrapper for simpler package.json scripts",
   "main": "tmex",
   "scripts": {
-    "test": "bats test.bats",
+    "lint": "shellcheck tmex",
+    "test": "npm run lint && bats test.bats",
     "testn": "clear && npm run test | bats-notify",
     "testw": "npm run test && fswatch -0 -o -r . | xargs -0 -n1 npm run test",
     "testnw": "npm run testn && fswatch -0 -o -r . | xargs -0 -n1 npm run testn"
@@ -22,7 +23,8 @@
   "devDependencies": {
     "bats": "1.1.0",
     "bats-assert": "2.0.0",
+    "bats-notify": "1.0.0",
     "bats-support": "0.3.0",
-    "bats-notify": "1.0.0"
+    "shellcheck": "^0.3.0"
   }
 }

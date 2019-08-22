@@ -1,6 +1,7 @@
 tmex
 ========
 [![build status](https://img.shields.io/travis/evnp/tmex/master.svg)](https://travis-ci.org/evnp/tmex)
+[![code style](https://img.shields.io/badge/code_style-shellcheck-0cc)](https://github.com/koalaman/shellcheck)
 [![latest release](https://img.shields.io/github/release/evnp/tmex.svg)](https://github.com/evnp/tmex/releases/latest)
 [![npm package](https://img.shields.io/npm/v/tmex.svg)](https://www.npmjs.com/package/tmex)
 [![license](https://img.shields.io/github/license/evnp/tmex.svg)](https://github.com/evnp/tmex/blob/master/LICENSE.md)
@@ -132,16 +133,16 @@ session : special-project
 
 Full options list (also accessible via `tmex --help`):
 ```
-tmex <session-name> \             - session name required unless --npm set; all other args optional
+tmex <session-name>                - session name required unless --npm set; all other args optional
   [-h|--help]
-  [-v|--version] \
-  [-n|--npm] \                    -n, --npm         if set, prefix each command with "npm run" for package.json scripts
-  [-t|--transpose] \              -t, --transpose   build layout in left-to-right orientation instead of top-to-bottom
-  [-r|--reattach] \               -r, --reattach    if tmux session already exists, re-attach to it instead of replacing it
-  [-p|--print] \                  -p, --print       emit command as string of tmux args instead of invoking tmux directly
-  [[-l|--layout] <1-9,[,],{,}>] \ -l, --layout      layout string, each digit represents number of panes in column
-  ["shell command 1"] \
-  ["shell command 2"] \           - shell commands that will be executed in each pane
+  [-v|--version]
+  [-n|--npm]                       -n, --npm         if set, prefix each command with "npm run" for package.json scripts
+  [-t|--transpose]                 -t, --transpose   build layout in left-to-right orientation instead of top-to-bottom
+  [-r|--reattach]                  -r, --reattach    if tmux session already exists, re-attach to it instead of replacing it
+  [-p|--print]                     -p, --print       emit command as string of tmux args instead of invoking tmux directly
+  [[-l|--layout] <1-9,[,],{,}>]    -l, --layout      layout string, each digit represents number of panes in column
+  ["shell command 1"]
+  ["shell command 2"]              - shell commands that will be executed in each pane
   ...                               number of shell commands N must not exceed sum of layout
   ["shell command N"]
 ```
