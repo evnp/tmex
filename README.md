@@ -8,6 +8,8 @@ tmex
 
 A minimalist tmux layout manager - one shell script, zero dependencies.
 
+![tmex demo](https://github.com/evnp/tmex/blob/master/tmex.gif?raw=true)
+
 Manage all your services in one view, without extra configuration files, yaml, etc. Take the `start` script below:
 ```diff
 package.json
