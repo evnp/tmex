@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# tmex 1.0.2
+# tmex 1.0.3
 
 # sanity - exit on any error; no unbound variables
 set -euo pipefail
@@ -18,7 +18,7 @@ function processargs () {
   # session name
   argsession="${args[argidx]-}"
 
-  if [[ "${argsession}" =~ ^(--(help|npm|print|reattach|shellless|transpose|version)|-[hnprstv]+)$ ]]; then
+  if [[ "${argsession}" =~ ^(--(detached|help|npm|print|reattach|shellless|transpose|version)|-[dhnprstv]+)$ ]]; then
     argsession=""
   else
     (( argidx++ )) || true
@@ -38,10 +38,11 @@ function processargs () {
       arglayout="${arglayout#-l}"
       arglayout="${arglayout#=}"
 
-    elif [[ "${arg}" =~ ^--(help|npm|print|reattach|shellless|transpose|version)$ ]]; then
+    elif [[ "${arg}" =~ ^--(detached|help|npm|print|reattach|shellless|transpose|version)$ ]]; then
       (( argidx++ )) || true
       arg="${arg#--}"  # remove "--" prefix
       case "${arg}" in
+        "detached")  argdetached=true;;
         "help")      arghelp=true;;
         "npm")       argnpm=true;;
         "print")     argprint=true;;
@@ -50,12 +51,13 @@ function processargs () {
         "transpose") argtranspose=true;;
         "version")   argversion=true;;
       esac
-    elif [[ "${arg}" =~ ^-[hnprstv]+$ ]]; then
+    elif [[ "${arg}" =~ ^-[dhnprstv]+$ ]]; then
       (( argidx++ )) || true
       arg="${arg#-}"  # remove "-" prefix
       for (( idx = 0; idx < ${#arg}; idx++ )); do
         char="${arg:idx:1}"
         case "${char}" in
+          "d") argdetached=true;;
           "h") arghelp=true;;
           "n") argnpm=true;;
           "p") argprint=true;;
@@ -518,6 +520,7 @@ function main () {
   local argversion
   local argnpm
   local argprint
+  local argdetached
   local argreattach
   local argshellless
   local argtranspose
@@ -545,6 +548,7 @@ function main () {
   [-t|--transpose]                 -t, --transpose   build layout in left-to-right orientation instead of top-to-bottom
   [-n|--npm]                       -n, --npm         if set, prefix each command with "npm run" for package.json scripts
   [-p|--print]                     -p, --print       emit command as string of tmux args instead of invoking tmux directly
+  [-d|--detached]                  -d, --detached    invoke tmux with -d (detached session); useful for piping data to tmex
   [-r|--reattach]                  -r, --reattach    if tmux session already exists, re-attach to it instead of replacing it
   [-s|--shellless]                 -s, --shellless   if set, invoke commands directly with tmux instead of running inside shell
   ["shell command 1"]
@@ -569,9 +573,10 @@ function main () {
     $ tmex -n build test
     > tmux new-session -s mypackagename "npm run build" ; split-window -h "npm run test"
 
--p, --print
-  To pass additional commands to tmux, invoke tmex with -p to emit tmux args instead of invoking tmux directly, e.g.
-    $ tmux $( tmex -np build test ) set-window-option remain-on-exit off \; set-window-option mode-keys vi
+-d, --detached
+  Invoke tmux with -d flag, starting session in "detached" mode. Useful for building a dynamic list of commands and piping to tmux
+  via xargs; tmux will not have a valid psuedo-tty and will error unless -d is set. Outputs session name for attachment, e.g:
+    $ tmux attach-session -t "$( echo "a b c" | xargs tmex -nd --layout 21 )"
 
 For more information, see https://github.com/evnp/tmex
 '
@@ -582,6 +587,7 @@ For more information, see https://github.com/evnp/tmex
   argversion=""   # optional - if set, display version and exit
   argnpm=""       # optional - if set, prefix each command with "npm run" for package.json scripts
   argprint=""     # optional - if set, print final tmux command to console instead of executing it
+  argdetached=""  # optional - if set, invoke tmux with -d flag (detached session)
   argreattach=""  # optional - if set, re-attach to existing tmux session isntead of replacing it
   argtranspose="" # optional - if set, layout in left-to-right instead of top-to-bottom orientation
   arglayout=""    # optional - string of digits defining a custom layout
@@ -606,6 +612,11 @@ For more information, see https://github.com/evnp/tmex
 
   # begin to construct tmux arguments
   tmuxargs+=( "new-session" "-s" "${argsession}" )
+
+  if [[ "${argdetached}" == true ]]; then
+    tmuxargs+=( "-d" )
+  fi
+
   cmd="${argcmds[0]-}"
   if [[ -n "${cmd}" ]]; then
     if [[ "${argshellless}" == true ]]; then
@@ -656,6 +667,9 @@ For more information, see https://github.com/evnp/tmex
 
     # execute constructed tmux command
     tmux "${tmuxargs[@]}"
+
+    # ouput session name for later attachment, setting options, etc.
+    echo "${argsession}"
   fi
 }
 
