@@ -1,7 +1,13 @@
-tmex
-========
+```                                             
+ ______   __    __    ______    __  __    
+/\__  _\ /\ \  |\ \  /\  ___\  /\_\_\_\   
+\/_/\ \/ \ \ \ | \ \ \ \  ___\ \/_/\_\/_  
+   \ \_\  \ \_\ \ \_\ \ \_____\  /\_\/\_\ 
+    \/_/   \/_/  \/_/  \/_____/  \/_/\/_/  tmux execute
+```
+
 [![build status](https://img.shields.io/travis/evnp/tmex/master.svg)](https://travis-ci.org/evnp/tmex)
-[![code style](https://img.shields.io/badge/code_style-shellcheck-0cc)](https://github.com/koalaman/shellcheck)
+[![code quality](https://img.shields.io/badge/code_quality-shellcheck-0cc)](https://github.com/koalaman/shellcheck)
 [![latest release](https://img.shields.io/github/release/evnp/tmex.svg)](https://github.com/evnp/tmex/releases/latest)
 [![npm package](https://img.shields.io/npm/v/tmex.svg)](https://www.npmjs.com/package/tmex)
 [![license](https://img.shields.io/github/license/evnp/tmex.svg)](https://github.com/evnp/tmex/blob/master/LICENSE.md)
@@ -10,7 +16,7 @@ A minimalist tmux layout manager - one shell script, zero dependencies.
 
 ![tmex demo](https://github.com/evnp/tmex/blob/master/tmex.gif?raw=true)
 
-Manage all your services in one view, without extra configuration files, yaml, etc. Take the `start` script below:
+Manage all your services in one view, without extra configuration files, yaml, etc. Consider the `start` script below:
 ```diff
 package.json
 {
@@ -21,7 +27,7 @@ package.json
     "server": "python -m http.server",
     "typecheck" "tsc --watch --noEmit",
 -   "start": "tmux new-session -s $npm_package_name 'npm run watch' \\; split-window 'npm run server' \\; split-window 'npm run typecheck'"
-+   "start": "tmex -n watch server typecheck"
++   "start": ✨"tmex -n watch server typecheck"✨
   }
   ...
 }
@@ -61,7 +67,7 @@ npm install -g tmex
 or sans-npm:
 ```
 curl -o ~/bin/tmex https://raw.githubusercontent.com/evnp/tmex/master/tmex && chmod +x ~/bin/tmex
-# or /usr/local/bin or other bin of your choice
+# or /usr/local/bin or other bin of your choice (as long it's in your $PATH)
 ```
 [tmex](https://raw.githubusercontent.com/evnp/tmex/master/tmex) has no external dependencies, but always read code before downloading to ensure it contains nothing unexpected.
 
@@ -119,7 +125,7 @@ Shorthand
 ```
 tmex <sessionname> 1224 "cmd a" "cmd b" "cmd c" etc...
 ```
-Tailor-made for simplifying package.json scripts in npm modules via `--npm|-n` flag. Session name defaults to `$npm_package_name` if `--npm` option is set. This will expand to match the `name` field set in `package.json`.
+Tailor-made for simplifying `package.json` scripts in npm modules via `--npm|-n` flag. Session name defaults to `$npm_package_name` if `--npm` option is set. This will expand to match the `name` field set in `package.json`.
 ```
 tmex -n watch server typecheck
 >>>

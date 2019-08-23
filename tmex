@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# tmex 1.0.1
+# tmex 1.0.2
 
 # sanity - exit on any error; no unbound variables
 set -euo pipefail
