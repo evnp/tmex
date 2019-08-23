@@ -6,11 +6,11 @@
     \/_/   \/_/  \/_/  \/_____/  \/_/\/_/  tmux execute
 ```
 
-[![build status](https://img.shields.io/travis/evnp/tmex/master.svg)](https://travis-ci.org/evnp/tmex)
-[![code quality](https://img.shields.io/badge/code_quality-shellcheck-0cc)](https://github.com/koalaman/shellcheck)
-[![latest release](https://img.shields.io/github/release/evnp/tmex.svg)](https://github.com/evnp/tmex/releases/latest)
-[![npm package](https://img.shields.io/npm/v/tmex.svg)](https://www.npmjs.com/package/tmex)
-[![license](https://img.shields.io/github/license/evnp/tmex.svg)](https://github.com/evnp/tmex/blob/master/LICENSE.md)
+[![build status](https://img.shields.io/travis/evnp/tmex/master.svg?style=flat-square)](https://travis-ci.org/evnp/tmex)
+[![code quality](https://img.shields.io/badge/code_quality-shellcheck-0cc?style=flat-square)](https://github.com/koalaman/shellcheck)
+[![latest release](https://img.shields.io/github/release/evnp/tmex.svg?style=flat-square)](https://github.com/evnp/tmex/releases/latest)
+[![npm package](https://img.shields.io/npm/v/tmex.svg?style=flat-square)](https://www.npmjs.com/package/tmex)
+[![license](https://img.shields.io/github/license/evnp/tmex.svg?style=flat-square)](https://github.com/evnp/tmex/blob/master/LICENSE.md)
 
 A minimalist tmux layout manager - one shell script, zero dependencies.
 
