@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# tmex 1.0.3
+# tmex 1.0.4
 
 # sanity - exit on any error; no unbound variables
 set -euo pipefail
@@ -541,7 +541,13 @@ function main () {
 
   version="$( head -n 3 < "$0" | tail -1 )"
   version="${version#\# }"  # remove "# " prefix
-  usage='Usage: tmex <session-name>         - session name required unless --npm set; all other args optional
+  usage='Usage:
+
+tmex <session-name> -nt 1224 "cmd a" "cmd b" "cmd c" ... etc.
+                     |     |              |
+           options --+     +-- layout     +-- shell commands
+
+tmex <session-name>                - session name required unless --npm set; all other args optional
   [-h|--help]
   [-v|--version]
   [[-l|--layout] <1-9,[,],{,}>]    -l, --layout      layout string, each digit represents number of panes in column

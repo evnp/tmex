@@ -12,11 +12,12 @@
 [![npm package](https://img.shields.io/npm/v/tmex.svg?style=flat-square)](https://www.npmjs.com/package/tmex)
 [![license](https://img.shields.io/github/license/evnp/tmex.svg?style=flat-square)](https://github.com/evnp/tmex/blob/master/LICENSE.md)
 
-A minimalist tmux layout manager - one shell script, zero dependencies.
+A minimalist tmux layout manager - one shell script, zero dependencies. Manage all your services in one view, without extra configuration files, yaml, etc.
 
 ![tmex demo](https://github.com/evnp/tmex/blob/master/tmex.gif?raw=true)
 
-Manage all your services in one view, without extra configuration files, yaml, etc. Consider the `start` script below:
+Tailor-made for simplifying `package.json` scripts (though tmex works just as well with any arbitrary commands).
+Consider the `start` script below:
 ```diff
 package.json
 {
@@ -74,8 +75,8 @@ Custom layouts
 Layouts are fully customizable via arg listing number of panes in each column:
 ```
 tmex <sessionname> --layout=1224
->>>                             |
-   1-----2-----2-----4----------+
+>>>                         |
+   1-----2-----2-----4------+
 +-----+-----+-----+-----+
 |     |     |     |  f  |
 |     |  b  |  d  +-----+
@@ -89,10 +90,10 @@ tmex <sessionname> --layout=1224
 
 Transpose layout left-to-right instead of top-to-bottom:
 ```
-tmex <sessionname> --layout=1224 --transpose
->>>                             |
-+-----------------------+       |
-|           a           | 1-----+
+tmex <sessionname> --transpose --layout=1224
+>>>                                     |
++-----------------------+               |
+|           a           | 1-------------+
 +-----------+-----------+ |
 |     b     |     c     | 2
 +-----------+-----------+ |
@@ -104,27 +105,32 @@ tmex <sessionname> --layout=1224 --transpose
 
 Layouts may be arbitrarily complex via sublayouts [xyz] and custom sizing {xyz}:
 ```
-tmex <sessionname> --layout=1[2{13}1]5{41111}
->>>                                 |      |
-         +--------------------------+      |
-+-----+--|--------+-----+                  |
-|     |  |        |     |                  |
-|     | 1|3       |     | 4----------------+
+tmex <sessionname> --layout=1[2{13}1]4{4112}
+>>>                             |      |
+         +----------------------+      |
++-----+--|--------+-----+              |
+|     |  |        |     |              |
+|     | 1|3       |     | 4------------+
 |     |  |        |     | |
 |     +--+--------+-----+ 1
 |     |           +-----+ 1
-|     |           +-----+ 1
-|     |           +-----+ 1
+|     |           +-----+ |
+|     |           |     | 2
 +-----+-----------+-----+
 ```
 
-Shorthand
----------
+Shorthand:
 ```
 tmex <sessionname> 1224 "cmd a" "cmd b" "cmd c" etc...
 ```
-Tailor-made for simplifying `package.json` scripts in npm modules via `--npm|-n` flag. Session name defaults to `$npm_package_name` if `--npm` option is set. This will expand to match the `name` field set in `package.json`.
+
+NPM packages
+===
+Simplify `package.json` scripts via `--npm|-n` flag. Commands will be prefixed with `npm run` (if necessary) and session name will default to `$npm_package_name`. This will expand to match the `name` field set in `package.json`.
 ```
+cat package.json | grep name
+>>> special-project
+
 tmex -n watch server typecheck
 >>>
 +-----------+-----------+
@@ -155,7 +161,7 @@ Usage: tmex <session-name>         - session name required unless --npm set; all
   ["shell command N"]
 ```
 
-Running Tests
+Running tests
 -------------
 Run once:
 ```
