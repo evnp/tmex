@@ -12,7 +12,9 @@
 [![npm package](https://img.shields.io/npm/v/tmex.svg?style=flat-square)](https://www.npmjs.com/package/tmex)
 [![license](https://img.shields.io/github/license/evnp/tmex.svg?style=flat-square)](https://github.com/evnp/tmex/blob/master/LICENSE.md)
 
-A minimalist tmux layout manager - one shell script, zero dependencies. Manage all your services in one view, without extra configuration files, yaml, etc.
+A minimalist tmux layout manager - one shell script, zero dependencies.
+
+Manage all your services in one view, without extra configuration files, yaml, etc. plus an intuitive, flexible layout system.
 
 ![tmex demo](https://github.com/evnp/tmex/blob/master/tmex.gif?raw=true)
 
@@ -70,6 +72,35 @@ curl -o ~/bin/tmex https://raw.githubusercontent.com/evnp/tmex/master/tmex && ch
 ```
 [tmex](https://raw.githubusercontent.com/evnp/tmex/master/tmex) has no external dependencies, but always read code before downloading to ensure it contains nothing unexpected.
 
+Usage
+-----
+```
+tmex <session-name> "cmd a" "cmd b" "cmd c" ... etc.
+```
+With options and custom layout provided:
+```
+tmex <session-name> -nt 1224 "cmd a" "cmd b" "cmd c" ... etc.
+                     |     |              |
+           options --+     +-- layout     +-- shell commands
+```
+Full options list (also accessible via `tmex -h`):
+```
+tmex <session-name>                - session name required unless --npm set; all other args optional
+  [-h|--help]
+  [-v|--version]
+  [[-l|--layout] <1-9,[,],{,}>]    -l, --layout      layout string, each digit represents number of panes in column
+  [-t|--transpose]                 -t, --transpose   build layout in left-to-right orientation instead of top-to-bottom
+  [-n|--npm]                       -n, --npm         if set, prefix each command with "npm run" for package.json scripts
+  [-p|--print]                     -p, --print       emit command as string of tmux args instead of invoking tmux directly
+  [-d|--detached]                  -d, --detached    invoke tmux with -d (detached session); useful for piping data to tmex
+  [-r|--reattach]                  -r, --reattach    if tmux session already exists, re-attach to it instead of replacing it
+  [-s|--shellless]                 -s, --shellless   if set, invoke commands directly with tmux instead of running inside shell
+  ["shell command 1"]
+  ["shell command 2"]              - shell commands that will be executed in each pane
+  ...                                number of shell commands N must not exceed sum of layout
+  ["shell command N"]
+```
+
 Custom layouts
 --------------
 Layouts are fully customizable via arg listing number of panes in each column:
@@ -119,13 +150,8 @@ tmex <sessionname> --layout=1[2{13}1]4{4112}
 +-----+-----------+-----+
 ```
 
-Shorthand:
-```
-tmex <sessionname> 1224 "cmd a" "cmd b" "cmd c" etc...
-```
-
-NPM packages
-===
+npm packages
+------------
 Simplify `package.json` scripts via `--npm|-n` flag. Commands will be prefixed with `npm run` (if necessary) and session name will default to `$npm_package_name`. This will expand to match the `name` field set in `package.json`.
 ```
 cat package.json | grep name
@@ -141,24 +167,6 @@ tmex -n watch server typecheck
 |           | typecheck |
 +-----------+-----------+
 session : special-project
-```
-
-Full options list (also accessible via `tmex --help`):
-```
-Usage: tmex <session-name>         - session name required unless --npm set; all other args optional
-  [-h|--help]
-  [-v|--version]
-  [[-l|--layout] <1-9,[,],{,}>]    -l, --layout      layout string, each digit represents number of panes in column
-  [-t|--transpose]                 -t, --transpose   build layout in left-to-right orientation instead of top-to-bottom
-  [-n|--npm]                       -n, --npm         if set, prefix each command with "npm run" for package.json scripts
-  [-p|--print]                     -p, --print       emit command as string of tmux args instead of invoking tmux directly
-  [-d|--detached]                  -d, --detached    invoke tmux with -d (detached session); useful for piping data to tmex
-  [-r|--reattach]                  -r, --reattach    if tmux session already exists, re-attach to it instead of replacing it
-  [-s|--shellless]                 -s, --shellless   if set, invoke commands directly with tmux instead of running inside shell
-  ["shell command 1"]
-  ["shell command 2"]              - shell commands that will be executed in each pane
-  ...                                number of shell commands N must not exceed sum of layout
-  ["shell command N"]
 ```
 
 Running tests
