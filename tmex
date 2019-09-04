@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# tmex 1.0.4
+# tmex 1.0.5
 
 # sanity - exit on any error; no unbound variables
 set -euo pipefail
@@ -156,7 +156,7 @@ function generatelayout () {
 }
 
 function validatelayout () {
-  # ensure layout is large enough to contain specified size
+  # ensure layout is valid and large enough to contain specified size
 
   # params:
   # $1 minsize [integer] minimum size of layout
@@ -232,7 +232,7 @@ function validatelayout () {
 }
 
 function selectpane () {
-  # construct a set of tmux select-pane commands according to params
+  # construct tmux select-pane args according to params
 
   # params:
   # $1 direction [string "v"|"h"] direction to split pane (vertical or horizontal)
@@ -263,8 +263,37 @@ function selectpane () {
   done
 }
 
+function executecmd () {
+  # construct tmux args to execute a given command
+
+  # params:
+  # $1 cmd [string] shell command that will be executed
+
+  # references external:
+  # ${argshellless}
+
+  # modifies external:
+  # ${tmuxargs}
+
+  local cmd
+
+  cmd="$1"
+  shift
+
+  if [[ -n "${cmd}" ]]; then
+    # if running in "shell-less" mode, execute command directly;
+    # otherwise use send-keys to execute command within default shell
+    if [[ "${argshellless}" == true ]]; then
+      tmuxargs+=( "${cmd}" )
+    else
+      tmuxargs+=( ";" "send-keys" "${cmd}" "Enter" )
+    fi
+  fi
+
+}
+
 function split1d () {
-  # construct a set of tmux split-window and select-pane commands that will split
+  # construct tmux split-window and select-pane args that will split
   # the current pane into `numpanes` equally-sized separate panes
 
   # params:
@@ -334,14 +363,7 @@ function split1d () {
 
     # split pane down the middle (adjusted according to size array)
     tmuxargs+=( ";" "split-window" "-${direction}" "-p${percentage}" "-d" )
-    cmd="${cmds[${half}]-}"
-    if [[ -n "${cmd}" ]]; then
-      if [[ "${argshellless}" == true ]]; then
-        tmuxargs+=( "${cmd}" )
-      else
-        tmuxargs+=( ";" "send-keys" "${cmd}" "Enter" )
-      fi
-    fi
+    executecmd "${cmds[${half}]-}"
 
     # keep splitting - 1st half of panes, then select pane at middle, then 2nd half
     split1d "${direction}" "${half}" "${sizing:0:half}" "${cmds[@]:0:half}"
@@ -358,14 +380,7 @@ function split1d () {
 
     # split off first pane (adjusted according to size array)
     tmuxargs+=( ";" "split-window" "-${direction}" "-p${percentage}" )
-    cmd="${cmds[1]-}"
-    if [[ -n "${cmd}" ]]; then
-      if [[ "${argshellless}" == true ]]; then
-        tmuxargs+=( "${cmd}" )
-      else
-        tmuxargs+=( ";" "send-keys" "${cmd}" "Enter" )
-      fi
-    fi
+    executecmd "${cmds[1]-}"
 
     # if more than 2 panes, keep splitting
     if (( numpanes > 2 && numpanes % 2 > 0 )); then
@@ -532,7 +547,6 @@ function main () {
   local cmd
   local idx
   local flag
-  local numcmds
   local output
 
   local version
@@ -600,12 +614,7 @@ For more information, see https://github.com/evnp/tmex
   argshellless="" # optional - if set, execute commands standalone instead of in a shell
   argcmds=""      # optional - list of commands to be executed in resulting panes
 
-  # tmux command that will be constructed and executed:
-  tmuxargs=()
-
   processargs "$@"
-
-  numcmds="${#argcmds[@]}"
 
   # if npm option is set, prefix commands "npm run ..."
   if [[ -n "${argnpm}" ]]; then
@@ -617,28 +626,38 @@ For more information, see https://github.com/evnp/tmex
   fi
 
   # begin to construct tmux arguments
-  tmuxargs+=( "new-session" "-s" "${argsession}" )
+  tmuxargs=()
 
-  if [[ "${argdetached}" == true ]]; then
-    tmuxargs+=( "-d" )
-  fi
-
-  cmd="${argcmds[0]-}"
-  if [[ -n "${cmd}" ]]; then
+  # if we're already in a tmux pane, further split the pane rather than nesting tmux sessions
+  paneid="${TMUX_PANE-}"
+  if [[ -n "${paneid}" ]]; then
+    # ensure we're not in "shell-less" mode; this would fail to run the 1st command in the 1st
+    # pane since the pane would die after executing the nested tmex command
     if [[ "${argshellless}" == true ]]; then
-      tmuxargs+=( "${cmd}" )
-    else
-      tmuxargs+=( ";" "send-keys" "${cmd}" "Enter" )
+      echo "Error: --shellless mode cannot be used when nesting tmex commands"
+      exit 1
+    fi
+    tmuxargs+=( "select-window" "-t" "${paneid}" ";" "select-pane" "-t" "${paneid}" )
+
+  # otherwise start a new session
+  else
+    tmuxargs+=( "new-session" "-s" "${argsession}" )
+
+    # if running in "detached" mode, add -d flag
+    if [[ "${argdetached}" == true ]]; then
+      tmuxargs+=( "-d" )
     fi
   fi
 
+  executecmd "${argcmds[0]-}"
+
   # if layout is not specified, generate a default
   if [[ -z "${arglayout}" ]]; then
-    generatelayout "${numcmds}"
+    generatelayout "${#argcmds[@]}"
   fi
 
   # ensure layout is large enough to contain commands provided
-  validatelayout "${numcmds}"
+  validatelayout "${#argcmds[@]}"
 
   # append layout commands onto tmuxargs
   [[ "${argtranspose}" ]] && flag="v" || flag="h"

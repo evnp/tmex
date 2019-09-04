@@ -56,28 +56,28 @@ dir=$BATS_TEST_DIRNAME
 }
 
 @test "./tmex --print --npm" {
-  npm_package_name="testpackagename"
+  export npm_package_name="testpackagename"
   run $dir/tmex --print --npm
   assert_output -p "new-session -s testpackagename"
   assert_success
 }
 
 @test "./tmex -pn" {
-  npm_package_name="testpackagename"
+  export npm_package_name="testpackagename"
   run $dir/tmex -pn
   assert_output -p "new-session -s testpackagename"
   assert_success
 }
 
 @test "./tmex testsessionname --print --npm" {
-  npm_package_name="testpackagename"
+  export npm_package_name="testpackagename"
   run $dir/tmex testsessionname --print --npm
   assert_output -p "new-session -s testsessionname"
   assert_success
 }
 
 @test "./tmex testsessionname -pn" {
-  npm_package_name="testpackagename"
+  export npm_package_name="testpackagename"
   run $dir/tmex testsessionname -pn
   assert_output -p "new-session -s testsessionname"
   assert_success
@@ -93,7 +93,7 @@ function print_layout () {
     command="${command%"${command##*[![:space:]]}"}"  # remove trailing whitespace
     command=$( echo "${command}" | tr -s " " )  # replace multiple space with single
 
-    if [[ "${command}" =~ ^(split-window|select-pane) ]]; then
+    if [[ "${command}" =~ ^(split-window|select-pane|send-keys) ]]; then
       expected+="${command}
 "
     fi
@@ -477,7 +477,7 @@ layout_123456_transposed="
 }
 
 @test "./tmex -p --npm a" {
-  npm_package_name="testpackagename"
+  export npm_package_name="testpackagename"
   run $dir/tmex -p --npm a
   assert_output -p "new-session -s testpackagename"
   assert_layout "
@@ -487,7 +487,7 @@ layout_123456_transposed="
 }
 
 @test "./tmex -p --npm a b" {
-  npm_package_name="testpackagename"
+  export npm_package_name="testpackagename"
   run $dir/tmex -p --npm a b
   assert_output -p "new-session -s testpackagename"
   assert_layout "
@@ -501,7 +501,7 @@ layout_123456_transposed="
 }
 
 @test "./tmex -p --npm a b c" {
-  npm_package_name="testpackagename"
+  export npm_package_name="testpackagename"
   run $dir/tmex -p --npm a b c
   assert_output -p "new-session -s testpackagename"
   assert_layout "
@@ -517,7 +517,7 @@ layout_123456_transposed="
 }
 
 @test "./tmex -p --npm a b c d" {
-  npm_package_name="testpackagename"
+  export npm_package_name="testpackagename"
   run $dir/tmex -p --npm a b c d
   assert_output -p "new-session -s testpackagename"
   assert_layout "
@@ -535,7 +535,7 @@ layout_123456_transposed="
 }
 
 @test "./tmex -p --npm a b c d e" {
-  npm_package_name="testpackagename"
+  export npm_package_name="testpackagename"
   run $dir/tmex -p --npm a b c d e
   assert_output -p "new-session -s testpackagename"
   assert_layout "
@@ -557,7 +557,7 @@ layout_123456_transposed="
 }
 
 @test "./tmex -p --npm a b c d e f" {
-  npm_package_name="testpackagename"
+  export npm_package_name="testpackagename"
   run $dir/tmex -p --npm a b c d e f
   assert_output -p "new-session -s testpackagename"
   assert_layout "
@@ -581,7 +581,7 @@ layout_123456_transposed="
 }
 
 @test "./tmex -p --npm a b c d e f g" {
-  npm_package_name="testpackagename"
+  export npm_package_name="testpackagename"
   run $dir/tmex -p --npm a b c d e f g
   assert_output -p "new-session -s testpackagename"
   assert_layout "
@@ -610,7 +610,7 @@ layout_123456_transposed="
 }
 
 @test "./tmex -p --npm a b c d e f g h" {
-  npm_package_name="testpackagename"
+  export npm_package_name="testpackagename"
   run $dir/tmex -p --npm a b c d e f g h
   assert_output -p "new-session -s testpackagename"
   assert_layout "
@@ -638,7 +638,7 @@ layout_123456_transposed="
 }
 
 @test "./tmex -p --npm a b c d e f g h i" {
-  npm_package_name="testpackagename"
+  export npm_package_name="testpackagename"
   run $dir/tmex -p --npm a b c d e f g h i
   assert_output -p "new-session -s testpackagename"
   assert_layout "
@@ -668,7 +668,7 @@ layout_123456_transposed="
 }
 
 @test "./tmex -pn 1234 a b c d e f g h i j" {
-  npm_package_name="testpackagename"
+  export npm_package_name="testpackagename"
   run $dir/tmex -pn 1234 a b c d e f g h i j
   assert_output -p "new-session -s testpackagename"
   assert_layout "
@@ -704,7 +704,7 @@ layout_123456_transposed="
 }
 
 @test "./tmex -pn 1[2{34}5]6 a b c d e f g h i j" {
-  npm_package_name="testpackagename"
+  export npm_package_name="testpackagename"
   run $dir/tmex -pn 1[2{34}5]6 a b c d e f g h i j
   assert_output -p "new-session -s testpackagename"
   assert_layout "
@@ -751,4 +751,23 @@ layout_123456_transposed="
 @test "./tmex -pn 1[2{34}5]6 a b c d e f g h i j k l m n o" {
   run $dir/tmex -pn 1[2{34}5]6 a b c d e f g h i j k l m n o
   assert_output -p "Invalid input: --layout=1[2{34}5]6 is too small for number of commands provided"
+}
+
+# ensure nested tmex commands will select and split their current pane
+# instead of spawning a nested tmux session
+@test "TMUX_PANE=%5 ./tmex testsessionname -p a b c" {
+  export TMUX_PANE="%5"
+  run $dir/tmex testsessionname -p a b c
+  refute_output -p "new-session -s testsessionname"
+  assert_output -p "select-window -t %5 ; select-pane -t %5"
+  assert_layout "
+       send-keys a Enter
+    split-window -h -p50
+       send-keys b Enter
+     select-pane -L
+     select-pane -R
+    split-window -v -p50
+       send-keys c Enter
+  "
+  assert_success
 }
