@@ -20,8 +20,7 @@ Manage all your services in one view, without extra configuration files, yaml, e
 
 ![tmex demo](https://github.com/evnp/tmex/blob/master/tmex.gif?raw=true)
 
-Tailor-made for simplifying `package.json` scripts, though tmex works just as well with any arbitrary commands.
-Consider the `start` script below:
+Tailor-made for simplifying `package.json` scripts, though tmex works just as well with any arbitrary commands:
 ```diff
 package.json
 {
@@ -118,7 +117,7 @@ tmex <sessionname> --transpose --layout=1224
 +-----+-----+-----+-----+
 ```
 
-Layouts may be arbitrarily complex via sublayouts [xyz] and custom sizing {xyz}:
+Layouts may be arbitrarily complex via sublayouts `[xyz]` and custom sizing `{xyz}`:
 ```
 tmex <sessionname> --layout=1[2{13}1]4{4112}
 >>>                             |      |
