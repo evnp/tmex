@@ -9,6 +9,12 @@ export TMUX_PANE=""
 
 dir=$BATS_TEST_DIRNAME
 
+setup() {
+  # ensure TMUX_PANE is not set at beginning of test so that tests can be run
+  # from within tmux (TMUX_PANE handling is tested explicitly at end of suite)
+  unset TMUX_PANE
+}
+
 @test "./tmex --print" {
   run $dir/tmex --print
   assert_output -p "Invalid input: session name required"
@@ -64,6 +70,7 @@ dir=$BATS_TEST_DIRNAME
   run $dir/tmex --print --npm
   assert_output -p "new-session -s testpackagename"
   assert_success
+  unset npm_package_name
 }
 
 @test "./tmex -pn" {
@@ -71,6 +78,7 @@ dir=$BATS_TEST_DIRNAME
   run $dir/tmex -pn
   assert_output -p "new-session -s testpackagename"
   assert_success
+  unset npm_package_name
 }
 
 @test "./tmex testsessionname --print --npm" {
@@ -78,6 +86,7 @@ dir=$BATS_TEST_DIRNAME
   run $dir/tmex testsessionname --print --npm
   assert_output -p "new-session -s testsessionname"
   assert_success
+  unset npm_package_name
 }
 
 @test "./tmex testsessionname -pn" {
@@ -85,6 +94,7 @@ dir=$BATS_TEST_DIRNAME
   run $dir/tmex testsessionname -pn
   assert_output -p "new-session -s testsessionname"
   assert_success
+  unset npm_package_name
 }
 
 function print_layout () {
@@ -488,6 +498,7 @@ layout_123456_transposed="
        send-keys \"npm run a\" Enter
   "
   assert_success
+  unset npm_package_name
 }
 
 @test "./tmex -p --npm a b" {
@@ -502,6 +513,7 @@ layout_123456_transposed="
      select-pane -R
   "
   assert_success
+  unset npm_package_name
 }
 
 @test "./tmex -p --npm a b c" {
@@ -518,6 +530,7 @@ layout_123456_transposed="
        send-keys \"npm run c\" Enter
   "
   assert_success
+  unset npm_package_name
 }
 
 @test "./tmex -p --npm a b c d" {
@@ -536,6 +549,7 @@ layout_123456_transposed="
        send-keys \"npm run d\" Enter
   "
   assert_success
+  unset npm_package_name
 }
 
 @test "./tmex -p --npm a b c d e" {
@@ -558,6 +572,7 @@ layout_123456_transposed="
        send-keys \"npm run e\" Enter
   "
   assert_success
+  unset npm_package_name
 }
 
 @test "./tmex -p --npm a b c d e f" {
@@ -582,6 +597,7 @@ layout_123456_transposed="
        send-keys \"npm run f\" Enter
   "
   assert_success
+  unset npm_package_name
 }
 
 @test "./tmex -p --npm a b c d e f g" {
@@ -611,6 +627,7 @@ layout_123456_transposed="
        send-keys \"npm run g\" Enter
   "
   assert_success
+  unset npm_package_name
 }
 
 @test "./tmex -p --npm a b c d e f g h" {
@@ -639,6 +656,7 @@ layout_123456_transposed="
        send-keys \"npm run h\" Enter
   "
   assert_success
+  unset npm_package_name
 }
 
 @test "./tmex -p --npm a b c d e f g h i" {
@@ -669,6 +687,7 @@ layout_123456_transposed="
        send-keys \"npm run i\" Enter
   "
   assert_success
+  unset npm_package_name
 }
 
 @test "./tmex -pn 1234 a b c d e f g h i j" {
@@ -705,6 +724,7 @@ layout_123456_transposed="
        send-keys \"npm run j\" Enter
   "
   assert_success
+  unset npm_package_name
 }
 
 @test "./tmex -pn 1[2{34}5]6 a b c d e f g h i j" {
@@ -745,6 +765,7 @@ layout_123456_transposed="
     split-window -v -p50
   "
   assert_success
+  unset npm_package_name
 }
 
 @test "./tmex -pn 1234 a b c d e f g h i j k" {
@@ -774,4 +795,5 @@ layout_123456_transposed="
        send-keys c Enter
   "
   assert_success
+  unset TMUX_PANE
 }
