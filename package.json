@@ -21,9 +21,9 @@
   "author": "Evan Purcer <evanpurcer@gmail.com> (http://evnp.ca)",
   "license": "MIT",
   "devDependencies": {
-    "bats": "1.1.0",
+    "bats": "1.2.1",
     "bats-assert": "2.0.0",
     "bats-support": "git+https://github.com/ztombol/bats-support.git#v0.2.0",
-    "shellcheck": "0.3.0"
+    "shellcheck": "0.4.4"
   }
 }
