@@ -168,7 +168,7 @@ or sans-npm:
 curl -o ~/bin/tmex https://raw.githubusercontent.com/evnp/tmex/master/tmex && chmod +x ~/bin/tmex
 # or /usr/local/bin or other bin of your choice (as long it's in your $PATH)
 ```
-[tmex](https://raw.githubusercontent.com/evnp/tmex/master/tmex) has no external dependencies, but always read code before downloading to ensure it contains nothing unexpected.
+[tmex](https://raw.githubusercontent.com/evnp/tmex/master/tmex) has no external dependencies other than tmux, but always read code before downloading to ensure it contains nothing unexpected.
 
 Tests
 -------------
