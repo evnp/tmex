@@ -3,6 +3,10 @@
 load './node_modules/bats-support/load'
 load './node_modules/bats-assert/load'
 
+# allow tests to work ouside or inside a tmux pane:
+# (normally tmex -p inside tmux pane would avoid including session name - no nested sessions)
+export TMUX_PANE=""
+
 dir=$BATS_TEST_DIRNAME
 
 @test "./tmex --print" {
