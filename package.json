@@ -1,7 +1,7 @@
 {
   "name": "tmex",
   "version": "1.0.7",
-  "description": "A minimalist tmux layout manager - one shell script, zero dependencies.",
+  "description": "A minimalist tmux layout manager - one shell script + tmux +  zero other dependencies",
   "main": "tmex",
   "scripts": {
     "lint": "shellcheck tmex",
