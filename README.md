@@ -8,11 +8,11 @@ A minimalist tmux layout manager - one shell script + tmux + zero other dependen
     \/_/   \/_/  \/_/  \/_____/  \/_/\/_/  tmux execute
 ```
 
-[![build status](https://img.shields.io/travis/evnp/tmex/master.svg?style=flat-square&color=3cb371)](https://travis-ci.org/evnp/tmex)
-[![code quality](https://img.shields.io/badge/code_quality-shellcheck-22576b?style=flat-square)](https://github.com/koalaman/shellcheck)
-[![latest release](https://img.shields.io/github/release/evnp/tmex.svg?style=flat-square)](https://github.com/evnp/tmex/releases/latest)
-[![npm package](https://img.shields.io/npm/v/tmex.svg?style=flat-square)](https://www.npmjs.com/package/tmex)
-[![license](https://img.shields.io/github/license/evnp/tmex.svg?style=flat-square&color=blue)](https://github.com/evnp/tmex/blob/master/LICENSE.md)
+[![tests](https://github.com/evnp/tmex/workflows/tests/badge.svg)](https://github.com/evnp/tmex/actions)
+[![shellcheck](https://github.com/evnp/tmex/workflows/shellcheck/badge.svg)](https://github.com/evnp/tmex/actions)
+[![latest release](https://img.shields.io/github/release/evnp/tmex.svg)](https://github.com/evnp/tmex/releases/latest)
+[![npm package](https://img.shields.io/npm/v/tmex.svg)](https://www.npmjs.com/package/tmex)
+[![license](https://img.shields.io/github/license/evnp/tmex.svg?color=blue)](https://github.com/evnp/tmex/blob/master/LICENSE.md)
 
 **Contents** - [Usage](https://github.com/evnp/tmex#usage) | [Layout](https://github.com/evnp/tmex#layout) | [npm](https://github.com/evnp/tmex#npm) | [Install](https://github.com/evnp/tmex#install) | [Tests](https://github.com/evnp/tmex#tests) | [License](https://github.com/evnp/tmex#license)
 
