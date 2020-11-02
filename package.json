@@ -1,6 +1,6 @@
 {
   "name": "tmex",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "A minimalist tmux layout manager - one shell script + tmux +  zero other dependencies",
   "main": "tmex",
   "scripts": {
