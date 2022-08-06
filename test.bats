@@ -138,7 +138,8 @@ function assert_layout () {
 }
 
 layout_1234="
-  split-window -h -p50 -d
+  split-window -h -p50
+   select-pane -L
   split-window -h -p50
    select-pane -R
   split-window -h -p50
@@ -151,7 +152,8 @@ layout_1234="
   split-window -v -p67
   split-window -v -p50
    select-pane -R
-  split-window -v -p50 -d
+  split-window -v -p50
+   select-pane -U
   split-window -v -p50
    select-pane -D
   split-window -v -p50
@@ -207,7 +209,8 @@ layout_1234="
 }
 
 layout_1234_transposed="
-  split-window -v -p50 -d
+  split-window -v -p50
+   select-pane -U
   split-window -v -p50
    select-pane -D
   split-window -v -p50
@@ -220,7 +223,8 @@ layout_1234_transposed="
   split-window -h -p67
   split-window -h -p50
    select-pane -D
-  split-window -h -p50 -d
+  split-window -h -p50
+   select-pane -L
   split-window -h -p50
    select-pane -R
   split-window -h -p50
@@ -255,12 +259,14 @@ layout_123456="
   split-window -h -p57
    select-pane -D
   split-window -h -p80
-  split-window -h -p50 -d
+  split-window -h -p50
+   select-pane -L
   split-window -h -p50
    select-pane -R
   split-window -h -p50
    select-pane -R
-  split-window -v -p50 -d
+  split-window -v -p50
+   select-pane -U
   split-window -v -p67
   split-window -v -p50
    select-pane -D
@@ -328,12 +334,14 @@ layout_123456_transposed="
   split-window -v -p57
    select-pane -R
   split-window -v -p80
-  split-window -v -p50 -d
+  split-window -v -p50
+   select-pane -U
   split-window -v -p50
    select-pane -D
   split-window -v -p50
    select-pane -D
-  split-window -h -p50 -d
+  split-window -h -p50
+   select-pane -L
   split-window -h -p67
   split-window -h -p50
    select-pane -R
@@ -358,6 +366,80 @@ layout_123456_transposed="
   assert_layout "${layout_123456_transposed}"
   assert_success
 }
+
+layout_44="
+   send-keys a Enter
+split-window -h -p50
+   send-keys e Enter
+ select-pane -L
+split-window -v -p50
+   send-keys c Enter
+ select-pane -U
+split-window -v -p50
+   send-keys b Enter
+ select-pane -D
+split-window -v -p50
+   send-keys d Enter
+ select-pane -R
+split-window -v -p50
+   send-keys g Enter
+ select-pane -U
+split-window -v -p50
+   send-keys f Enter
+ select-pane -D
+split-window -v -p50
+   send-keys h Enter
+"
+
+@test "./tmex testsessionname -p -l=44 a b c d e f g h" {
+  run $dir/tmex testsessionname -p -l=44 a b c d e f g h
+  assert_layout "${layout_44}"
+  assert_success
+}
+
+layout_444="
+   send-keys a Enter
+split-window -h -p67
+   send-keys e Enter
+split-window -h -p50
+   send-keys i Enter
+ select-pane -L
+ select-pane -L
+split-window -v -p50
+   send-keys c Enter
+ select-pane -U
+split-window -v -p50
+   send-keys b Enter
+ select-pane -D
+split-window -v -p50
+   send-keys d Enter
+ select-pane -R
+split-window -v -p50
+   send-keys g Enter
+ select-pane -U
+split-window -v -p50
+   send-keys f Enter
+ select-pane -D
+split-window -v -p50
+   send-keys h Enter
+ select-pane -R
+split-window -v -p50
+   send-keys k Enter
+ select-pane -U
+split-window -v -p50
+   send-keys j Enter
+ select-pane -D
+split-window -v -p50
+   send-keys l Enter
+"
+
+@test "./tmex testsessionname -p -l=444 a b c d e f g h i j k l" {
+  run $dir/tmex testsessionname -p -l=444 a b c d e f g h i j k l
+  assert_layout "${layout_444}"
+  assert_success
+}
+
+# Test Shell-less mode:
 
 @test "./tmex testsessionname -p --shellless a" {
   run $dir/tmex testsessionname -p --shellless a
@@ -432,7 +514,8 @@ layout_123456_transposed="
 @test "./tmex testsessionname -p --shellless a b c d e f g" {
   run $dir/tmex testsessionname -p --shellless a b c d e f g
   assert_layout "
-    split-window -h -p50 -d d
+    split-window -h -p50 d
+     select-pane -L
     split-window -h -p50 b
      select-pane -R
     split-window -h -p50 f
@@ -602,8 +685,9 @@ layout_123456_transposed="
   assert_output -p "new-session -s testpackagename"
   assert_layout "
        send-keys \"npm run a\" Enter
-    split-window -h -p50 -d
+    split-window -h -p50
        send-keys \"npm run d\" Enter
+     select-pane -L
     split-window -h -p50
        send-keys \"npm run b\" Enter
      select-pane -R
@@ -692,8 +776,9 @@ layout_123456_transposed="
   assert_output -p "new-session -s testpackagename"
   assert_layout "
        send-keys \"npm run a\" Enter
-    split-window -h -p50 -d
+    split-window -h -p50
        send-keys \"npm run d\" Enter
+     select-pane -L
     split-window -h -p50
        send-keys \"npm run b\" Enter
      select-pane -R
@@ -711,8 +796,9 @@ layout_123456_transposed="
     split-window -v -p50
        send-keys \"npm run f\" Enter
      select-pane -R
-    split-window -v -p50 -d
+    split-window -v -p50
        send-keys \"npm run i\" Enter
+     select-pane -U
     split-window -v -p50
        send-keys \"npm run h\" Enter
      select-pane -D
@@ -744,15 +830,17 @@ layout_123456_transposed="
      select-pane -D
     split-window -h -p80
        send-keys \"npm run e\" Enter
-    split-window -h -p50 -d
+    split-window -h -p50
        send-keys \"npm run g\" Enter
+     select-pane -L
     split-window -h -p50
        send-keys \"npm run f\" Enter
      select-pane -R
     split-window -h -p50
        send-keys \"npm run h\" Enter
      select-pane -R
-    split-window -v -p50 -d
+    split-window -v -p50
+     select-pane -U
     split-window -v -p67
        send-keys \"npm run j\" Enter
     split-window -v -p50
