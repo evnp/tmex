@@ -449,7 +449,7 @@ function split2d () {
     elif [[ "${char}" == "}" ]]; then
       sizebracketsopen=false
     elif [[ "${sizebracketsopen}" == true ]] && (( "${depth}" == 0 )); then
-      sublayoutsizings[$(( ${#sublayoutsizings[@]} - 1 ))]+="${char}"
+      sublayoutsizings[${#sublayoutsizings[@]} - 1]+="${char}"
     fi
 
     if [[ "${char}" == "]" ]]; then
@@ -457,10 +457,10 @@ function split2d () {
     fi
 
     if (( "${depth}" > 0 )); then
-      sublayouts[$(( ${#sublayouts[@]} - 1 ))]+="${char}"
+      sublayouts[${#sublayouts[@]} - 1]+="${char}"
 
       if [[ "${char}" =~ [0-9] && "${sizebracketsopen}" == false ]]; then
-        (( sublayoutpanecounts[$(( ${#sublayoutpanecounts[@]} - 1 ))] += char )) || true
+        (( sublayoutpanecounts[${#sublayoutpanecounts[@]} - 1] += char )) || true
       fi
     fi
 
