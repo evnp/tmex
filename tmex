@@ -682,8 +682,8 @@ For more information, see https://github.com/evnp/tmex
     echo "${output}"
   else
     # tmux silently rewrites "." to "_" and "\" to "\\" when setting session names
-    # by making these replacements here, we can allow tmex --reattach behavior to
-    # work as expected even if these chars are present in the given session name:
+    # by making these replacements here, we can allow tmex to reattach/kill sessions
+    # as expected even if these chars are present in the given session name:
     argsession="${argsession//./_}"
     argsession="${argsession//\\/\\\\}"
 
