@@ -681,10 +681,11 @@ For more information, see https://github.com/evnp/tmex
     done
     echo "${output}"
   else
-    # tmux silently rewrites "." to "_" and "\" to "\\" when setting session names
+    # tmux rewrites "."->"_", ":"->"_", "\"->"\\" when setting session names
     # by making these replacements here, we can allow tmex to reattach/kill sessions
     # as expected even if these chars are present in the given session name:
     argsession="${argsession//./_}"
+    argsession="${argsession//:/_}"
     argsession="${argsession//\\/\\\\}"
 
     # either attach to an existing session or kill it based on specified behavior
