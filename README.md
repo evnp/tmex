@@ -152,6 +152,9 @@ In the example above, the layout `1[2{13}1]4{4112}` contains the sublayout `2{13
 npm
 ------------
 Simplify `package.json` scripts via `--npm` or `-n`. Commands will be prefixed with `npm run` (if necessary) and session name will default to `$npm_package_name`. This will expand to match the `name` field set in `package.json`.
+
+**NOTE:** tmux replaces `.`→`_`, `:`→`_`, `\`→`\\` when setting session names, so your final session name may not exactly match the `name` specified in `package.json` (or the name you provide via the `<session-name>` argument at the command line).
+
 ```sh
 cat package.json | grep name
 >>> "name": "special-project"
