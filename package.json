@@ -6,6 +6,7 @@
   "scripts": {
     "lint": "shellcheck tmex",
     "test": "npm run lint && bats test.bats",
+    "testf": "run() { npm run lint && bats -f \"$@\" test.bats; }; run",
     "testn": "clear && npm run test | bats-notify",
     "testw": "npm run test && fswatch -0 -o -r . | xargs -0 -n1 npm run test",
     "testnw": "npm run testn && fswatch -0 -o -r . | xargs -0 -n1 npm run testn"
