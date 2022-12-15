@@ -890,6 +890,46 @@ split-window -v -p50
 	unset TMUX_PANE
 }
 
+@test "TMUX_PANE=%5 ./tmex --kill" {
+	export TMUX_PANE="%5"
+	run $dir/tmex --kill
+	assert_output -p "kill-session -t ${TMUX_PANE}"
+	assert_success
+	unset TMUX_PANE
+}
+
+@test "TMUX_PANE=%5 ./tmex -k" {
+	export TMUX_PANE="%5"
+	run $dir/tmex -k
+	assert_output -p "kill-session -t ${TMUX_PANE}"
+	assert_success
+	unset TMUX_PANE
+}
+
+@test "./tmex testsessionname --kill" {
+	run $dir/tmex testsessionname --kill
+	assert_output -p "kill-session -t testsessionname"
+	assert_success
+}
+
+@test "./tmex testsessionname -k" {
+	run $dir/tmex testsessionname -k
+	assert_output -p "kill-session -t testsessionname"
+	assert_success
+}
+
+@test "./tmex --kill testsessionname" {
+	run $dir/tmex --kill testsessionname
+	assert_output -p "kill-session -t testsessionname"
+	assert_success
+}
+
+@test "./tmex -k testsessionname" {
+	run $dir/tmex -k testsessionname
+	assert_output -p "kill-session -t testsessionname"
+	assert_success
+}
+
 function layout_with_new_pct_flags() {
 	sed -E 's/ -p([0-9]+)/ -l\1%/g' <<< "$1"
 }

@@ -89,6 +89,7 @@ tmex <session-name>                - session name required unless --npm set; all
   [-p|--print]                     -p, --print       emit command as string of tmux args instead of invoking tmux directly
   [-d|--detached]                  -d, --detached    invoke tmux with -d (detached session); useful for piping data to tmex
   [-r|--reattach]                  -r, --reattach    if tmux session already exists, re-attach to it instead of replacing it
+  [-k|--kill]                      -k, --kill        kill the current or specified tmux session (all other arguments ignored)
   [-s|--shellless]                 -s, --shellless   if set, invoke commands directly with tmux instead of running inside shell
   ["shell command 1"]
   ["shell command 2"]              - shell commands that will be executed in each pane
