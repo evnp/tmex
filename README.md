@@ -150,6 +150,35 @@ tmex your-session-name --layout=1[2{13}1]4{4112}
 ```
 In the example above, the layout `1[2{13}1]4{4112}` contains the sublayout `2{13}1` which is constructed in the second column of the full layout. This in turn specifies relative sizing `2{13}` for its first 2 panes, meaning the 2nd pane will be 3x the size of the 1st (denoted by 1, 3 in the diagram above). The 3rd column of the full layout `4{4112}` also defines custom sizing of panes (denoted by 4, 1, 1, 2 in the diagram above).
 
+Sometimes you might want a row/column of your layout to contain a grid of N panes, laid out using the default algorithm. This is done by placing an empty set of { } brackets _after_ a number of panes in the layout. This can be thought of as "requesting the default layout" for the preceeding set of panes.
+```sh
+tmex your-session-name --layout=35{}4
+┌─────┬─────┬─────┬─────┬─────┐
+│     │     │     │     │  4  │
+│  3  │     │     │     │     │
+│     │     │  5  │  5  ├─────┤
+├─────┤     │     │     │  4  │
+│     │     │     │     │     │
+│  3  │  5  ├─────┼─────┼─────┤
+│     │     │     │     │  4  │
+├─────┤     │     │     │     │
+│     │     │  5  │  5  ├─────┤
+│  3  │     │     │     │  4  │
+│     │     │     │     │     │
+└─────┴─────┴─────┴─────┴─────┘
+```
+The layout above is equivalent to:
+```sh
+tmex your-session-name --layout=31224
+```
+because `5{}` is expanded to `122`, which is the default grid layout when 5 panes are required. You can experiment with commands such as `tmex your-session-name --layout=-7-` to see what default grid layout is produced for each number of panes. In general, each default grid layout attempts to equalize pane sizes, widths, and heights as much as possible, keeping the largest pane on the left with odd numbers of panes.
+
+These two variations are equivalent, and may be useful in scripts where maximal clarity is desired:
+```sh
+tmex your-session-name --layout=35{g}4
+tmex your-session-name --layout=35{grid}4
+```
+
 npm
 ------------
 Simplify `package.json` scripts via `--npm` or `-n`. Commands will be prefixed with `npm run` (if necessary) and session name will default to `$npm_package_name`. This will expand to match the `name` field set in `package.json`.

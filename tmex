@@ -9,6 +9,8 @@ function processargs () {
   local args
   local argidx
   local arg
+	local argmodified
+	local emptybraces
   local idx
   local char
 
@@ -78,8 +80,16 @@ function processargs () {
 
   # if next arg is a valid layout, use it as layout instead of shell command
   arg="${args[argidx]-}"
-  if [[ -z "${arglayout}" && "${arg}" =~ ^[][}{1-9]+$ ]]; then
-    if ! [[ "${arg}" =~ ^{ && "${arg}" =~ {[^}{]*[^1-9][^}{]*} ]]; then
+	# remove {g} {grid} {G} {GRID} sections from arg before validating layout
+	emptybraces='{}'
+  argmodified="${arg//\{g\}/${emptybraces}}"
+  argmodified="${arg//\{grid\}/${emptybraces}}"
+  argmodified="${arg//\{G\}/${emptybraces}}"
+  argmodified="${arg//\{GRID\}/${emptybraces}}"
+  if [[ -z "${arglayout}" && "${argmodified}" =~ ^[][}{1-9]+$ ]]; then
+    # ^ ensure arg only contains [] {} 0-9
+    if ! [[ "${argmodified}" =~ {[^}{]*[^1-9][^}{]*} ]]; then
+      # ^ ensure arg doesn't have any { } groups which contain non-numeric chars
       (( argidx++ )) || true
       arglayout="${arg}"
     fi
@@ -198,7 +208,7 @@ function validatelayout () {
   # if layout contains characters other than 0-9, [, ], {, }, exit with error
   if ! [[ "${arglayout}" =~ ^[][}{0-9]+$ ]]; then
     echo ""
-    echo "Invalid input: --layout=${arglayout} must contain only numeric characters and [ ] { } brackets"
+    echo "Invalid input: --layout=${arglayoutoriginal} must contain only numeric characters, [ ] { } brackets, or characters 's' 'g' ','"
     echo ""
     echo "${usage}"
     exit 1
@@ -207,16 +217,7 @@ function validatelayout () {
   # if layout contains zero, exit with error
   if [[ "${arglayout}" =~ 0 ]]; then
     echo ""
-    echo "Invalid input: --layout=${arglayout} column cannot be set to zero"
-    echo ""
-    echo "${usage}"
-    exit 1
-  fi
-
-  # if layout starts with { } brackets, exit with error
-  if [[ "${arglayout}" =~ ^{ ]]; then
-    echo ""
-    echo "Invalid input: --layout=${arglayout} cannot begin with { } brackets"
+    echo "Invalid input: --layout=${arglayoutoriginal} column/size cannot be set to zero"
     echo ""
     echo "${usage}"
     exit 1
@@ -225,7 +226,7 @@ function validatelayout () {
   # if layout contains non-numeric characters within { } brackets, exit with error
   if [[ "${arglayout}" =~ {[^}{]*[^0-9][^}{]*} ]]; then
     echo ""
-    echo "Invalid input: --layout=${arglayout} cannot include non-numeric characters within { } brackets"
+    echo "Invalid input: --layout=${arglayoutoriginal} cannot include non-numeric characters within { } brackets"
     echo ""
     echo "${usage}"
     exit 1
@@ -247,7 +248,7 @@ function validatelayout () {
   # if size exceeds sum of layout string digits, exit with error
   if (( minsize > layoutsizesum )); then
     echo ""
-    echo "Invalid input: --layout=${arglayout} is too small for number of commands provided"
+    echo "Invalid input: --layout=${arglayoutoriginal} is too small for number of commands provided"
     echo ""
     echo "${usage}"
     exit 1
@@ -578,6 +579,7 @@ function main () {
   local argshellless
   local argtranspose
   local arglayout
+  local arglayoutoriginal
   local argkill
   local argcmds
 
@@ -587,11 +589,15 @@ function main () {
   local idx
   local flag
   local output
+  local pattern
 
   local version
   local tmuxversion
   local usage
   local help
+
+  local layoutsize
+  local parentlayout
 
   tmuxversion="$( tmux -V )"
   if [[ "${tmuxversion}" =~ ([0-9]+(\.[0-9]+)?) ]]; then
@@ -734,6 +740,32 @@ For more information, see https://github.com/evnp/tmex
   # if layout is not specified, generate a default
   if [[ -z "${arglayout}" ]]; then
     generatelayout "${#argcmds[@]}"
+  else
+		arglayoutoriginal="${arglayout}"
+
+    # --- Grid Sub-Layouts --- #
+    # for each set of hyphen-surrounded digits within layout,
+    # replace with a default grid sub-layout with size matching digits:
+    pattern="([0-9]+)\{(g?(rid)?)\}"
+    shopt -s nocasematch
+    while [[ "${arglayout}" =~ ${pattern} ]]; do
+      echo "${BASH_REMATCH[@]}"
+      layoutsize="${BASH_REMATCH[1]}"
+      parentlayout="${arglayout}"
+      generatelayout "${layoutsize}"
+      arglayout="${parentlayout/${layoutsize}\{${BASH_REMATCH[2]}\}/${arglayout}}"
+    done
+    shopt -u nocasematch
+
+    # --- Top Level Sizing --- #
+    # if layout starts with { } bracket sizing, automatically wrap the whole thing
+    # in a sublayout and transpose it, so that top-level sizing is applied
+    pattern="^\{([0-9]+)\}"
+    if [[ "${arglayout}" =~ ${pattern} ]]; then
+      toplevelsizing="${BASH_REMATCH[1]}"
+      arglayout="[${arglayout/\{${toplevelsizing}\}/}]{${toplevelsizing}}"
+      [[ "${argtranspose}" == TRUE ]] && argtranspose=FALSE || argtranspose=TRUE
+    fi
   fi
 
   # ensure layout is large enough to contain commands provided
