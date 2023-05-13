@@ -44,15 +44,15 @@ function processargs () {
       (( argidx++ )) || true
       arg="${arg#--}"  # remove "--" prefix
       case "${arg}" in
-        "detached")  argdetached=true;;
-        "help")      arghelp=true;;
-        "npm")       argnpm=true;;
-        "print")     argprint=true;;
-        "reattach")  argreattach=true;;
-        "shellless") argshellless=true;;
-        "transpose") argtranspose=true;;
-        "kill")      argkill=true;;
-        "version")   argversion=true;;
+        'detached')  argdetached=TRUE;;
+        'help')      arghelp=TRUE;;
+        'npm')       argnpm=TRUE;;
+        'print')     argprint=TRUE;;
+        'reattach')  argreattach=TRUE;;
+        'shellless') argshellless=TRUE;;
+        'transpose') argtranspose=TRUE;;
+        'kill')      argkill=TRUE;;
+        'version')   argversion=TRUE;;
       esac
   elif [[ "${arg}" =~ ^-[dhknprstv]+$ ]]; then
       (( argidx++ )) || true
@@ -60,15 +60,15 @@ function processargs () {
       for (( idx = 0; idx < ${#arg}; idx++ )); do
         char="${arg:idx:1}"
         case "${char}" in
-          "d") argdetached=true;;
-          "h") arghelp=true;;
-          "n") argnpm=true;;
-          "p") argprint=true;;
-          "r") argreattach=true;;
-          "s") argshellless=true;;
-          "t") argtranspose=true;;
-          "k") argkill=true;;
-          "v") argversion=true;;
+          'd') argdetached=TRUE;;
+          'h') arghelp=TRUE;;
+          'n') argnpm=TRUE;;
+          'p') argprint=TRUE;;
+          'r') argreattach=TRUE;;
+          's') argshellless=TRUE;;
+          't') argtranspose=TRUE;;
+          'k') argkill=TRUE;;
+          'v') argversion=TRUE;;
         esac
       done
     else
@@ -89,18 +89,18 @@ function processargs () {
   argcmds=( "${args[@]:argidx}" )
 
   # allow omission of session name if --npm is set
-  if [[ -z "${argsession}" && -n "${argnpm}" ]]; then
+  if [[ -z "${argsession}" && "${argnpm}" == TRUE ]]; then
     argsession="${npm_package_name-}"  # default to avoid 'unbound local variable' issues
 
     # if env var is undefined we're probably running manually instead of from an npm script;
     # try and pull package name from npm env manually
     if [[ -z "${argsession}" ]]; then
-      argsession="$( cut -d "=" -f 2 <<< "$( npm run env 2> /dev/null | grep "npm_package_name" )" )"
+      argsession="$( cut -d "=" -f 2 <<< "$( npm run env 2> /dev/null | grep 'npm_package_name' )" )"
     fi
   fi
 
   # allow omission of session name if --kill is set
-  if [[ -z "${argsession}" && -n "${argkill}" ]]; then
+  if [[ -z "${argsession}" && "${argkill}" == TRUE ]]; then
     if (( ${#args[@]} == 2 )) && ! [[ "${args[1]}" =~ ^- ]]; then
       # if there's only one other arg and it doesn't start with "-" or "--",
       # treat this arg as the session name to kill:
@@ -113,15 +113,15 @@ function processargs () {
   fi
 
   # warn and exit of --kill was specified but other arguments were provided
-  if [[ -n "${argkill}" ]]; then
-    if (( ${#argcmds[@]} > 0 )) || [[ -n "${argdetached}" || -n "${argnpm}" || -n "${argreattach}" || -n "${argshellless}" || -n "${argtranspose}" ]]; then
+  if [[ "${argkill}" == TRUE ]]; then
+    if (( ${#argcmds[@]} > 0 )) || [[ "${argdetached}" == TRUE || "${argnpm}" == TRUE || "${argreattach}" == TRUE || "${argshellless}" == TRUE || "${argtranspose}" == TRUE ]]; then
       echo "You specified --kill (-k) but there are extra args."
       echo "Run command again without extra args if you want to kill the session."
       exit 1
     fi
   fi
 
-  if [[ -z "${argsession}" && -z "${arghelp}" && -z "${argversion}" ]]; then
+  if [[ -z "${argsession}" && "${arghelp}" == FALSE && "${argversion}" == FALSE ]]; then
     echo ""
     echo "Invalid input: session name required (call 'tmex <session-name> <options> <commands>')"
     echo ""
@@ -232,14 +232,14 @@ function validatelayout () {
   fi
 
   layoutsizesum=0
-  sizebracketsopen=false
+  sizebracketsopen=FALSE
   for (( idx = 0; idx < ${#arglayout}; idx++ )); do
     char="${arglayout:${idx}:1}"
-    if [[ "${char}" = "{" ]]; then
-      sizebracketsopen=true
-    elif [[ "${char}" = "}" ]]; then
-      sizebracketsopen=false
-    elif [[ "${sizebracketsopen}" == false && "${char}" =~ [0-9] ]]; then
+    if [[ "${char}" == '{' ]]; then
+      sizebracketsopen=TRUE
+    elif [[ "${char}" == '}' ]]; then
+      sizebracketsopen=FALSE
+    elif [[ "${sizebracketsopen}" == FALSE && "${char}" =~ [0-9] ]]; then
       (( layoutsizesum += char )) || true
     fi
   done
@@ -307,7 +307,7 @@ function executecmd () {
   if [[ -n "${cmd}" ]]; then
     # if running in "shell-less" mode, execute command directly;
     # otherwise use send-keys to execute command within default shell
-    if [[ -n "${argshellless}" ]]; then
+    if [[ "${argshellless}" == TRUE ]]; then
       tmuxargs+=( "${cmd}" )
     else
       tmuxargs+=( ";" "send-keys" "${cmd}" "Enter" )
@@ -478,15 +478,15 @@ function split2d () {
   sublayouts=()
   sublayoutpanecounts=()
   sublayoutsizings=()
-  sizebracketsopen=false
+  sizebracketsopen=FALSE
   for (( idx = 0; idx < ${#layout}; idx++ )); do
     char="${layout:${idx}:1}"
 
     if [[ "${char}" == '{' ]]; then
-      sizebracketsopen=true
+      sizebracketsopen=TRUE
     elif [[ "${char}" == '}' ]]; then
-      sizebracketsopen=false
-    elif [[ "${sizebracketsopen}" == true ]] && (( "${depth}" == 0 )); then
+      sizebracketsopen=FALSE
+    elif [[ "${sizebracketsopen}" == TRUE ]] && (( "${depth}" == 0 )); then
       sublayoutsizings[${#sublayoutsizings[@]} - 1]+="${char}"
     fi
 
@@ -497,7 +497,7 @@ function split2d () {
     if (( "${depth}" > 0 )); then
       sublayouts[${#sublayouts[@]} - 1]+="${char}"
 
-      if [[ "${char}" =~ [0-9] && "${sizebracketsopen}" == false ]]; then
+      if [[ "${char}" =~ ^[0-9]$ && "${sizebracketsopen}" == FALSE ]]; then
         (( sublayoutpanecounts[${#sublayoutpanecounts[@]} - 1] += char )) || true
       fi
     fi
@@ -511,7 +511,7 @@ function split2d () {
       (( depth += 1 )) || true
     fi
 
-    if [[ "${char}" =~ [0-9] && "${sizebracketsopen}" == false ]] && (( depth == 0 )); then
+    if [[ "${char}" =~ ^[0-9]$ && "${sizebracketsopen}" == FALSE ]] && (( depth == 0 )); then
       sublayout=$( printf '%0.s1' $( seq 1 "${char}" ) ) # "111..1" str len == char
       sublayouts+=( "${sublayout}" )
       sublayoutpanecounts+=( "${char}" )
@@ -658,21 +658,21 @@ For more information, see https://github.com/evnp/tmex
 '
 
   # parse args into vars:
-  argsession=""   # required - session name
-  arghelp=""      # optional - if set, display usage message and exit
-  argversion=""   # optional - if set, display version and exit
-  argnpm=""       # optional - if set, prefix each command with "npm run" for package.json scripts
-  argprint=""     # optional - if set, print final tmux command to console instead of executing it
-  argdetached=""  # optional - if set, invoke tmux with -d flag (detached session)
-  argreattach=""  # optional - if set, re-attach to existing tmux session isntead of replacing it
-  argtranspose="" # optional - if set, layout in left-to-right instead of top-to-bottom orientation
-  arglayout=""    # optional - string of digits defining a custom layout
-  argshellless="" # optional - if set, execute commands standalone instead of in a shell
-  argcmds=""      # optional - list of commands to be executed in resulting panes
+  argsession=""      # required - session name
+  arghelp=FALSE      # optional - if TRUE, display usage message and exit
+  argversion=FALSE   # optional - if TRUE, display version and exit
+  argnpm=FALSE       # optional - if TRUE, prefix each command with "npm run" for package.json scripts
+  argprint=FALSE     # optional - if TRUE, print final tmux command to console instead of executing it
+  argdetached=FALSE  # optional - if TRUE, invoke tmux with -d flag (detached session)
+  argreattach=FALSE  # optional - if TRUE, re-attach to existing tmux session isntead of replacing it
+  argtranspose=FALSE # optional - if TRUE, layout in left-to-right instead of top-to-bottom orientation
+  arglayout=""       # optional - string of digits defining a custom layout
+  argshellless=FALSE # optional - if TRUE, execute commands standalone instead of in a shell
+  argcmds=""         # optional - list of commands to be executed in resulting panes
 
   processargs "$@"
 
-  if [[ -n "${arghelp}" ]]; then
+  if [[ "${arghelp}" == TRUE ]]; then
     echo "${version}"
     echo ""
     echo "${usage}"
@@ -680,15 +680,15 @@ For more information, see https://github.com/evnp/tmex
     exit 0
   fi
 
-  if [[ -n "${argversion}" ]]; then
+  if [[ "${argversion}" == TRUE ]]; then
     echo "${version}"
     exit 0
   fi
 
   # if -k/--kill specified tmux session and exit:
-  if [[ -n "${argkill}" ]]; then
+  if [[ "${argkill}" == TRUE ]]; then
     tmuxargs=("kill-session" "-t" "${argsession}")
-    if [[ -n "${argprint}" ]]; then
+    if [[ "${argprint}" == TRUE ]]; then
       echo "${tmuxargs[@]}"
     else
       tmux "${tmuxargs[@]}"
@@ -697,7 +697,7 @@ For more information, see https://github.com/evnp/tmex
   fi
 
   # if npm option is set, prefix commands "npm run ..."
-  if [[ -n "${argnpm}" ]]; then
+  if [[ "${argnpm}" == TRUE ]]; then
     for (( idx = 0; idx < ${#argcmds[@]}; idx++ )); do
       if ! [[ "${argcmds[idx]}" == 'npm '* ]]; then
         argcmds[idx]="npm run ${argcmds[idx]}"
@@ -713,7 +713,7 @@ For more information, see https://github.com/evnp/tmex
   if [[ -n "${paneid}" ]]; then
     # ensure we're not in "shell-less" mode; this would fail to run the 1st command in the 1st
     # pane since the pane would die after executing the nested tmex command
-    if [[ -n "${argshellless}" ]]; then
+    if [[ "${argshellless}" == TRUE ]]; then
       echo "Error: --shellless mode cannot be used when nesting tmex commands"
       exit 1
     fi
@@ -724,7 +724,7 @@ For more information, see https://github.com/evnp/tmex
     tmuxargs+=( "new-session" "-s" "${argsession}" )
 
     # if running in "detached" mode, add -d flag
-    if [[ -n "${argdetached}" ]]; then
+    if [[ "${argdetached}" == TRUE ]]; then
       tmuxargs+=( "-d" )
     fi
   fi
@@ -740,16 +740,16 @@ For more information, see https://github.com/evnp/tmex
   validatelayout "${#argcmds[@]}"
 
   # append layout commands onto tmuxargs
-  [[ "${argtranspose}" ]] && flag="v" || flag="h"
+  [[ "${argtranspose}" == TRUE ]] && flag="v" || flag="h"
   split2d "${flag}" "${arglayout}" "" "${argcmds[@]-}"
 
   # if running shell-less, command exit will kill tmux pane which makes troubleshooting hard
   # set remain-on-exit on - more of a sane default since user will see when a command failed
-  if [[ -n "${argshellless}" ]]; then
+  if [[ "${argshellless}" == TRUE ]]; then
     tmuxargs+=( ";" "set-window-option" "remain-on-exit" "on" ";" )
   fi
 
-  if [[ -n "${argprint}" ]]; then
+  if [[ "${argprint}" == TRUE ]]; then
     output=""
     for (( idx = 0; idx < ${#tmuxargs[@]}; idx++ )); do
       if [[ "${tmuxargs[idx]}" == *' '* ]]; then
@@ -763,7 +763,7 @@ For more information, see https://github.com/evnp/tmex
     # either attach to an existing session or kill it based on specified behavior
     if [[ -z "${paneid}" ]]; then # avoid doing this if we're already in tmux session
       if tmux has-session -t "${argsession}" 2>/dev/null; then
-        if [[ -n "${argreattach}" ]]; then
+        if [[ "${argreattach}" == TRUE ]]; then
           tmux attach-session -t "${argsession}"
           exit 0
         else
