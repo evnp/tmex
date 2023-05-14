@@ -597,6 +597,7 @@ function main () {
   local help
 
   local layoutsize
+  local toplevelsizing
   local parentlayout
 
   tmuxversion="$( tmux -V )"
@@ -760,10 +761,10 @@ For more information, see https://github.com/evnp/tmex
     # --- Top Level Sizing --- #
     # if layout starts with { } bracket sizing, automatically wrap the whole thing
     # in a sublayout and transpose it, so that top-level sizing is applied
-    pattern="^\{([0-9]+)\}"
+    pattern="^(\{[0-9]+\})"
     if [[ "${arglayout}" =~ ${pattern} ]]; then
       toplevelsizing="${BASH_REMATCH[1]}"
-      arglayout="[${arglayout/\{${toplevelsizing}\}/}]{${toplevelsizing}}"
+      arglayout="[${arglayout/${toplevelsizing}/}]${toplevelsizing}"
       [[ "${argtranspose}" == TRUE ]] && argtranspose=FALSE || argtranspose=TRUE
     fi
   fi

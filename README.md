@@ -137,18 +137,35 @@ Layouts may be arbitrarily complex via sublayouts `[xyz]` and custom sizing `{xy
 ```sh
 tmex your-session-name --layout=1[2{13}1]4{4112}
 >>>                                 │      │
-         ┌──────────────────────────┘      │
-┌─────┬──│────────┬─────┐                  │
-│     │  │        │     │                  │
-│     │ 1│3       │  4─────────────────────┘
-│     │  │        │  │  │
-│     ├──┴────────┼──1──┤
-│     │           ├──1──┤
-│     │           ├──│──┤
-│     │           │  2  │
-└─────┴───────────┴─────┘
+           ┌────────────────────────┘      │
+┌───────┬──│────┬───────┐                  │
+│       │  │    │       │                  │
+│       │ 1│3   │   4──────────────────────┘
+│       │  │    │   │   │
+│       ├──┴────┼───1───┤
+│       │       ├───1───┤
+│       │       ├───│───┤
+│       │       │   2   │
+└───────┴───────┴───────┘
 ```
-In the example above, the layout `1[2{13}1]4{4112}` contains the sublayout `2{13}1` which is constructed in the second column of the full layout. This in turn specifies relative sizing `2{13}` for its first 2 panes, meaning the 2nd pane will be 3x the size of the 1st (denoted by 1, 3 in the diagram above). The 3rd column of the full layout `4{4112}` also defines custom sizing of panes (denoted by 4, 1, 1, 2 in the diagram above).
+In the example above, the layout `1[2{13}1]4{4112}` contains the sublayout `[2{13}1]` which is constructed in the second column of the full layout. This in turn specifies relative sizing `2{13}` for its first 2 panes, meaning the 2nd pane will be 3x the size of the 1st (denoted by 1, 3 in the diagram above). The 3rd column of the full layout `4{4112}` also defines custom sizing of panes (denoted by 4, 1, 1, 2 in the diagram above).
+
+If you want to change the widths of columns at the top level of the layout, you'll need to prefix the layout with a set of widths:
+```sh
+tmex your-session-name --layout={152}1[2{13}1]4{4112}
+>>>
+├─1─┼───────5───────┼──2───┤
+┌───┬────┬──────────┬──────┐
+│   │    │          │      │
+│   │  1 │    3     │  4   │
+│   │    │          │      │
+│   ├────┴──────────┼──1───┤
+│   │               ├──1───┤
+│   │               ├──────┤
+│   │               │  2   │
+└───┴───────────────┴──────┘
+```
+Note that the sublayout `[2{13}1]` is treated as a single column when sizing is applied, so that set of panes as a whole receives `5` as its width relative to the other columns.
 
 Sometimes you might want a row/column of your layout to contain a grid of N panes, laid out using the default algorithm. This is done by placing an empty set of { } brackets _after_ a number of panes in the layout. This can be thought of as "requesting the default layout" for the preceeding set of panes.
 ```sh
