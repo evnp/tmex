@@ -173,6 +173,15 @@ function refute_layout () {
   ! assert_layout "$@"
 }
 
+function assert_layout_shorthand() {
+	assert_layout "$(
+		xargs <<< "$1" |
+		sed -E 's/H/; split-window -h/g' |
+		sed -E 's/V/; split-window -v/g' |
+		sed -E 's/(U|D|L|R)/; select-pane -\1/g'
+	)"
+}
+
 layout_1234="
 	split-window -h -p50
 	 select-pane -L
@@ -227,6 +236,135 @@ layout_1234="
 	run $dir/tmex testsessionname --layout 1234
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_1234}"
+	assert_success
+}
+
+@test "./tmex testsessionname --layout {1111}1234" {
+	run $dir/tmex testsessionname --layout {1111}1234
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234}"
+	assert_success
+}
+
+@test "./tmex testsessionname --layout {9999}1234" {
+	run $dir/tmex testsessionname --layout {9999}1234
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234}"
+	assert_success
+}
+
+layout_4321="
+	split-window -h -p30
+	 select-pane -L
+	split-window -h -p43
+	 select-pane -R
+	split-window -h -p33
+	 select-pane -L
+	 select-pane -L
+	 select-pane -L
+	 select-pane -R
+	split-window -v -p50
+	 select-pane -R
+	split-window -v -p67
+	split-window -v -p50
+	 select-pane -R
+	split-window -v -p50
+	 select-pane -U
+	split-window -v -p50
+	 select-pane -D
+	split-window -v -p50
+"
+
+@test "./tmex testsessionname --layout {4321}1234" {
+	run $dir/tmex testsessionname --layout {4321}1234
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_4321}"
+	assert_success
+}
+
+shorthand_layout_987654321="
+	H -p80 H -p28 L H -p42 L H -p47 R H -p45 R H -p30 L H -p43 R H -p33
+	L L L L L L L L R V -p50 R V -p67 V -p50 R V -p50 U V -p50 D V -p50
+	R V -p80 V -p50 U V -p50 D V -p50 R V -p50 U V -p67 V -p50 D V -p67
+	V -p50 R V -p86 V -p50 U V -p67 V -p50 D V -p67 V -p50 R V -p50 U V -p50
+	U V -p50 D V -p50 D V -p50 U V -p50 D V -p50 R V -p89 V -p50 U V -p50
+	U V -p50 D V -p50 D V -p50 U V -p50 D V -p50
+"
+
+@test "./tmex testsessionname --layout {987654321}123456789" {
+	run $dir/tmex testsessionname --layout {987654321}123456789
+	assert_output -p "new-session -s testsessionname"
+	assert_layout_shorthand "${shorthand_layout_987654321}"
+	assert_success
+}
+
+@test "./tmex testsessionname --layout 3{}34" {
+	run $dir/tmex testsessionname --layout 3{}34
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234}"
+	assert_success
+	run $dir/tmex testsessionname --layout 3{g}34
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234}"
+	assert_success
+	run $dir/tmex testsessionname --layout 3{grid}34
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234}"
+	assert_success
+	run $dir/tmex testsessionname --layout 3{G}34
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234}"
+	assert_success
+	run $dir/tmex testsessionname --layout 3{GRID}34
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234}"
+	assert_success
+}
+
+layout_grid5="
+	split-window -h -p67
+	split-window -h -p50
+	 select-pane -L
+	 select-pane -L
+	split-window -v -p67
+	split-window -v -p50
+	 select-pane -R
+	split-window -v -p67
+	split-window -v -p50
+	 select-pane -U
+	 select-pane -U
+	 select-pane -D
+	split-window -h -p50
+	 select-pane -D
+	split-window -h -p50
+	 select-pane -R
+	split-window -v -p50
+	 select-pane -U
+	split-window -v -p50
+	 select-pane -D
+	split-window -v -p50
+"
+
+@test "./tmex testsessionname --layout 3[5{}]4" {
+	run $dir/tmex testsessionname --layout 3[5{}]4
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_grid5}"
+	assert_success
+	run $dir/tmex testsessionname --layout 3[5{g}]4
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_grid5}"
+	assert_success
+	run $dir/tmex testsessionname --layout 3[5{grid}]4
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_grid5}"
+	assert_success
+	run $dir/tmex testsessionname --layout 3[5{G}]4
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_grid5}"
+	assert_success
+	run $dir/tmex testsessionname --layout 3[5{GRID}]4
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_grid5}"
 	assert_success
 }
 
@@ -778,6 +916,42 @@ split-window -v -p50
 	unset npm_package_name
 }
 
+layout_a_j="
+		 send-keys \"npm run a\" Enter
+	split-window -h -p67
+		 send-keys \"npm run b\" Enter
+	split-window -h -p50
+		 send-keys \"npm run i\" Enter
+	 select-pane -L
+	 select-pane -L
+	 select-pane -R
+	split-window -v -p50
+		 send-keys \"npm run d\" Enter
+	 select-pane -U
+	split-window -h -p57
+		 send-keys \"npm run c\" Enter
+	 select-pane -D
+	split-window -h -p80
+		 send-keys \"npm run e\" Enter
+	split-window -h -p50
+		 send-keys \"npm run g\" Enter
+	 select-pane -L
+	split-window -h -p50
+		 send-keys \"npm run f\" Enter
+	 select-pane -R
+	split-window -h -p50
+		 send-keys \"npm run h\" Enter
+	 select-pane -R
+	split-window -v -p50
+	 select-pane -U
+	split-window -v -p67
+		 send-keys \"npm run j\" Enter
+	split-window -v -p50
+	 select-pane -D
+	split-window -v -p67
+	split-window -v -p50
+"
+
 @test "./tmex -n 1234 a b c d e f g h i j" {
 	export npm_package_name="testpackagename"
 	run $dir/tmex -n 1234 a b c d e f g h i j
@@ -821,41 +995,7 @@ split-window -v -p50
 	export npm_package_name="testpackagename"
 	run $dir/tmex -n 1[2{34}5]6 a b c d e f g h i j
 	assert_output -p "new-session -s testpackagename"
-	assert_layout "
-			 send-keys \"npm run a\" Enter
-		split-window -h -p67
-			 send-keys \"npm run b\" Enter
-		split-window -h -p50
-			 send-keys \"npm run i\" Enter
-		 select-pane -L
-		 select-pane -L
-		 select-pane -R
-		split-window -v -p50
-			 send-keys \"npm run d\" Enter
-		 select-pane -U
-		split-window -h -p57
-			 send-keys \"npm run c\" Enter
-		 select-pane -D
-		split-window -h -p80
-			 send-keys \"npm run e\" Enter
-		split-window -h -p50
-			 send-keys \"npm run g\" Enter
-		 select-pane -L
-		split-window -h -p50
-			 send-keys \"npm run f\" Enter
-		 select-pane -R
-		split-window -h -p50
-			 send-keys \"npm run h\" Enter
-		 select-pane -R
-		split-window -v -p50
-		 select-pane -U
-		split-window -v -p67
-			 send-keys \"npm run j\" Enter
-		split-window -v -p50
-		 select-pane -D
-		split-window -v -p67
-		split-window -v -p50
-	"
+	assert_layout "${layout_a_j}"
 	assert_success
 	unset npm_package_name
 }
