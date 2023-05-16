@@ -368,6 +368,19 @@ layout_grid5="
 	assert_success
 }
 
+@test "./tmex testsessionname --layout {}3[5]4" {
+	run $dir/tmex testsessionname --layout {}3[5]4
+	assert_output -p "Invalid input: --layout={}3[5]4 cannot start with {} clause"
+	run $dir/tmex testsessionname --layout {g}3[5]4
+	assert_output -p "Invalid input: --layout={g}3[5]4 cannot start with {g} clause"
+	run $dir/tmex testsessionname --layout {grid}3[5]4
+	assert_output -p "Invalid input: --layout={grid}3[5]4 cannot start with {grid} clause"
+	run $dir/tmex testsessionname --layout {G}3[5]4
+	assert_output -p "Invalid input: --layout={G}3[5]4 cannot start with {G} clause"
+	run $dir/tmex testsessionname --layout {GRID}3[5]4
+	assert_output -p "Invalid input: --layout={GRID}3[5]4 cannot start with {GRID} clause"
+}
+
 layout_1234_transposed="
 	split-window -v -p50
 	 select-pane -U

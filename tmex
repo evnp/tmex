@@ -9,8 +9,8 @@ function processargs () {
   local args
   local argidx
   local arg
-	local argmodified
-	local emptybraces
+  local argmodified
+  local emptybraces
   local idx
   local char
 
@@ -208,7 +208,7 @@ function validatelayout () {
   # if layout contains characters other than 0-9, [, ], {, }, exit with error
   if ! [[ "${arglayout}" =~ ^[][}{0-9]+$ ]]; then
     echo ""
-    echo "Invalid input: --layout=${arglayoutoriginal} must contain only numeric characters, [ ] { } brackets, or characters 's' 'g' ','"
+    echo "Invalid input: --layout=${arglayoutoriginal} must contain only numeric characters and [ ] { } brackets"
     echo ""
     echo "${usage}"
     exit 1
@@ -742,21 +742,28 @@ For more information, see https://github.com/evnp/tmex
   if [[ -z "${arglayout}" ]]; then
     generatelayout "${#argcmds[@]}"
   else
-		arglayoutoriginal="${arglayout}"
+    arglayoutoriginal="${arglayout}"
 
     # --- Grid Sub-Layouts --- #
     # for each set of hyphen-surrounded digits within layout,
     # replace with a default grid sub-layout with size matching digits:
-    pattern="([0-9]+)\{(g?(rid)?)\}"
+    pattern="([0-9]+)\{(g|grid)?\}"
     shopt -s nocasematch
     while [[ "${arglayout}" =~ ${pattern} ]]; do
-      echo "${BASH_REMATCH[@]}"
       layoutsize="${BASH_REMATCH[1]}"
       parentlayout="${arglayout}"
       generatelayout "${layoutsize}"
       arglayout="${parentlayout/${layoutsize}\{${BASH_REMATCH[2]}\}/${arglayout}}"
     done
     shopt -u nocasematch
+    # if layout _starts_ with any of {} {g} {grid} {G} {GRID} clauses, exit with error
+    if [[ "${arglayout}" =~ ^(\{\}) || "${arglayout}" =~ ^(\{g(rid)?\}) || "${arglayout}" =~ ^(\{G(RID)?\}) ]]; then
+      echo ""
+      echo "Invalid input: --layout=${arglayoutoriginal} cannot start with ${BASH_REMATCH[1]} clause"
+      echo ""
+      echo "${usage}"
+      exit 1
+    fi
 
     # --- Top Level Sizing --- #
     # if layout starts with { } bracket sizing, automatically wrap the whole thing
