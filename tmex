@@ -80,15 +80,15 @@ function processargs () {
 
   # if next arg is a valid layout, use it as layout instead of shell command
   arg="${args[argidx]-}"
-	# remove {g} {grid} {G} {GRID} sections from arg before validating layout
-	emptybraces='{}'
+  # remove {g} {grid} {G} {GRID} sections from arg before validating layout
+  emptybraces='{}'
   argmodified="${arg//\{g\}/${emptybraces}}"
   argmodified="${arg//\{grid\}/${emptybraces}}"
   argmodified="${arg//\{G\}/${emptybraces}}"
   argmodified="${arg//\{GRID\}/${emptybraces}}"
-  if [[ -z "${arglayout}" && "${argmodified}" =~ ^[][}{1-9]+$ ]]; then
-    # ^ ensure arg only contains [] {} 0-9
-    if ! [[ "${argmodified}" =~ {[^}{]*[^1-9][^}{]*} ]]; then
+  if [[ -z "${arglayout}" && "${argmodified}" =~ ^[][}{0-9/]+$ ]]; then
+    # ^ ensure arg only contains [] {} 0-9 /
+    if ! [[ "${argmodified}" =~ {[^}{]*[^0-9/][^}{]*} ]]; then
       # ^ ensure arg doesn't have any { } groups which contain non-numeric chars
       (( argidx++ )) || true
       arglayout="${arg}"
@@ -202,11 +202,13 @@ function validatelayout () {
 
   local idx
   local char
+  local nextchar
   local layoutsizesum
   local sizebracketsopen
+  local multidigitvalue
 
-  # if layout contains characters other than 0-9, [, ], {, }, exit with error
-  if ! [[ "${arglayout}" =~ ^[][}{0-9]+$ ]]; then
+  # if layout contains characters other than 0-9, [, ], {, }, /, exit with error
+  if ! [[ "${arglayout}" =~ ^[][}{0-9/]+$ ]]; then
     echo ""
     echo "Invalid input: --layout=${arglayoutoriginal} must contain only numeric characters and [ ] { } brackets"
     echo ""
@@ -214,17 +216,8 @@ function validatelayout () {
     exit 1
   fi
 
-  # if layout contains zero, exit with error
-  if [[ "${arglayout}" =~ 0 ]]; then
-    echo ""
-    echo "Invalid input: --layout=${arglayoutoriginal} column/size cannot be set to zero"
-    echo ""
-    echo "${usage}"
-    exit 1
-  fi
-
-  # if layout contains non-numeric characters within { } brackets, exit with error
-  if [[ "${arglayout}" =~ {[^}{]*[^0-9][^}{]*} ]]; then
+  # if layout contains non-numeric non-slash characters within { } brackets, exit with error
+  if [[ "${arglayout}" =~ {[^}{]*[^0-9/][^}{]*} ]]; then
     echo ""
     echo "Invalid input: --layout=${arglayoutoriginal} cannot include non-numeric characters within { } brackets"
     echo ""
@@ -234,13 +227,38 @@ function validatelayout () {
 
   layoutsizesum=0
   sizebracketsopen=FALSE
+  multidigitvalue='-1'
+  if [[ "${arglayout}" =~ ^[0-9]+/ ]]; then
+    multidigitvalue=''
+  fi
   for (( idx = 0; idx < ${#arglayout}; idx++ )); do
     char="${arglayout:${idx}:1}"
-    if [[ "${char}" == '{' ]]; then
+    nextchar="${layout:$(( idx + 1 )):1}"
+
+    if [[ "${char}" == "/" ]]; then
+      if [[ "${nextchar}" =~ ^[0-9]$ ]]; then
+        multidigitvalue=''
+      fi
+      continue
+    elif [[ "${multidigitvalue}" != '-1' && "${char}" =~ ^[0-9]$ ]]; then
+      multidigitvalue+="${char}"
+      if [[ "${nextchar}" =~ ^[0-9]$ ]]; then
+        continue
+      else
+        char="${multidigitvalue}"
+        multidigitvalue='-1'
+      fi
+    else
+      multidigitvalue='-1'
+    fi
+
+    if [[ "${char}" == '0' ]]; then
+      continue
+    elif [[ "${char}" == '{' ]]; then
       sizebracketsopen=TRUE
     elif [[ "${char}" == '}' ]]; then
       sizebracketsopen=FALSE
-    elif [[ "${sizebracketsopen}" == FALSE && "${char}" =~ [0-9] ]]; then
+    elif [[ "${sizebracketsopen}" == FALSE && "${char}" =~ ^[0-9]+$ ]]; then
       (( layoutsizesum += char )) || true
     fi
   done
@@ -356,6 +374,7 @@ function split1d () {
   local percentage
   local pctprefix
   local pctsuffix
+  local multidigitvalue
 
   # support for percentage values under `split-pane -l<value>%` was added in tmux 3.1
   # and `split-pane -p<value>` was deprecated (fully removed in tmux 3.4)
@@ -369,19 +388,25 @@ function split1d () {
   fi
 
   # convert sizing string to sizearr:
-  # numpanes: 3, sizing: "123" -> [1, 2, 3]
-  # numpanes: 3, sizing: ""    -> [1, 1, 1]
-  # numpanes: 3, sizing: "23"  -> [2, 3, 1]
-  sizesum=0
+  # sizing: "1/2/3"  -> [1, 2, 3]
+  # sizing: ""       -> []
+  # sizing: "2/3"    -> [2, 3]
+  # sizing: "12/13"  -> [12, 13]
+  # NOTE: leading/trailing slashes on these strings are acceptable
+  sizesum="${numpanes}"
   sizearr=()
-  for (( idx = 0; idx < numpanes; idx++ )); do
-    char="1"
-    if (( ${#sizing} > idx )); then
-      char="${sizing:idx:1}"
+  multidigitvalue=''
+  for (( idx = 0; idx <= ${#sizing}; idx++ )); do
+    char="${sizing:idx:1}"
+    if [[ "${char}" =~ ^[0-9]$ ]]; then
+      multidigitvalue+="${char}"
+    elif [[ -n "${multidigitvalue}" ]]; then
+      sizearr+=( "${multidigitvalue}" )
+      (( sizesum += ( multidigitvalue - 1 ) )) || true
+      multidigitvalue=''
     fi
-    sizearr+=( "${char}" )
-    (( sizesum += char )) || true
   done
+  # echo "${sizing}" "${sizesum}" "${sizearr[@]:-}"
 
   # if more than 2 panes and numpanes is even, split down the middle
   if (( numpanes > 2 && numpanes % 2 == 0 )); then
@@ -391,7 +416,7 @@ function split1d () {
     halfsizesum=0
 
     for (( idx = 0; idx < half; idx++ )); do
-      (( halfsizesum += sizearr[idx] )) || true
+      (( halfsizesum += ${sizearr[idx]:-1} )) || true
     done
 
     # percentage = 100 - round((halfsizesum * 100) / sizesum)
@@ -405,15 +430,15 @@ function split1d () {
     selectpane "${direction}" "UL" 1
 
     # keep splitting - 1st half of panes, then select pane at middle, then 2nd half
-    split1d "${direction}" "${half}" "${sizing:0:half}" "${cmds[@]:0:half}"
+    split1d "${direction}" "${half}" "$( IFS='/'; echo "${sizearr[@]:0:half}" )" "${cmds[@]:0:half}"
     selectpane "${direction}" "DR" 1
-    split1d "${direction}" "${half}" "${sizing:half}" "${cmds[@]:half}"
+    split1d "${direction}" "${half}" "$( IFS='/'; echo "${sizearr[@]:half}" )" "${cmds[@]:half}"
 
   # if only 2 panes or numpanes is odd, split off first pane
   elif (( numpanes >= 2 )); then
 
     # percentage = 100 - round((sizearr[0] * 100) / sizesum)
-    percentage=$(( ( sizearr[0] * 100 * 1000 ) / sizesum ))
+    percentage=$(( ( ${sizearr[0]:-1} * 100 * 1000 ) / sizesum ))
     percentage=$(( ( percentage + 500 ) / 1000 ))  # round
     percentage=$(( 100 - percentage ))  # invert
 
@@ -423,7 +448,7 @@ function split1d () {
 
     # if more than 2 panes, keep splitting
     if (( numpanes > 2 && numpanes % 2 > 0 )); then
-      split1d "${direction}" "$(( numpanes - 1 ))" "${sizing:1}" "${cmds[@]:1}"
+			split1d "${direction}" "$(( numpanes - 1 ))" "$( IFS='/'; echo "${sizearr[@]:1}" )" "${cmds[@]:1}"
     fi
   fi
 }
@@ -455,6 +480,7 @@ function split2d () {
 
   local idx
   local char
+  local nextchar
   local depth
   local flag
 
@@ -469,36 +495,61 @@ function split2d () {
   local subcmds
 
   local sizebracketsopen
+  local multidigitvalue
 
   # expand layout string into three arrays:
-  # e.g. "12(31)[3[45](21)](12)6"
-  # -> ["1", "11", "3[45](21)", "111111"]  # sublayouts
-  # -> [ 1,   2,    12,          6      ]  # sublayoutpanecounts
-  # -> ["",  "31", "12",        ""      ]  # sublayoutsizings
+  # e.g. "12{31}[3[45]{21}]{12}6"
+  # -> ["1", "11",   "3[45]{21}", "111111"]  # sublayouts
+  # -> [ 1,   2,      12,          6      ]  # sublayoutpanecounts
+  # -> ["",  "3/1/", "1/2/",      ""      ]  # sublayoutsizings
   depth=0
   sublayouts=()
   sublayoutpanecounts=()
   sublayoutsizings=()
   sizebracketsopen=FALSE
+  multidigitvalue='-1'
+  if [[ "${layout}" =~ ^[0-9]+/ ]]; then
+    multidigitvalue=''
+  fi
   for (( idx = 0; idx < ${#layout}; idx++ )); do
     char="${layout:${idx}:1}"
+    nextchar="${layout:$(( idx + 1 )):1}"
 
-    if [[ "${char}" == '{' ]]; then
+    if [[ "${char}" == "/" ]]; then
+      if [[ "${nextchar}" =~ ^[0-9]$ ]]; then
+        multidigitvalue='-1'
+      fi
+      continue
+    elif [[ "${multidigitvalue}" != '-1' && "${char}" =~ ^[0-9]$ ]]; then
+      multidigitvalue+="${char}"
+      if [[ "${nextchar}" =~ ^[0-9]$ ]]; then
+        continue
+      else
+        char="${multidigitvalue}"
+        multidigitvalue='-1'
+      fi
+    else
+      multidigitvalue='-1'
+    fi
+
+    if [[ "${char}" == '0' ]]; then
+      continue
+    elif [[ "${char}" == '{' ]]; then
       sizebracketsopen=TRUE
     elif [[ "${char}" == '}' ]]; then
       sizebracketsopen=FALSE
-    elif [[ "${sizebracketsopen}" == TRUE ]] && (( "${depth}" == 0 )); then
-      sublayoutsizings[${#sublayoutsizings[@]} - 1]+="${char}"
+    elif [[ "${sizebracketsopen}" == TRUE ]] && (( depth == 0 )); then
+      sublayoutsizings[${#sublayoutsizings[@]} - 1]+="${char}/"
     fi
 
     if [[ "${char}" == ']' ]]; then
       (( depth -= 1 )) || true
     fi
 
-    if (( "${depth}" > 0 )); then
+    if (( depth > 0 )); then
       sublayouts[${#sublayouts[@]} - 1]+="${char}"
 
-      if [[ "${char}" =~ ^[0-9]$ && "${sizebracketsopen}" == FALSE ]]; then
+      if [[ "${char}" =~ ^[0-9]+$ && "${sizebracketsopen}" == FALSE ]]; then
         (( sublayoutpanecounts[${#sublayoutpanecounts[@]} - 1] += char )) || true
       fi
     fi
@@ -512,7 +563,7 @@ function split2d () {
       (( depth += 1 )) || true
     fi
 
-    if [[ "${char}" =~ ^[0-9]$ && "${sizebracketsopen}" == FALSE ]] && (( depth == 0 )); then
+    if [[ "${char}" =~ ^[0-9]+$ && "${sizebracketsopen}" == FALSE ]] && (( depth == 0 )); then
       sublayout=$( printf '%0.s1' $( seq 1 "${char}" ) ) # "111..1" str len == char
       sublayouts+=( "${sublayout}" )
       sublayoutpanecounts+=( "${char}" )
@@ -626,7 +677,7 @@ tmex <session-name> -nt 1224 "cmd a" "cmd b" "cmd c" ... etc.
 tmex <session-name>                - session name required unless --npm or --kill set; all other args optional
   [-h|--help]
   [-v|--version]
-  [[-l|--layout] <1-9,[,],{,}>]    -l, --layout      layout string, each digit represents number of panes in column
+  [[-l|--layout] <0-9,/,[,],{,}>]  -l, --layout      layout string, each digit represents number of panes in column
   [-t|--transpose]                 -t, --transpose   build layout in left-to-right orientation instead of top-to-bottom
   [-n|--npm]                       -n, --npm         if set, prefix each command with "npm run" for package.json scripts
   [-p|--print]                     -p, --print       emit command as string of tmux args instead of invoking tmux directly
@@ -642,7 +693,7 @@ tmex <session-name>                - session name required unless --npm or --kil
   # shellcheck disable=SC2016
   help='-l, --layout
   If no layout is provided, a default will be generated to match the number of commands provided.
-  Otherwise, layout must be a string of digits 1-9, and [ ] { } chars. Each digit divides a column into a number of panes, e.g.
+  Otherwise, layout must be a string of digits 0-9, and [ ] { } chars. Each digit divides a column into a number of panes, e.g.
     $ tmex -n --layout=1224
   This layout produces 1 pane in the first column, 2 panes in the 2nd and 3rd columns, and 4 panes in the 4th column.
   [ ] and { } delineate sub-layouts and custom sizing. e.g.
@@ -745,7 +796,7 @@ For more information, see https://github.com/evnp/tmex
     arglayoutoriginal="${arglayout}"
 
     # --- Grid Sub-Layouts --- #
-    # for each set of hyphen-surrounded digits within layout,
+    # for each set of digits within layout followed by {} {g} {grid} {G} {GRID}
     # replace with a default grid sub-layout with size matching digits:
     pattern="([0-9]+)\{(g|grid)?\}"
     shopt -s nocasematch
@@ -753,6 +804,10 @@ For more information, see https://github.com/evnp/tmex
       layoutsize="${BASH_REMATCH[1]}"
       parentlayout="${arglayout}"
       generatelayout "${layoutsize}"
+      # wrap every pane count of new sub-layout within its own set of [[ ]] brackets,
+      # so that slashes in adjacent sections of parent layout don't trigger multi-digit
+      # counting logic within the new sub-layout:
+      arglayout="$( sed -E 's/([0-9])/[[\1]]/g' <<< "${arglayout}" )"
       arglayout="${parentlayout/${layoutsize}\{${BASH_REMATCH[2]}\}/${arglayout}}"
     done
     shopt -u nocasematch
@@ -768,7 +823,7 @@ For more information, see https://github.com/evnp/tmex
     # --- Top Level Sizing --- #
     # if layout starts with { } bracket sizing, automatically wrap the whole thing
     # in a sublayout and transpose it, so that top-level sizing is applied
-    pattern="^(\{[0-9]+\})"
+    pattern="^(\{[0-9/]+\})"
     if [[ "${arglayout}" =~ ${pattern} ]]; then
       toplevelsizing="${BASH_REMATCH[1]}"
       arglayout="[${arglayout/${toplevelsizing}/}]${toplevelsizing}"

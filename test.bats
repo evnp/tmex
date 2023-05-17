@@ -210,9 +210,33 @@ layout_1234="
 	assert_layout "${layout_1234}"
 	assert_success
 }
+@test "./tmex testsessionname 1/2/3/4" {
+	run $dir/tmex testsessionname 1/2/3/4
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234}"
+	assert_success
+}
+@test "./tmex testsessionname 1//2//3//4" {
+	run $dir/tmex testsessionname 1//2//3//4
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234}"
+	assert_success
+}
+@test "./tmex testsessionname /1//2//3//4/" {
+	run $dir/tmex testsessionname /1//2//3//4/
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234}"
+	assert_success
+}
 
 @test "./tmex testsessionname -l1234" {
 	run $dir/tmex testsessionname -l1234
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234}"
+	assert_success
+}
+@test "./tmex testsessionname -l1/2/3/4" {
+	run $dir/tmex testsessionname -l1/2/3/4
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_1234}"
 	assert_success
@@ -224,9 +248,21 @@ layout_1234="
 	assert_layout "${layout_1234}"
 	assert_success
 }
+@test "./tmex testsessionname -l 1/2/3/4" {
+	run $dir/tmex testsessionname -l 1/2/3/4
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234}"
+	assert_success
+}
 
 @test "./tmex testsessionname --layout=1234" {
 	run $dir/tmex testsessionname --layout=1234
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234}"
+	assert_success
+}
+@test "./tmex testsessionname --layout=1/2/3/4" {
+	run $dir/tmex testsessionname --layout=1/2/3/4
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_1234}"
 	assert_success
@@ -238,6 +274,12 @@ layout_1234="
 	assert_layout "${layout_1234}"
 	assert_success
 }
+@test "./tmex testsessionname --layout 1/2/3/4" {
+	run $dir/tmex testsessionname --layout 1/2/3/4
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234}"
+	assert_success
+}
 
 @test "./tmex testsessionname --layout {1111}1234" {
 	run $dir/tmex testsessionname --layout {1111}1234
@@ -245,9 +287,69 @@ layout_1234="
 	assert_layout "${layout_1234}"
 	assert_success
 }
+@test "./tmex testsessionname --layout {1111}1/2/3/4" {
+	run $dir/tmex testsessionname --layout {1111}1/2/3/4
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234}"
+	assert_success
+}
+@test "./tmex testsessionname --layout {1/1/1/1}1234" {
+	run $dir/tmex testsessionname --layout {1/1/1/1}1234
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234}"
+	assert_success
+}
+@test "./tmex testsessionname --layout {1/1/1/1}1/2/3/4" {
+	run $dir/tmex testsessionname --layout {1/1/1/1}1/2/3/4
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234}"
+	assert_success
+}
+@test "./tmex testsessionname --layout {1/1/1/1}/1234" {
+	run $dir/tmex testsessionname --layout {1/1/1/1}/1234
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234}"
+	assert_success
+}
+@test "./tmex testsessionname --layout {1/1/1/1}/1/2/3/4" {
+	run $dir/tmex testsessionname --layout {1/1/1/1}/1/2/3/4
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234}"
+	assert_success
+}
 
 @test "./tmex testsessionname --layout {9999}1234" {
 	run $dir/tmex testsessionname --layout {9999}1234
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234}"
+	assert_success
+}
+@test "./tmex testsessionname --layout {9999}1/2/3/4" {
+	run $dir/tmex testsessionname --layout {9999}1/2/3/4
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234}"
+	assert_success
+}
+@test "./tmex testsessionname --layout {9/9/9/9}1234" {
+	run $dir/tmex testsessionname --layout {9/9/9/9}1234
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234}"
+	assert_success
+}
+@test "./tmex testsessionname --layout {9/9/9/9}1/2/3/4" {
+	run $dir/tmex testsessionname --layout {9/9/9/9}1/2/3/4
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234}"
+	assert_success
+}
+@test "./tmex testsessionname --layout {9/9/9/9}/1234" {
+	run $dir/tmex testsessionname --layout {9/9/9/9}/1234
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234}"
+	assert_success
+}
+@test "./tmex testsessionname --layout {9/9/9/9}/1/2/3/4" {
+	run $dir/tmex testsessionname --layout {9/9/9/9}/1/2/3/4
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_1234}"
 	assert_success
@@ -281,6 +383,36 @@ layout_4321="
 	assert_layout "${layout_4321}"
 	assert_success
 }
+@test "./tmex testsessionname --layout {4321}1/2/3/4" {
+	run $dir/tmex testsessionname --layout {4321}1/2/3/4
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_4321}"
+	assert_success
+}
+@test "./tmex testsessionname --layout {4/3/2/1}1234" {
+	run $dir/tmex testsessionname --layout {4/3/2/1}1234
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_4/3/2/1}"
+	assert_success
+}
+@test "./tmex testsessionname --layout {4/3/2/1}1/2/3/4" {
+	run $dir/tmex testsessionname --layout {4/3/2/1}1/2/3/4
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_4321}"
+	assert_success
+}
+@test "./tmex testsessionname --layout {4/3/2/1}/1234" {
+	run $dir/tmex testsessionname --layout {4/3/2/1}/1234
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_4/3/2/1}"
+	assert_success
+}
+@test "./tmex testsessionname --layout {4/3/2/1}/1/2/3/4" {
+	run $dir/tmex testsessionname --layout {4/3/2/1}/1/2/3/4
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_4321}"
+	assert_success
+}
 
 shorthand_layout_987654321="
 	H -p80 H -p28 L H -p42 L H -p47 R H -p45 R H -p30 L H -p43 R H -p33
@@ -297,25 +429,75 @@ shorthand_layout_987654321="
 	assert_layout_shorthand "${shorthand_layout_987654321}"
 	assert_success
 }
+@test "./tmex testsessionname --layout {987654321}1/2/3/4/5/6/7/8/9" {
+	run $dir/tmex testsessionname --layout {987654321}1/2/3/4/5/6/7/8/9
+	assert_output -p "new-session -s testsessionname"
+	assert_layout_shorthand "${shorthand_layout_987654321}"
+	assert_success
+}
+@test "./tmex testsessionname --layout {9/8/7/6/5/4/3/2/1}123456789" {
+	run $dir/tmex testsessionname --layout {9/8/7/6/5/4/3/2/1}123456789
+	assert_output -p "new-session -s testsessionname"
+	assert_layout_shorthand "${shorthand_layout_987654321}"
+	assert_success
+}
+@test "./tmex testsessionname --layout {9/8/7/6/5/4/3/2/1}/123456789" {
+	run $dir/tmex testsessionname --layout {9/8/7/6/5/4/3/2/1}/123456789
+	assert_output -p "new-session -s testsessionname"
+	assert_layout_shorthand "${shorthand_layout_987654321}"
+	assert_success
+}
+@test "./tmex testsessionname --layout {9/8/7/6/5/4/3/2/1}1/2/3/4/5/6/7/8/9" {
+	run $dir/tmex testsessionname --layout {9/8/7/6/5/4/3/2/1}1/2/3/4/5/6/7/8/9
+	assert_output -p "new-session -s testsessionname"
+	assert_layout_shorthand "${shorthand_layout_987654321}"
+	assert_success
+}
+@test "./tmex testsessionname --layout {9/8/7/6/5/4/3/2/1}/1/2/3/4/5/6/7/8/9" {
+	run $dir/tmex testsessionname --layout {9/8/7/6/5/4/3/2/1}/1/2/3/4/5/6/7/8/9
+	assert_output -p "new-session -s testsessionname"
+	assert_layout_shorthand "${shorthand_layout_987654321}"
+	assert_success
+}
 
 @test "./tmex testsessionname --layout 3{}34" {
 	run $dir/tmex testsessionname --layout 3{}34
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_1234}"
 	assert_success
+}
+@test "./tmex testsessionname --layout 3{g}34" {
 	run $dir/tmex testsessionname --layout 3{g}34
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_1234}"
 	assert_success
+}
+@test "./tmex testsessionname --layout 3{grid}34" {
 	run $dir/tmex testsessionname --layout 3{grid}34
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_1234}"
 	assert_success
+}
+@test "./tmex testsessionname --layout 3{G}34" {
 	run $dir/tmex testsessionname --layout 3{G}34
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_1234}"
 	assert_success
+}
+@test "./tmex testsessionname --layout 3{GRID}34" {
 	run $dir/tmex testsessionname --layout 3{GRID}34
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234}"
+	assert_success
+}
+@test "./tmex testsessionname --layout 3{}3/4" {
+	run $dir/tmex testsessionname --layout 3{}3/4
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234}"
+	assert_success
+}
+@test "./tmex testsessionname --layout /3{}/3/4/" {
+	run $dir/tmex testsessionname --layout /3{}/3/4/
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_1234}"
 	assert_success
@@ -350,19 +532,51 @@ layout_grid5="
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_grid5}"
 	assert_success
+}
+@test "./tmex testsessionname --layout 3[5{g}]4" {
 	run $dir/tmex testsessionname --layout 3[5{g}]4
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_grid5}"
 	assert_success
+}
+@test "./tmex testsessionname --layout 3[5{grid}]4" {
 	run $dir/tmex testsessionname --layout 3[5{grid}]4
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_grid5}"
 	assert_success
+}
+@test "./tmex testsessionname --layout 3[5{G}]4" {
 	run $dir/tmex testsessionname --layout 3[5{G}]4
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_grid5}"
 	assert_success
+}
+@test "./tmex testsessionname --layout 3[5{GRID}]4" {
 	run $dir/tmex testsessionname --layout 3[5{GRID}]4
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_grid5}"
+	assert_success
+}
+@test "./tmex testsessionname --layout 3/[5{}/]4" {
+	run $dir/tmex testsessionname --layout 3/[5{}/]4
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_grid5}"
+	assert_success
+}
+@test "./tmex testsessionname --layout 3/[5{}]/4" {
+	run $dir/tmex testsessionname --layout 3/[5{}]/4
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_grid5}"
+	assert_success
+}
+@test "./tmex testsessionname --layout 3[/5{}/]4" {
+	run $dir/tmex testsessionname --layout 3[/5{}/]4
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_grid5}"
+	assert_success
+}
+@test "./tmex testsessionname --layout /3[5{}]/4/" {
+	run $dir/tmex testsessionname --layout /3[5{}]/4/
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_grid5}"
 	assert_success
@@ -371,14 +585,26 @@ layout_grid5="
 @test "./tmex testsessionname --layout {}3[5]4" {
 	run $dir/tmex testsessionname --layout {}3[5]4
 	assert_output -p "Invalid input: --layout={}3[5]4 cannot start with {} clause"
+}
+@test "./tmex testsessionname --layout {g}3[5]4" {
 	run $dir/tmex testsessionname --layout {g}3[5]4
 	assert_output -p "Invalid input: --layout={g}3[5]4 cannot start with {g} clause"
+}
+@test "./tmex testsessionname --layout {grid}3[5]4" {
 	run $dir/tmex testsessionname --layout {grid}3[5]4
 	assert_output -p "Invalid input: --layout={grid}3[5]4 cannot start with {grid} clause"
+}
+@test "./tmex testsessionname --layout {G}3[5]4" {
 	run $dir/tmex testsessionname --layout {G}3[5]4
 	assert_output -p "Invalid input: --layout={G}3[5]4 cannot start with {G} clause"
+}
+@test "./tmex testsessionname --layout {GRID}3[5]4" {
 	run $dir/tmex testsessionname --layout {GRID}3[5]4
 	assert_output -p "Invalid input: --layout={GRID}3[5]4 cannot start with {GRID} clause"
+}
+@test "./tmex testsessionname --layout {GRID}/3[/5]/4/" {
+	run $dir/tmex testsessionname --layout {GRID}/3[/5]/4/
+	assert_output -p "Invalid input: --layout={GRID}/3[/5]/4/ cannot start with {GRID} clause"
 }
 
 layout_1234_transposed="
@@ -408,15 +634,45 @@ layout_1234_transposed="
 	assert_layout "${layout_1234_transposed}"
 	assert_success
 }
+@test "./tmex testsessionname -t 1/2/3/4" {
+	run $dir/tmex testsessionname -t 1/2/3/4
+	assert_layout "${layout_1234_transposed}"
+	assert_success
+}
+@test "./tmex testsessionname -t /1/2/3/4/" {
+	run $dir/tmex testsessionname -t /1/2/3/4/
+	assert_layout "${layout_1234_transposed}"
+	assert_success
+}
 
 @test "./tmex testsessionname -l1234 -t" {
 	run $dir/tmex testsessionname -l1234 -t
 	assert_layout "${layout_1234_transposed}"
 	assert_success
 }
+@test "./tmex testsessionname -l1/2/3/4 -t" {
+	run $dir/tmex testsessionname -l1/2/3/4 -t
+	assert_layout "${layout_1234_transposed}"
+	assert_success
+}
+@test "./tmex testsessionname -l/1/2/3/4/ -t" {
+	run $dir/tmex testsessionname -l/1/2/3/4/ -t
+	assert_layout "${layout_1234_transposed}"
+	assert_success
+}
 
 @test "./tmex testsessionname --layout=1234 --transpose" {
 	run $dir/tmex testsessionname --layout=1234 --transpose
+	assert_layout "${layout_1234_transposed}"
+	assert_success
+}
+@test "./tmex testsessionname --layout=1/2/3/4 --transpose" {
+	run $dir/tmex testsessionname --layout=1/2/3/4 --transpose
+	assert_layout "${layout_1234_transposed}"
+	assert_success
+}
+@test "./tmex testsessionname --layout=/1/2/3/4/ --transpose" {
+	run $dir/tmex testsessionname --layout=/1/2/3/4/ --transpose
 	assert_layout "${layout_1234_transposed}"
 	assert_success
 }
@@ -453,9 +709,33 @@ layout_123456="
 	assert_layout "${layout_123456}"
 	assert_success
 }
+@test "./tmex testsessionname 1/[2{3/4}/5]/6" {
+	run $dir/tmex testsessionname 1/[2{3/4}/5]/6
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_123456}"
+	assert_success
+}
+@test "./tmex testsessionname /1[/2{34}5]6/" {
+	run $dir/tmex testsessionname /1[/2{34}5]6/
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_123456}"
+	assert_success
+}
 
 @test "./tmex testsessionname -l1[2{34}5]6" {
 	run $dir/tmex testsessionname -l1[2{34}5]6
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_123456}"
+	assert_success
+}
+@test "./tmex testsessionname -l1/[2{3/4}/5]/6" {
+	run $dir/tmex testsessionname -l1/[2{3/4}/5]/6
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_123456}"
+	assert_success
+}
+@test "./tmex testsessionname -l/1[/2{34}5]6/" {
+	run $dir/tmex testsessionname -l/1[/2{34}5]6/
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_123456}"
 	assert_success
@@ -467,6 +747,18 @@ layout_123456="
 	assert_layout "${layout_123456}"
 	assert_success
 }
+@test "./tmex testsessionname -l 1/[2{3/4}/5]/6" {
+	run $dir/tmex testsessionname -l 1/[2{3/4}/5]/6
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_123456}"
+	assert_success
+}
+@test "./tmex testsessionname -l /1[/2{34}5]6/" {
+	run $dir/tmex testsessionname -l /1[/2{34}5]6/
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_123456}"
+	assert_success
+}
 
 @test "./tmex testsessionname --layout=1[2{34}5]6" {
 	run $dir/tmex testsessionname --layout=1[2{34}5]6
@@ -474,9 +766,33 @@ layout_123456="
 	assert_layout "${layout_123456}"
 	assert_success
 }
+@test "./tmex testsessionname --layout=1/[2{3/4}/5]/6" {
+	run $dir/tmex testsessionname --layout=1/[2{3/4}/5]/6
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_123456}"
+	assert_success
+}
+@test "./tmex testsessionname --layout=/1[/2{34}5]6/" {
+	run $dir/tmex testsessionname --layout=/1[/2{34}5]6/
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_123456}"
+	assert_success
+}
 
 @test "./tmex testsessionname --layout 1[2{34}5]6" {
 	run $dir/tmex testsessionname --layout 1[2{34}5]6
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_123456}"
+	assert_success
+}
+@test "./tmex testsessionname --layout 1/[2{3/4}/5]/6" {
+	run $dir/tmex testsessionname --layout 1/[2{3/4}/5]/6
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_123456}"
+	assert_success
+}
+@test "./tmex testsessionname --layout /1[/2{34}5]6/" {
+	run $dir/tmex testsessionname --layout /1[/2{34}5]6/
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_123456}"
 	assert_success
@@ -513,15 +829,45 @@ layout_123456_transposed="
 	assert_layout "${layout_123456_transposed}"
 	assert_success
 }
+@test "./tmex testsessionname -t 1/[2{3/4}/5]/6" {
+	run $dir/tmex testsessionname -t 1/[2{3/4}/5]/6
+	assert_layout "${layout_123456_transposed}"
+	assert_success
+}
+@test "./tmex testsessionname -t /1[/2{34}5]6/" {
+	run $dir/tmex testsessionname -t /1[/2{34}5]6/
+	assert_layout "${layout_123456_transposed}"
+	assert_success
+}
 
 @test "./tmex testsessionname -l1[2{34}5]6 -t" {
 	run $dir/tmex testsessionname -l1[2{34}5]6 -t
 	assert_layout "${layout_123456_transposed}"
 	assert_success
 }
+@test "./tmex testsessionname -l1/[2{3/4}/5]/6 -t" {
+	run $dir/tmex testsessionname -l1/[2{3/4}/5]/6 -t
+	assert_layout "${layout_123456_transposed}"
+	assert_success
+}
+@test "./tmex testsessionname -l/1[/2{34}5]6/ -t" {
+	run $dir/tmex testsessionname -l/1[/2{34}5]6/ -t
+	assert_layout "${layout_123456_transposed}"
+	assert_success
+}
 
 @test "./tmex testsessionname --layout=1[2{34}5]6 --transpose" {
 	run $dir/tmex testsessionname --layout=1[2{34}5]6 --transpose
+	assert_layout "${layout_123456_transposed}"
+	assert_success
+}
+@test "./tmex testsessionname --layout=1/[2{3/4}/5]/6 --transpose" {
+	run $dir/tmex testsessionname --layout=1/[2{3/4}/5]/6 --transpose
+	assert_layout "${layout_123456_transposed}"
+	assert_success
+}
+@test "./tmex testsessionname --layout=/1[/2{34}5]6/ --transpose" {
+	run $dir/tmex testsessionname --layout=/1[/2{34}5]6/ --transpose
 	assert_layout "${layout_123456_transposed}"
 	assert_success
 }
@@ -552,6 +898,16 @@ split-window -v -p50
 
 @test "./tmex testsessionname -l=44 a b c d e f g h" {
 	run $dir/tmex testsessionname -l=44 a b c d e f g h
+	assert_layout "${layout_44}"
+	assert_success
+}
+@test "./tmex testsessionname -l=4/4 a b c d e f g h" {
+	run $dir/tmex testsessionname -l=4/4 a b c d e f g h
+	assert_layout "${layout_44}"
+	assert_success
+}
+@test "./tmex testsessionname -l=/4/4/ a b c d e f g h" {
+	run $dir/tmex testsessionname -l=/4/4/ a b c d e f g h
 	assert_layout "${layout_44}"
 	assert_success
 }
@@ -594,6 +950,16 @@ split-window -v -p50
 
 @test "./tmex testsessionname -l=444 a b c d e f g h i j k l" {
 	run $dir/tmex testsessionname -l=444 a b c d e f g h i j k l
+	assert_layout "${layout_444}"
+	assert_success
+}
+@test "./tmex testsessionname -l=4/4/4 a b c d e f g h i j k l" {
+	run $dir/tmex testsessionname -l=4/4/4 a b c d e f g h i j k l
+	assert_layout "${layout_444}"
+	assert_success
+}
+@test "./tmex testsessionname -l=/4/4/4/ a b c d e f g h i j k l" {
+	run $dir/tmex testsessionname -l=/4/4/4/ a b c d e f g h i j k l
 	assert_layout "${layout_444}"
 	assert_success
 }
@@ -1017,10 +1383,26 @@ layout_a_j="
 	run $dir/tmex -n 1234 a b c d e f g h i j k
 	assert_output -p "Invalid input: --layout=1234 is too small for number of commands provided"
 }
+@test "./tmex -n 1/2/3/4 a b c d e f g h i j k" {
+	run $dir/tmex -n 1/2/3/4 a b c d e f g h i j k
+	assert_output -p "Invalid input: --layout=1/2/3/4 is too small for number of commands provided"
+}
+@test "./tmex -n /1/2/3/4/ a b c d e f g h i j k" {
+	run $dir/tmex -n /1/2/3/4/ a b c d e f g h i j k
+	assert_output -p "Invalid input: --layout=/1/2/3/4/ is too small for number of commands provided"
+}
 
 @test "./tmex -n 1[2{34}5]6 a b c d e f g h i j k l m n o" {
 	run $dir/tmex -n 1[2{34}5]6 a b c d e f g h i j k l m n o
 	assert_output -p "Invalid input: --layout=1[2{34}5]6 is too small for number of commands provided"
+}
+@test "./tmex -n /[2{3/4}/5]/6 a b c d e f g h i j k l m n o" {
+	run $dir/tmex -n 1/[2{3/4}/5]/6 a b c d e f g h i j k l m n o
+	assert_output -p "Invalid input: --layout=1/[2{3/4}/5]/6 is too small for number of commands provided"
+}
+@test "./tmex -n /1[/2{/3/4}5/]6 a b c d e f g h i j k l m n o" {
+	run $dir/tmex -n /1[/2{/3/4}5/]6/ a b c d e f g h i j k l m n o
+	assert_output -p "Invalid input: --layout=/1[/2{/3/4}5/]6/ is too small for number of commands provided"
 }
 
 # ensure nested tmex commands will select and split their current pane
