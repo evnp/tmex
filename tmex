@@ -9,6 +9,7 @@ function processargs () {
   local args
   local argidx
   local arg
+  local flags
   local argmodified
   local emptybraces
   local idx
@@ -20,20 +21,25 @@ function processargs () {
   # session name
   argsession="${args[argidx]-}"
 
+  # check if we're skipping session name, if it matches another arg type
   if [[ "${argsession}" =~ ^--(detached|help|kill|npm|print|reattach|shellless|transpose|version)$ ]]; then
     argsession=""
-  elif [[ "${argsession}" =~ ^-[dhknprstv]+$ ]]; then
+	elif [[ "${argsession}" =~ ^--(focus|layout) ]]; then
+    argsession=""
+  elif [[ "${argsession}" =~ ^-[dfhklnprstv]+ ]]; then
     argsession=""
   else
     (( argidx++ )) || true
   fi
 
-  # flags
   while true; do
     arg="${args[argidx]-}"
-    if [[ "${arg}" =~ ^(-l|--layout) ]]; then
+    if [[ "${arg}" =~ ^(-([dhknprstv]*)l|--layout) ]]; then
       (( argidx++ )) || true
-      if [[ "${arg}" == "-l" || "${arg}" == "--layout" ]]; then
+      if [[ "${arg}" != '--layout' ]]; then
+        arg="${arg/-${BASH_REMATCH[2]}/-}"
+      fi
+      if [[ "${arg}" == "-l" || "${arg}" == '--layout' ]]; then
         arg="${args[argidx]-}"
         (( argidx++ )) || true
       fi
@@ -41,6 +47,30 @@ function processargs () {
       arglayout="${arglayout#--layout}"  # remove possible prefixes (if necessary)
       arglayout="${arglayout#-l}"
       arglayout="${arglayout#=}"
+      flags="${BASH_REMATCH[2]}"
+
+    elif [[ "${arg}" =~ ^(-([dhknprstv]*)f|--focus) ]]; then
+      (( argidx++ )) || true
+      if [[ "${arg}" != '--focus' ]]; then
+        arg="${arg/-${BASH_REMATCH[2]}/-}"
+      fi
+      if [[ "${arg}" == "-f" || "${arg}" == "--focus" ]]; then
+        arg="${args[argidx]-}"
+        (( argidx++ )) || true
+      fi
+      argfocus="${arg}"
+      argfocus="${argfocus#--focus}"  # remove possible prefixes (if necessary)
+      argfocus="${argfocus#-f}"
+      argfocus="${argfocus#=}"
+      flags="${BASH_REMATCH[2]}"
+
+      if ! [[ "${argfocus}" =~ ^-?[0-9]$ ]]; then
+        echo ""
+        echo "Invalid input: --focus (-f) arg value must be an integer"
+        echo ""
+        echo "${usage}"
+        exit 1
+      fi
 
     elif [[ "${arg}" =~ ^--(detached|help|kill|npm|print|reattach|shellless|transpose|version)$ ]]; then
       (( argidx++ )) || true
@@ -56,11 +86,17 @@ function processargs () {
         'kill')      argkill=TRUE;;
         'version')   argversion=TRUE;;
       esac
-  elif [[ "${arg}" =~ ^-[dhknprstv]+$ ]]; then
+    elif [[ "${arg}" =~ ^-[dhknprstv]+$ ]]; then
       (( argidx++ )) || true
       arg="${arg#-}"  # remove "-" prefix
-      for (( idx = 0; idx < ${#arg}; idx++ )); do
-        char="${arg:idx:1}"
+      flags="${arg}"
+    else
+      break
+    fi
+
+    if [[ -n "${flags}" ]]; then
+      for (( idx = 0; idx < ${#flags}; idx++ )); do
+        char="${flags:idx:1}"
         case "${char}" in
           'd') argdetached=TRUE;;
           'h') arghelp=TRUE;;
@@ -73,8 +109,7 @@ function processargs () {
           'v') argversion=TRUE;;
         esac
       done
-    else
-      break
+      flags=""
     fi
   done
 
@@ -86,12 +121,15 @@ function processargs () {
   argmodified="${arg//\{grid\}/${emptybraces}}"
   argmodified="${arg//\{G\}/${emptybraces}}"
   argmodified="${arg//\{GRID\}/${emptybraces}}"
-  if [[ -z "${arglayout}" && "${argmodified}" =~ ^[][}{0-9/]+$ ]]; then
+  if [[ -z "${arglayout}" && "${argmodified}" =~ ^[][}{0-9/.]+$ ]]; then
     # ^ ensure arg only contains [] {} 0-9 /
     if ! [[ "${argmodified}" =~ {[^}{]*[^0-9/][^}{]*} ]]; then
       # ^ ensure arg doesn't have any { } groups which contain non-numeric chars
-      (( argidx++ )) || true
-      arglayout="${arg}"
+      if ! [[ "${argmodified}" =~ [^0-9.]\. ]]; then
+        # ^ ensure arg doesn't have any . characters preceeded by non-numeric chars
+        (( argidx++ )) || true
+        arglayout="${arg}"
+      fi
     fi
   fi
 
@@ -207,8 +245,8 @@ function validatelayout () {
   local sizebracketsopen
   local multidigitvalue
 
-  # if layout contains characters other than 0-9, [, ], {, }, /, exit with error
-  if ! [[ "${arglayout}" =~ ^[][}{0-9/]+$ ]]; then
+  # if layout contains characters other than 0-9, [, ], {, }, /, ., exit with error
+  if ! [[ "${arglayout}" =~ ^[][}{0-9/.]+$ ]]; then
     echo ""
     echo "Invalid input: --layout=${arglayoutoriginal} must contain only numeric characters and [ ] { } brackets"
     echo ""
@@ -220,6 +258,15 @@ function validatelayout () {
   if [[ "${arglayout}" =~ {[^}{]*[^0-9/][^}{]*} ]]; then
     echo ""
     echo "Invalid input: --layout=${arglayoutoriginal} cannot include non-numeric characters within { } brackets"
+    echo ""
+    echo "${usage}"
+    exit 1
+  fi
+
+  # if layout contains non-numeric non-dot characters preceeding '.' exit with error
+  if [[ "${arglayout}" =~ [^0-9.]\. ]]; then
+    echo ""
+    echo "Invalid input: --layout=${arglayoutoriginal} cannot include '.' immediately preceeded by non-numeric character"
     echo ""
     echo "${usage}"
     exit 1
@@ -278,7 +325,7 @@ function selectpane () {
   # construct tmux select-pane args according to params
 
   # params:
-  # $1 direction [string "v"|"h"] direction to split pane (vertical or horizontal)
+  # $1 direction [string "v"|"h"] direction to select pane in (vertical or horizontal)
   # $2 flags     [string]         pair of flags that will be used based on direction
   # $3 repeat    [integer]        repeat select-pane operation N times
 
@@ -620,18 +667,19 @@ function main () {
 
   local usage
 
-  local argsession
-  local arghelp
-  local argversion
-  local argnpm
-  local argprint
   local argdetached
-  local argreattach
-  local argshellless
-  local argtranspose
+  local argfocus
+  local arghelp
+  local argkill
   local arglayout
   local arglayoutoriginal
-  local argkill
+  local argnpm
+  local argprint
+  local argreattach
+  local argsession
+  local argshellless
+  local argtranspose
+  local argversion
   local argcmds
 
   local tmuxargs
@@ -678,6 +726,7 @@ tmex <session-name>                - session name required unless --npm or --kil
   [-h|--help]
   [-v|--version]
   [[-l|--layout] <0-9,/,[,],{,}>]  -l, --layout      layout string, each digit represents number of panes in column
+  [[-f|--focus] <0-9>]             -f, --focus       tmux pane to select by index, must be an integer
   [-t|--transpose]                 -t, --transpose   build layout in left-to-right orientation instead of top-to-bottom
   [-n|--npm]                       -n, --npm         if set, prefix each command with "npm run" for package.json scripts
   [-p|--print]                     -p, --print       emit command as string of tmux args instead of invoking tmux directly
@@ -716,16 +765,17 @@ For more information, see https://github.com/evnp/tmex
 '
 
   # parse args into vars:
-  argsession=""      # required - session name
+  argdetached=FALSE  # optional - if TRUE, invoke tmux with -d flag (detached session)
+  argfocus=""        # optional - tmux pane to select by index
   arghelp=FALSE      # optional - if TRUE, display usage message and exit
-  argversion=FALSE   # optional - if TRUE, display version and exit
+  arglayout=""       # optional - string of digits defining a custom layout
   argnpm=FALSE       # optional - if TRUE, prefix each command with "npm run" for package.json scripts
   argprint=FALSE     # optional - if TRUE, print final tmux command to console instead of executing it
-  argdetached=FALSE  # optional - if TRUE, invoke tmux with -d flag (detached session)
   argreattach=FALSE  # optional - if TRUE, re-attach to existing tmux session isntead of replacing it
-  argtranspose=FALSE # optional - if TRUE, layout in left-to-right instead of top-to-bottom orientation
-  arglayout=""       # optional - string of digits defining a custom layout
+  argsession=""      # required - session name
   argshellless=FALSE # optional - if TRUE, execute commands standalone instead of in a shell
+  argtranspose=FALSE # optional - if TRUE, layout in left-to-right instead of top-to-bottom orientation
+  argversion=FALSE   # optional - if TRUE, display version and exit
   argcmds=""         # optional - list of commands to be executed in resulting panes
 
   processargs "$@"

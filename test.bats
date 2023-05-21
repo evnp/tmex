@@ -661,6 +661,54 @@ layout_1234_transposed="
 	assert_success
 }
 
+@test "./tmex testsessionname -tl1234" {
+	run $dir/tmex testsessionname -tl1234
+	assert_layout "${layout_1234_transposed}"
+	assert_success
+}
+@test "./tmex testsessionname -tl1/2/3/4" {
+	run $dir/tmex testsessionname -tl1/2/3/4
+	assert_layout "${layout_1234_transposed}"
+	assert_success
+}
+@test "./tmex testsessionname -tl/1/2/3/4/" {
+	run $dir/tmex testsessionname -tl/1/2/3/4/
+	assert_layout "${layout_1234_transposed}"
+	assert_success
+}
+
+@test "./tmex testsessionname -tl 1234" {
+	run $dir/tmex testsessionname -tl 1234
+	assert_layout "${layout_1234_transposed}"
+	assert_success
+}
+@test "./tmex testsessionname -tl 1/2/3/4" {
+	run $dir/tmex testsessionname -tl 1/2/3/4
+	assert_layout "${layout_1234_transposed}"
+	assert_success
+}
+@test "./tmex testsessionname -tl /1/2/3/4/" {
+	run $dir/tmex testsessionname -tl /1/2/3/4/
+	assert_layout "${layout_1234_transposed}"
+	assert_success
+}
+
+@test "./tmex testsessionname -tl=1234" {
+	run $dir/tmex testsessionname -tl=1234
+	assert_layout "${layout_1234_transposed}"
+	assert_success
+}
+@test "./tmex testsessionname -tl=1/2/3/4" {
+	run $dir/tmex testsessionname -tl=1/2/3/4
+	assert_layout "${layout_1234_transposed}"
+	assert_success
+}
+@test "./tmex testsessionname -tl=/1/2/3/4/" {
+	run $dir/tmex testsessionname -tl=/1/2/3/4/
+	assert_layout "${layout_1234_transposed}"
+	assert_success
+}
+
 @test "./tmex testsessionname --layout=1234 --transpose" {
 	run $dir/tmex testsessionname --layout=1234 --transpose
 	assert_layout "${layout_1234_transposed}"
@@ -852,6 +900,54 @@ layout_123456_transposed="
 }
 @test "./tmex testsessionname -l/1[/2{34}5]6/ -t" {
 	run $dir/tmex testsessionname -l/1[/2{34}5]6/ -t
+	assert_layout "${layout_123456_transposed}"
+	assert_success
+}
+
+@test "./tmex testsessionname -tl1[2{34}5]6" {
+	run $dir/tmex testsessionname -tl1[2{34}5]6
+	assert_layout "${layout_123456_transposed}"
+	assert_success
+}
+@test "./tmex testsessionname -tl1/[2{3/4}/5]/6" {
+	run $dir/tmex testsessionname -tl1/[2{3/4}/5]/6
+	assert_layout "${layout_123456_transposed}"
+	assert_success
+}
+@test "./tmex testsessionname -tl/1[/2{34}5]6/" {
+	run $dir/tmex testsessionname -tl/1[/2{34}5]6/
+	assert_layout "${layout_123456_transposed}"
+	assert_success
+}
+
+@test "./tmex testsessionname -tl 1[2{34}5]6" {
+	run $dir/tmex testsessionname -tl 1[2{34}5]6
+	assert_layout "${layout_123456_transposed}"
+	assert_success
+}
+@test "./tmex testsessionname -tl 1/[2{3/4}/5]/6" {
+	run $dir/tmex testsessionname -tl 1/[2{3/4}/5]/6
+	assert_layout "${layout_123456_transposed}"
+	assert_success
+}
+@test "./tmex testsessionname -tl /1[/2{34}5]6/" {
+	run $dir/tmex testsessionname -tl /1[/2{34}5]6/
+	assert_layout "${layout_123456_transposed}"
+	assert_success
+}
+
+@test "./tmex testsessionname -tl=1[2{34}5]6" {
+	run $dir/tmex testsessionname -tl=1[2{34}5]6
+	assert_layout "${layout_123456_transposed}"
+	assert_success
+}
+@test "./tmex testsessionname -tl=1/[2{3/4}/5]/6" {
+	run $dir/tmex testsessionname -tl=1/[2{3/4}/5]/6
+	assert_layout "${layout_123456_transposed}"
+	assert_success
+}
+@test "./tmex testsessionname -tl=/1[/2{34}5]6/" {
+	run $dir/tmex testsessionname -tl=/1[/2{34}5]6/
 	assert_layout "${layout_123456_transposed}"
 	assert_success
 }
@@ -1403,6 +1499,97 @@ layout_a_j="
 @test "./tmex -n /1[/2{/3/4}5/]6 a b c d e f g h i j k l m n o" {
 	run $dir/tmex -n /1[/2{/3/4}5/]6/ a b c d e f g h i j k l m n o
 	assert_output -p "Invalid input: --layout=/1[/2{/3/4}5/]6/ is too small for number of commands provided"
+}
+
+@test "./tmex -nl1234 a b c d e f g h i j k" {
+	run $dir/tmex -nl1234 a b c d e f g h i j k
+	assert_output -p "Invalid input: --layout=1234 is too small for number of commands provided"
+}
+@test "./tmex -nl1/2/3/4 a b c d e f g h i j k" {
+	run $dir/tmex -nl1/2/3/4 a b c d e f g h i j k
+	assert_output -p "Invalid input: --layout=1/2/3/4 is too small for number of commands provided"
+}
+@test "./tmex -nl/1/2/3/4/ a b c d e f g h i j k" {
+	run $dir/tmex -nl/1/2/3/4/ a b c d e f g h i j k
+	assert_output -p "Invalid input: --layout=/1/2/3/4/ is too small for number of commands provided"
+}
+
+@test "./tmex -nl1[2{34}5]6 a b c d e f g h i j k l m n o" {
+	run $dir/tmex -nl1[2{34}5]6 a b c d e f g h i j k l m n o
+	assert_output -p "Invalid input: --layout=1[2{34}5]6 is too small for number of commands provided"
+}
+@test "./tmex -nl/[2{3/4}/5]/6 a b c d e f g h i j k l m n o" {
+	run $dir/tmex -nl1/[2{3/4}/5]/6 a b c d e f g h i j k l m n o
+	assert_output -p "Invalid input: --layout=1/[2{3/4}/5]/6 is too small for number of commands provided"
+}
+@test "./tmex -nl/1[/2{/3/4}5/]6 a b c d e f g h i j k l m n o" {
+	run $dir/tmex -nl/1[/2{/3/4}5/]6/ a b c d e f g h i j k l m n o
+	assert_output -p "Invalid input: --layout=/1[/2{/3/4}5/]6/ is too small for number of commands provided"
+}
+
+@test "./tmex -nl 1234 a b c d e f g h i j k" {
+	run $dir/tmex -nl 1234 a b c d e f g h i j k
+	assert_output -p "Invalid input: --layout=1234 is too small for number of commands provided"
+}
+@test "./tmex -nl 1/2/3/4 a b c d e f g h i j k" {
+	run $dir/tmex -nl 1/2/3/4 a b c d e f g h i j k
+	assert_output -p "Invalid input: --layout=1/2/3/4 is too small for number of commands provided"
+}
+@test "./tmex -nl /1/2/3/4/ a b c d e f g h i j k" {
+	run $dir/tmex -nl /1/2/3/4/ a b c d e f g h i j k
+	assert_output -p "Invalid input: --layout=/1/2/3/4/ is too small for number of commands provided"
+}
+
+@test "./tmex -nl 1[2{34}5]6 a b c d e f g h i j k l m n o" {
+	run $dir/tmex -nl 1[2{34}5]6 a b c d e f g h i j k l m n o
+	assert_output -p "Invalid input: --layout=1[2{34}5]6 is too small for number of commands provided"
+}
+@test "./tmex -nl /[2{3/4}/5]/6 a b c d e f g h i j k l m n o" {
+	run $dir/tmex -nl 1/[2{3/4}/5]/6 a b c d e f g h i j k l m n o
+	assert_output -p "Invalid input: --layout=1/[2{3/4}/5]/6 is too small for number of commands provided"
+}
+@test "./tmex -nl /1[/2{/3/4}5/]6 a b c d e f g h i j k l m n o" {
+	run $dir/tmex -nl /1[/2{/3/4}5/]6/ a b c d e f g h i j k l m n o
+	assert_output -p "Invalid input: --layout=/1[/2{/3/4}5/]6/ is too small for number of commands provided"
+}
+
+@test "./tmex -nl=1234 a b c d e f g h i j k" {
+	run $dir/tmex -nl=1234 a b c d e f g h i j k
+	assert_output -p "Invalid input: --layout=1234 is too small for number of commands provided"
+}
+@test "./tmex -nl=1/2/3/4 a b c d e f g h i j k" {
+	run $dir/tmex -nl=1/2/3/4 a b c d e f g h i j k
+	assert_output -p "Invalid input: --layout=1/2/3/4 is too small for number of commands provided"
+}
+@test "./tmex -nl=/1/2/3/4/ a b c d e f g h i j k" {
+	run $dir/tmex -nl=/1/2/3/4/ a b c d e f g h i j k
+	assert_output -p "Invalid input: --layout=/1/2/3/4/ is too small for number of commands provided"
+}
+
+@test "./tmex -nl=1[2{34}5]6 a b c d e f g h i j k l m n o" {
+	run $dir/tmex -nl=1[2{34}5]6 a b c d e f g h i j k l m n o
+	assert_output -p "Invalid input: --layout=1[2{34}5]6 is too small for number of commands provided"
+}
+@test "./tmex -nl=/[2{3/4}/5]/6 a b c d e f g h i j k l m n o" {
+	run $dir/tmex -nl=1/[2{3/4}/5]/6 a b c d e f g h i j k l m n o
+	assert_output -p "Invalid input: --layout=1/[2{3/4}/5]/6 is too small for number of commands provided"
+}
+@test "./tmex -nl=/1[/2{/3/4}5/]6 a b c d e f g h i j k l m n o" {
+	run $dir/tmex -nl=/1[/2{/3/4}5/]6/ a b c d e f g h i j k l m n o
+	assert_output -p "Invalid input: --layout=/1[/2{/3/4}5/]6/ is too small for number of commands provided"
+}
+
+@test "./tmex -nf=abc -l=/1[/2{/3/4}5/]6 a b c d e f g h i j k l m n o" {
+	run $dir/tmex -nf=abc -l=/1[/2{/3/4}5/]6/ a b c d e f g h i j k l m n o
+	assert_output -p "Invalid input: --focus (-f) arg value must be an integer"
+}
+@test "./tmex -nf= -l=/1[/2{/3/4}5/]6 a b c d e f g h i j k l m n o" {
+	run $dir/tmex -nf= -l=/1[/2{/3/4}5/]6/ a b c d e f g h i j k l m n o
+	assert_output -p "Invalid input: --focus (-f) arg value must be an integer"
+}
+@test "./tmex -nf -l=/1[/2{/3/4}5/]6 a b c d e f g h i j k l m n o" {
+	run $dir/tmex -nf -l=/1[/2{/3/4}5/]6/ a b c d e f g h i j k l m n o
+	assert_output -p "Invalid input: --focus (-f) arg value must be an integer"
 }
 
 # ensure nested tmex commands will select and split their current pane
