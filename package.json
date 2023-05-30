@@ -5,11 +5,17 @@
   "main": "tmex",
   "scripts": {
     "lint": "shellcheck tmex",
-    "test": "npm run lint && time bats --jobs 16 --no-parallelize-across-files test.bats",
-    "testf": "run() { npm run lint && bats -f \"$@\" test.bats; }; run",
-    "testn": "clear && npm run test | bats-notify",
-    "testw": "npm run test && fswatch -0 -o -r . | xargs -0 -n1 npm run test",
-    "testnw": "npm run testn && fswatch -0 -o -r . | xargs -0 -n1 npm run testn"
+    "test": "npm run -s lint && time bats --jobs 16 --no-parallelize-across-files test.bats",
+    "testf": "run() { npm run -s lint && bats -f \"$@\" test.bats; }; run",
+    "testi": "run() { npm run -s lint && bats -f \" $( cat test.bats | grep @test | cut -d' ' -f3- | head -$1 | tail -1 | sed 's/\" {$//' )$\" test.bats; }; run",
+    "testn": "clear && npm run -s test | bats-notify",
+    "testw": "npm run -s test && fswatch -0 -o -r . | xargs -0 -n1 npm run test",
+    "testnw": "npm run -s testn && fswatch -0 -o -r . | xargs -0 -n1 npm run testn",
+    "tf": "npm run -s testf",
+    "ti": "npm run -s testi",
+    "tn": "npm run -s testn",
+    "tw": "npm run -s testw",
+    "tnw": "npm run -s testnw"
   },
   "bin": {
     "tmex": "tmex"
