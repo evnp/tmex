@@ -6,14 +6,7 @@
 set -euo pipefail
 
 function processargs () {
-  local args
-  local argidx
-  local arg
-  local flags
-  local argmodified
-  local emptybraces
-  local idx
-  local char
+  local args argidx arg flags argmodified emptybraces idx char
 
   args=( "${@-}" )
   argidx=0
@@ -24,7 +17,7 @@ function processargs () {
   # check if we're skipping session name, if it matches another arg type
   if [[ "${argsession}" =~ ^--(detached|help|kill|npm|print|reattach|shellless|transpose|version)$ ]]; then
     argsession=""
-	elif [[ "${argsession}" =~ ^--(focus|layout) ]]; then
+  elif [[ "${argsession}" =~ ^--(focus|layout) ]]; then
     argsession=""
   elif [[ "${argsession}" =~ ^-[dfhklnprstv]+ ]]; then
     argsession=""
@@ -64,7 +57,7 @@ function processargs () {
       argfocus="${argfocus#=}"
       flags="${BASH_REMATCH[2]}"
 
-      if ! [[ "${argfocus}" =~ ^-?[0-9]$ ]]; then
+      if ! [[ "${argfocus}" =~ ^-?[0-9]+$ ]]; then
         echo ""
         echo "Invalid input: --focus (-f) arg value must be an integer"
         echo ""
@@ -186,31 +179,24 @@ function processargs () {
 }
 
 function generatelayout () {
-  # generate a default layout based on specified size:
-  # size:1 -> layout:"1"
-  # size:2 -> layout:"11"
-  # size:3 -> layout:"12"
-  # size:4 -> layout:"22"
-  # size:5 -> layout:"122"
-  # size:6 -> layout:"222"
-  # size:7 -> layout:"1222"
-  # size:8 -> layout:"233"
-  # ...
+  local size root quot rmdr
 
-  # params:
-  # $1 size [integer] size of layout
-
-  # modifies external:
-  # ${arglayout}
-
-  local size
+  # Generate a default layout based on specified size:
+  #   size:1 -> layout:"1"
+  #   size:2 -> layout:"11"
+  #   size:3 -> layout:"12"
+  #   size:4 -> layout:"22"
+  #   size:5 -> layout:"122"
+  #   size:6 -> layout:"222"
+  #   size:7 -> layout:"1222"
+  #   size:8 -> layout:"233"
+  #   ...
+  # Params:
+  #   $1 size [integer] size of layout
+  # Modifies external:
+  #   ${arglayout}
 
   size="$1"
-  shift
-
-  local root
-  local quot
-  local rmdr
 
   if (( size == 0 )); then
     arglayout="1"
@@ -228,22 +214,13 @@ function generatelayout () {
 }
 
 function validatelayout () {
-  # ensure layout is valid and large enough to contain specified size
+  local minsize idx char nextchar layoutsizesum sizebracketsopen multidigitvalue
 
-  # params:
-  # $1 minsize [integer] minimum size of layout
-
-  local minsize
+  # Ensure layout is valid and large enough to contain specified size.
+  # Params:
+  #   $1 minsize [integer] minimum size of layout
 
   minsize="$1"
-  shift
-
-  local idx
-  local char
-  local nextchar
-  local layoutsizesum
-  local sizebracketsopen
-  local multidigitvalue
 
   # if layout contains characters other than 0-9, [, ], {, }, /, ., exit with error
   if ! [[ "${arglayout}" =~ ^[][}{0-9/.]+$ ]]; then
@@ -318,57 +295,42 @@ function validatelayout () {
     echo "${usage}"
     exit 1
   fi
-
 }
 
 function selectpane () {
-  # construct tmux select-pane args according to params
+  local direction flags repeat idx flag
 
-  # params:
-  # $1 direction [string "v"|"h"] direction to select pane in (vertical or horizontal)
-  # $2 flags     [string]         pair of flags that will be used based on direction
-  # $3 repeat    [integer]        repeat select-pane operation N times
-
-  # modifies external:
-  # ${tmuxargs}
-
-  local direction
-  local flags
-  local repeat
+  # Construct tmux select-pane args according to params.
+  # Params:
+  #   $1 direction [string "v"|"h"] direction to select in (vertical or horizontal)
+  #   $2 flags     [string]         flags that will be used based on direction
+  #   $3 repeat    [integer]        repeat select-pane operation N times
+  # Modifies external:
+  #   ${tmuxargs}
 
   direction="$1"
-  shift
-  flags="$1"
-  shift
-  repeat="$1"
-  shift
+  flags="$2"
+  repeat="$3"
 
-  local idx
-  local flag
-
-  [[ "${direction}" == "v" ]] && flag="${flags:0:1}" || flag="${flags:1:1}"
+  [[ "${direction}" == 'v' ]] && flag="${flags:0:1}" || flag="${flags:1:1}"
 
   for (( idx = 0; idx < repeat; idx++ )); do
-    tmuxargs+=( ";" "select-pane" "-${flag}" )
+    tmuxargs+=( ';' 'select-pane' "-${flag}" )
   done
 }
 
 function executecmd () {
-  # construct tmux args to execute a given command
-
-  # params:
-  # $1 cmd [string] shell command that will be executed
-
-  # references external:
-  # ${argshellless}
-
-  # modifies external:
-  # ${tmuxargs}
-
   local cmd
 
+  # Construct tmux args to execute a given command.
+  # Params:
+  #   $1 cmd [string] shell command that will be executed
+  # References external:
+  #   ${argshellless}
+  # Modifies external:
+  #   ${tmuxargs}
+
   cmd="$1"
-  shift
 
   if [[ -n "${cmd}" ]]; then
     # if running in "shell-less" mode, execute command directly;
@@ -383,45 +345,26 @@ function executecmd () {
 }
 
 function split1d () {
-  # construct tmux split-window and select-pane args that will split
-  # the current pane into `numpanes` equally-sized separate panes
+  local direction numpanes sizing cmds cmd idx char flag
+  local half sizesum sizearr percentage pctprefix pctsuffix multidigitvalue
 
-  # params:
-  # $1 direction [string "v"|"h"] direction to split pane (vertical or horizontal)
-  # $2 numpanes  [integer]        number of panes to split current pane into
-  # $3 sizing    [string]         relative sizing of panes
-  # $@ cmds      [array<string>]  list of commands to be executed in resulting panes
-
-  # references external:
-  # ${argshellless}
-
-  # modifies external:
-  # ${tmuxargs}
-
-  local direction
-  local numpanes
-  local sizing
-  local cmds
+  # Construct tmux split-window and select-pane args that will split
+  # the current pane into `numpanes` equally-sized separate panes.
+  # Params:
+  #   $1 direction [string "v"|"h"] direction to split pane (vertical or horizontal)
+  #   $2 numpanes  [integer]        number of panes to split current pane into
+  #   $3 sizing    [string]         relative sizing of panes
+  #   $@ cmds      [array<string>]  list of commands to be executed in resulting panes
+  # References external:
+  #   ${argshellless}
+  # Modifies external:
+  #   ${tmuxargs}
 
   direction="$1"
-  shift
-  numpanes="$1"
-  shift
-  sizing="$1"
-  shift
-  cmds=( "${@-}" )
+  numpanes="$2"
+  sizing="$3"
 
-  local cmd
-  local idx
-  local char
-  local flag
-  local half
-  local sizesum
-  local sizearr
-  local percentage
-  local pctprefix
-  local pctsuffix
-  local multidigitvalue
+  shift 3; cmds=( "${@-}" )
 
   # support for percentage values under `split-pane -l<value>%` was added in tmux 3.1
   # and `split-pane -p<value>` was deprecated (fully removed in tmux 3.4)
@@ -495,54 +438,33 @@ function split1d () {
 
     # if more than 2 panes, keep splitting
     if (( numpanes > 2 && numpanes % 2 > 0 )); then
-			split1d "${direction}" "$(( numpanes - 1 ))" "$( IFS='/'; echo "${sizearr[@]:1}" )" "${cmds[@]:1}"
+      split1d "${direction}" "$(( numpanes - 1 ))" "$( IFS='/'; echo "${sizearr[@]:1}" )" "${cmds[@]:1}"
     fi
   fi
 }
 
 function split2d () {
-  # construct a set of tmux split-window and select-pane commands that will split
-  # the current pane according to layout
+  local direction layout cmds idx char nextchar depth flag
+  local sublayouts numsublayouts
+  local sublayoutpanecounts sublayoutpanecount sublayoutsizings
+  local initialcmds initialcmdidx subcmds sizebracketsopen multidigitvalue
 
-  # params:
-  # $1 direction [string "v"|"h"] direction to split pane (vertical or horizontal)
-  # $2 layout    [string]         number of panes to split current pane into
-  # $3 sizing    [string]         relative sizing of panes
-  # $@ cmds      [array<string>]  list of commands to be executed in resulting panes
-
-  # modifies external:
-  # ${tmuxargs}
-
-  local direction
-  local layout
-  local cmds
+  # Construct a set of tmux split-window and select-pane commands that will split
+  # the current pane according to layout.
+  # Params:
+  #   $1 direction [string "v"|"h"] direction to split pane (vertical or horizontal)
+  #   $2 layout    [string]         number of panes to split current pane into
+  #   $3 sizing    [string]         relative sizing of panes
+  #   $@ cmds      [array<string>]  list of commands to be executed in resulting panes
+  # Modifies external:
+  #   ${tmuxargs}
+  #   ${centerpaneidx}
 
   direction="$1"
-  shift
-  layout="$1"
-  shift
-  sizing="$1"
-  shift
-  cmds=( "${@-}" )
+  layout="$2"
+  sizing="$3"
 
-  local idx
-  local char
-  local nextchar
-  local depth
-  local flag
-
-  local sublayouts
-  local numsublayouts
-  local sublayoutpanecounts
-  local sublayoutpanecount
-  local sublayoutsizings
-
-  local initialcmds
-  local initialcmdidx
-  local subcmds
-
-  local sizebracketsopen
-  local multidigitvalue
+  shift 3; cmds=( "${@-}" )
 
   # expand layout string into three arrays:
   # e.g. "12{31}[3[45]{21}]{12}6"
@@ -660,44 +582,15 @@ function split2d () {
 }
 
 function main () {
-  # construct and execute a tmux command that runs a set of commands inside a layout
+  local argdetached argfocus arghelp argkill arglayout arglayoutoriginal argcmds
+  local argnpm argprint argreattach argsession argshellless argtranspose argversion
 
-  # params:
-  # $@ args [array<any>] arguments passed to script
+  local tmuxargs cmd idx flag output pattern version tmuxversion usage help
+  local layoutsize toplevelsizing parentlayout
 
-  local usage
-
-  local argdetached
-  local argfocus
-  local arghelp
-  local argkill
-  local arglayout
-  local arglayoutoriginal
-  local argnpm
-  local argprint
-  local argreattach
-  local argsession
-  local argshellless
-  local argtranspose
-  local argversion
-  local argcmds
-
-  local tmuxargs
-
-  local cmd
-  local idx
-  local flag
-  local output
-  local pattern
-
-  local version
-  local tmuxversion
-  local usage
-  local help
-
-  local layoutsize
-  local toplevelsizing
-  local parentlayout
+  # Construct and execute a tmux command that runs a set of commands inside a layout.
+  # Params:
+  #   $@ args [array<any>] arguments passed to script
 
   tmuxversion="$( tmux -V )"
   if [[ "${tmuxversion}" =~ ([0-9]+(\.[0-9]+)?) ]]; then
@@ -764,19 +657,19 @@ tmex <session-name>                - session name required unless --npm or --kil
 For more information, see https://github.com/evnp/tmex
 '
 
-  # parse args into vars:
+  # Parse args into vars:
   argdetached=FALSE  # optional - if TRUE, invoke tmux with -d flag (detached session)
-  argfocus=""        # optional - tmux pane to select by index
+  argfocus=''        # optional - tmux pane to select by index
   arghelp=FALSE      # optional - if TRUE, display usage message and exit
-  arglayout=""       # optional - string of digits defining a custom layout
+  arglayout=''       # optional - string of digits defining a custom layout
   argnpm=FALSE       # optional - if TRUE, prefix each command with "npm run" for package.json scripts
   argprint=FALSE     # optional - if TRUE, print final tmux command to console instead of executing it
   argreattach=FALSE  # optional - if TRUE, re-attach to existing tmux session isntead of replacing it
-  argsession=""      # required - session name
+  argsession=''      # required - session name
   argshellless=FALSE # optional - if TRUE, execute commands standalone instead of in a shell
   argtranspose=FALSE # optional - if TRUE, layout in left-to-right instead of top-to-bottom orientation
   argversion=FALSE   # optional - if TRUE, display version and exit
-  argcmds=""         # optional - list of commands to be executed in resulting panes
+  argcmds=''         # optional - list of commands to be executed in resulting panes
 
   processargs "$@"
 
@@ -825,15 +718,15 @@ For more information, see https://github.com/evnp/tmex
       echo "Error: --shellless mode cannot be used when nesting tmex commands"
       exit 1
     fi
-    tmuxargs+=( "select-window" "-t" "${paneid}" ";" "select-pane" "-t" "${paneid}" )
+    tmuxargs+=( 'select-window' '-t' "${paneid}" ';' 'select-pane' '-t' "${paneid}" )
 
   # otherwise start a new session
   else
-    tmuxargs+=( "new-session" "-s" "${argsession}" )
+    tmuxargs+=( 'new-session' '-s' "${argsession}" )
 
     # if running in "detached" mode, add -d flag
     if [[ "${argdetached}" == TRUE ]]; then
-      tmuxargs+=( "-d" )
+      tmuxargs+=( '-d' )
     fi
   fi
 
@@ -885,13 +778,17 @@ For more information, see https://github.com/evnp/tmex
   validatelayout "${#argcmds[@]}"
 
   # append layout commands onto tmuxargs
-  [[ "${argtranspose}" == TRUE ]] && flag="v" || flag="h"
-  split2d "${flag}" "${arglayout}" "" "${argcmds[@]-}"
+  [[ "${argtranspose}" == TRUE ]] && flag='v' || flag='h'
+  split2d "${flag}" "${arglayout}" '' "${argcmds[@]-}"
+
+  # if [[ -n "${argfocus}" ]]; then
+  #   tmuxargs+=( ';' 'select-pane' 4 )
+  # fi
 
   # if running shell-less, command exit will kill tmux pane which makes troubleshooting hard
   # set remain-on-exit on - more of a sane default since user will see when a command failed
   if [[ "${argshellless}" == TRUE ]]; then
-    tmuxargs+=( ";" "set-window-option" "remain-on-exit" "on" ";" )
+    tmuxargs+=( ';' 'set-window-option' 'remain-on-exit' 'on' ';' )
   fi
 
   if [[ "${argprint}" == TRUE ]]; then
