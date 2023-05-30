@@ -5,7 +5,7 @@
   "main": "tmex",
   "scripts": {
     "lint": "shellcheck tmex",
-    "test": "npm run lint && bats test.bats",
+    "test": "npm run lint && time bats --jobs 16 --no-parallelize-across-files test.bats",
     "testf": "run() { npm run lint && bats -f \"$@\" test.bats; }; run",
     "testn": "clear && npm run test | bats-notify",
     "testw": "npm run test && fswatch -0 -o -r . | xargs -0 -n1 npm run test",
@@ -22,8 +22,9 @@
   "author": "Evan Purcer <evanpurcer@gmail.com> (http://evnp.ca)",
   "license": "MIT",
   "devDependencies": {
-    "bats": "1.2.1",
+    "bats": "1.9.0",
     "bats-assert": "2.0.0",
+    "bats-notify": "1.0.0",
     "bats-support": "git+https://github.com/ztombol/bats-support.git#v0.2.0",
     "shellcheck": "0.4.4"
   }
