@@ -11,11 +11,13 @@ setup() {
 	# ensure TMUX_PANE is not set at beginning of test so that tests can be run
 	# from within tmux (TMUX_PANE handling is tested explicitly at end of suite)
 	unset TMUX_PANE
+  export TMUX_VERSION="3.0"
 	mock_tmux
 }
 
 teardown() {
 	unset TMUX_PANE
+	unset TMUX_VERSION
 	restore_tmux
 }
 
@@ -28,7 +30,11 @@ mock_tmux() {
 			local args
 			local arg
 			local output=""
-			args=( "\${@}" )
+			if [[ "\$*" == '-V' ]]; then
+				echo "tmux \${TMUX_VERSION}"
+				exit 0
+			fi
+			args=( "\$@" )
 			for (( idx = 0; idx < \${#args[@]}; idx++ )); do
 				arg="\${args[idx]}"
 				if [[ "\${args[idx]}" =~ [[:space:]] ]]; then
@@ -157,10 +163,14 @@ function assert_layout () {
 		fi
 	done
 	suffix=" ; "
-	expected="${expected%${suffix}}"	# remove trailing semicolon
+	expected="${expected%"${suffix}"}"	# remove trailing semicolon
 	unset IFS
 
 	assert_output -p "${expected}"
+}
+
+function refute_layout () {
+  ! assert_layout "$@"
 }
 
 layout_1234="
@@ -878,4 +888,114 @@ split-window -v -p50
 	"
 	assert_success
 	unset TMUX_PANE
+}
+
+function layout_with_new_pct_flags() {
+	sed -E 's/ -p([0-9]+)/ -l\1%/g' <<< "$1"
+}
+
+# ensure running with a newer version of tmux (>3.0) causes
+# 'split-window -l<value>%' to be used instead of 'split-window -p<value>',
+# see https://github.com/tmux/tmux/blob/master/CHANGES#L663-L665 for details
+@test "TMUX_VERSION=3.0 ./tmex testsessionname 1234" {
+	export TMUX_VERSION=3.0
+	run $dir/tmex testsessionname 1234
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234}"
+	refute_layout "$( layout_with_new_pct_flags "${layout_1234}" )"
+  refute_output -p "Warning: current tmux version could not be determined"
+	assert_success
+	unset TMUX_VERSION
+}
+@test "TMUX_VERSION=2.3.4 ./tmex testsessionname 1234" {
+	export TMUX_VERSION=2.3.4
+	run $dir/tmex testsessionname 1234
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234}"
+	refute_layout "$( layout_with_new_pct_flags "${layout_1234}" )"
+  refute_output -p "Warning: current tmux version could not be determined"
+	assert_success
+	unset TMUX_VERSION
+}
+@test "TMUX_VERSION=1 ./tmex testsessionname 1234" {
+	export TMUX_VERSION=1
+	run $dir/tmex testsessionname 1234
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234}"
+	refute_layout "$( layout_with_new_pct_flags "${layout_1234}" )"
+  refute_output -p "Warning: current tmux version could not be determined"
+	assert_success
+	unset TMUX_VERSION
+}
+@test "TMUX_VERSION=3.1 ./tmex testsessionname 1234" {
+	export TMUX_VERSION=3.1
+	run $dir/tmex testsessionname 1234
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "$( layout_with_new_pct_flags "${layout_1234}" )"
+	refute_layout "${layout_1234}"
+  refute_output -p "Warning: current tmux version could not be determined"
+	assert_success
+	unset TMUX_VERSION
+}
+@test "TMUX_VERSION=3.3a ./tmex testsessionname 1234" {
+	export TMUX_VERSION=3.3a
+	run $dir/tmex testsessionname 1234
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "$( layout_with_new_pct_flags "${layout_1234}" )"
+	refute_layout "${layout_1234}"
+  refute_output -p "Warning: current tmux version could not be determined"
+	assert_success
+	unset TMUX_VERSION
+}
+@test "TMUX_VERSION=3.4 ./tmex testsessionname 1234" {
+	export TMUX_VERSION=3.4
+	run $dir/tmex testsessionname 1234
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "$( layout_with_new_pct_flags "${layout_1234}" )"
+	refute_layout "${layout_1234}"
+  refute_output -p "Warning: current tmux version could not be determined"
+	assert_success
+	unset TMUX_VERSION
+}
+@test "TMUX_VERSION=123.456.789.xyz ./tmex testsessionname 1234" {
+	export TMUX_VERSION=123.456.789.xyz
+	run $dir/tmex testsessionname 1234
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "$( layout_with_new_pct_flags "${layout_1234}" )"
+	refute_layout "${layout_1234}"
+  refute_output -p "Warning: current tmux version could not be determined"
+	assert_success
+	unset TMUX_VERSION
+}
+
+# ensure warning is shown ONLY if current tmux version is not available
+@test "TMUX_VERSION='' ./tmex testsessionname 1234" {
+	run $dir/tmex testsessionname 1234
+	assert_output -p "new-session -s testsessionname"
+  refute_output -p "Warning: current tmux version could not be determined"
+	assert_success
+	export TMUX_VERSION=''
+	run $dir/tmex testsessionname 1234
+	assert_output -p "new-session -s testsessionname"
+  assert_output -p "Warning: current tmux version could not be determined"
+  # when version is unavailable, an older tmux version should be assumed:
+	assert_layout "${layout_1234}"
+	refute_layout "$( layout_with_new_pct_flags "${layout_1234}" )"
+	assert_success
+	unset TMUX_VERSION
+}
+
+# ensure warning is suppressed if requested via env var
+@test "TMUX_VERSION='' TMEX_SUPPRESS_WARNING_PCT_FLAGS=1 ./tmex testsessionname 1234" {
+	export TMUX_VERSION=''
+  export TMEX_SUPPRESS_WARNING_PCT_FLAGS=1
+	run $dir/tmex testsessionname 1234
+	assert_output -p "new-session -s testsessionname"
+  refute_output -p "Warning: current tmux version could not be determined"
+  # an older tmux version should still be assumed, regardless of warning suppression:
+	assert_layout "${layout_1234}"
+	refute_layout "$( layout_with_new_pct_flags "${layout_1234}" )"
+	assert_success
+	unset TMUX_VERSION
+  unset TMEX_SUPPRESS_WARNING_PCT_FLAGS
 }
