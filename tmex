@@ -329,6 +329,19 @@ function split1d () {
   local sizesum
   local sizearr
   local percentage
+  local pctprefix
+  local pctsuffix
+
+  # support for percentage values under `split-pane -l<value>%` was added in tmux 3.1
+  # and `split-pane -p<value>` was deprecated (fully removed in tmux 3.4)
+  # see https://github.com/tmux/tmux/blob/master/CHANGES#L663-L665 for details
+  if [[ -z "${tmuxversion}" ]] || (( $( bc -l <<< "${tmuxversion} < 3.1" ) )); then
+    pctprefix="-p"
+    pctsuffix=""
+  else
+    pctprefix="-l"
+    pctsuffix="%"
+  fi
 
   # convert sizing string to sizearr:
   # numpanes: 3, sizing: "123" -> [1, 2, 3]
@@ -362,7 +375,7 @@ function split1d () {
     percentage=$(( 100 - percentage ))  # invert
 
     # split pane down the middle (adjusted according to size array)
-    tmuxargs+=( ";" "split-window" "-${direction}" "-p${percentage}" )
+    tmuxargs+=( ";" "split-window" "-${direction}" "${pctprefix}${percentage}${pctsuffix}" )
     executecmd "${cmds[${half}]-}"
     selectpane "${direction}" "UL" 1
 
@@ -380,7 +393,7 @@ function split1d () {
     percentage=$(( 100 - percentage ))  # invert
 
     # split off first pane (adjusted according to size array)
-    tmuxargs+=( ";" "split-window" "-${direction}" "-p${percentage}" )
+    tmuxargs+=( ";" "split-window" "-${direction}" "${pctprefix}${percentage}${pctsuffix}" )
     executecmd "${cmds[1]-}"
 
     # if more than 2 panes, keep splitting
@@ -551,8 +564,24 @@ function main () {
   local output
 
   local version
+  local tmuxversion
   local usage
   local help
+
+  tmuxversion="$( tmux -V )"
+  if [[ "${tmuxversion}" =~ ([0-9]+(\.[0-9]+)?) ]]; then
+    tmuxversion="${BASH_REMATCH[0]}"
+  elif [[ -z "${TMEX_SUPPRESS_WARNING_PCT_FLAGS:-}" ]]; then
+    echo "Warning: current tmux version could not be determined from"
+    echo "  tmux -V  >>>  \"${tmuxversion}\""
+    echo "This can result in incorrect pane-splitting behavior since tmux has made"
+    echo "backwards-incompatible changes to flags of the split-window command."
+    echo "Please ensure your installation of tmux produces a semver string within"
+    echo "the output of 'tmux -V', or add 'export TMEX_SUPPRESS_WARNING_PCT_FLAGS=1'"
+    echo "to your shell rc file to hide this warning."
+    echo "See https://github.com/tmux/tmux/blob/master/CHANGES#L663-L665 for details."
+    echo
+  fi
 
   version="$( head -n 3 < "$0" | tail -1 )"
   version="${version#\# }"  # remove "# " prefix
