@@ -441,6 +441,12 @@ function split1d () {
     percentage=$(( ( ${sizearr[0]:-1} * 100 * 1000 ) / sizesum ))
     percentage=$(( ( percentage + 500 ) / 1000 ))  # round
     percentage=$(( 100 - percentage ))  # invert
+    # below calculation would provide float percentages (2 decimal places) which
+    # would result in more accurate pane proportions, but tmux doesn't support
+    # decimal percentages at this time
+    # percentage="$(
+    #   bc -l <<< "100 - ${sizearr[0]:-1} * 100 / ${sizesum}" | xargs printf %.2f
+    # )"
 
     # split off first pane (adjusted according to size array)
     tmuxargs+=( ";" "split-window" "-${direction}" "${pctprefix}${percentage}${pctsuffix}" )
@@ -496,7 +502,7 @@ function split2d () {
 
     if [[ "${char}" == "," ]]; then
       if [[ "${nextchar}" =~ ^[0-9]$ ]]; then
-        multidigitvalue='-1'
+        multidigitvalue=''
       fi
       continue
     elif [[ "${multidigitvalue}" != '-1' && "${char}" =~ ^[0-9]$ ]]; then
