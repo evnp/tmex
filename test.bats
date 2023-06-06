@@ -215,19 +215,19 @@ layout_1234="
 	assert_layout "${layout_1234}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname 1/2/3/4" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname 1,2,3,4" {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_1234}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname 1//2//3//4" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname 1,,2,,3,,4" {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_1234}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname /1//2//3//4/" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname ,1,,2,,3,,4," {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_1234}"
@@ -240,7 +240,7 @@ layout_1234="
 	assert_layout "${layout_1234}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname -l1/2/3/4" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname -l1,2,3,4" {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_1234}"
@@ -253,7 +253,7 @@ layout_1234="
 	assert_layout "${layout_1234}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname -l 1/2/3/4" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname -l 1,2,3,4" {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_1234}"
@@ -266,7 +266,7 @@ layout_1234="
 	assert_layout "${layout_1234}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout=1/2/3/4" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname --layout=1,2,3,4" {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_1234}"
@@ -279,7 +279,7 @@ layout_1234="
 	assert_layout "${layout_1234}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout 1/2/3/4" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname --layout 1,2,3,4" {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_1234}"
@@ -333,31 +333,31 @@ layout_1234="
 	assert_layout "${layout_1234}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout {1111}1/2/3/4" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname --layout {1111}1,2,3,4" {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_1234}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout {1/1/1/1}1234" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname --layout {1,1,1,1}1234" {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_1234}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout {1/1/1/1}1/2/3/4" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname --layout {1,1,1,1}1,2,3,4" {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_1234}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout {1/1/1/1}/1234" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname --layout {1,1,1,1},1234" {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_1234}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout {1/1/1/1}/1/2/3/4" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname --layout {1,1,1,1},1,2,3,4" {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_1234}"
@@ -370,31 +370,31 @@ layout_1234="
 	assert_layout "${layout_1234}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout {9999}1/2/3/4" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname --layout {9999}1,2,3,4" {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_1234}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout {9/9/9/9}1234" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname --layout {9,9,9,9}1234" {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_1234}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout {9/9/9/9}1/2/3/4" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname --layout {9,9,9,9}1,2,3,4" {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_1234}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout {9/9/9/9}/1234" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname --layout {9,9,9,9},1234" {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_1234}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout {9/9/9/9}/1/2/3/4" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname --layout {9,9,9,9},1,2,3,4" {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_1234}"
@@ -429,31 +429,31 @@ layout_4321="
 	assert_layout "${layout_4321}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout {4321}1/2/3/4" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname --layout {4321}1,2,3,4" {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_4321}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout {4/3/2/1}1234" {
-	run_tmex
-	assert_output -p "new-session -s testsessionname"
-	assert_layout "${layout_4/3/2/1}"
-	assert_success
-}
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout {4/3/2/1}1/2/3/4" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname --layout {4,3,2,1}1234" {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_4321}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout {4/3/2/1}/1234" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname --layout {4,3,2,1}1,2,3,4" {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
-	assert_layout "${layout_4/3/2/1}"
+	assert_layout "${layout_4321}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout {4/3/2/1}/1/2/3/4" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname --layout {4,3,2,1},1234" {
+	run_tmex
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_4321}"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname --layout {4,3,2,1},1,2,3,4" {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_4321}"
@@ -475,31 +475,31 @@ shorthand_layout_987654321="
 	assert_layout_shorthand "${shorthand_layout_987654321}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout {987654321}1/2/3/4/5/6/7/8/9" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname --layout {987654321}1,2,3,4,5,6,7,8,9" {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout_shorthand "${shorthand_layout_987654321}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout {9/8/7/6/5/4/3/2/1}123456789" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname --layout {9,8,7,6,5,4,3,2,1}123456789" {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout_shorthand "${shorthand_layout_987654321}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout {9/8/7/6/5/4/3/2/1}/123456789" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname --layout {9,8,7,6,5,4,3,2,1},123456789" {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout_shorthand "${shorthand_layout_987654321}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout {9/8/7/6/5/4/3/2/1}1/2/3/4/5/6/7/8/9" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname --layout {9,8,7,6,5,4,3,2,1}1,2,3,4,5,6,7,8,9" {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout_shorthand "${shorthand_layout_987654321}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout {9/8/7/6/5/4/3/2/1}/1/2/3/4/5/6/7/8/9" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname --layout {9,8,7,6,5,4,3,2,1},1,2,3,4,5,6,7,8,9" {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout_shorthand "${shorthand_layout_987654321}"
@@ -536,13 +536,13 @@ shorthand_layout_987654321="
 	assert_layout "${layout_1234}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout 3{}3/4" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname --layout 3{}3,4" {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_1234}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout /3{}/3/4/" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname --layout ,3{},3,4," {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_1234}"
@@ -603,25 +603,25 @@ layout_grid5="
 	assert_layout "${layout_grid5}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout 3/[5{}/]4" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname --layout 3,[5{},]4" {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_grid5}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout 3/[5{}]/4" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname --layout 3,[5{}],4" {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_grid5}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout 3[/5{}/]4" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname --layout 3[,5{},]4" {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_grid5}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout /3[5{}]/4/" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname --layout ,3[5{}],4," {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_grid5}"
@@ -663,9 +663,9 @@ layout_grid5="
 	refute_output -p "new-session -s testsessionname"
 	assert_failure
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout {GRID}/3[/5]/4/" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname --layout {GRID},3[,5],4," {
 	run_tmex
-	assert_output -p "Invalid input: --layout={GRID}/3[/5]/4/ cannot start with {GRID} clause"
+	assert_output -p "Invalid input: --layout={GRID},3[,5],4, cannot start with {GRID} clause"
 	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	assert_failure
@@ -698,12 +698,12 @@ layout_1234_transposed="
 	assert_layout "${layout_1234_transposed}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname -t 1/2/3/4" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname -t 1,2,3,4" {
 	run_tmex
 	assert_layout "${layout_1234_transposed}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname -t /1/2/3/4/" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname -t ,1,2,3,4," {
 	run_tmex
 	assert_layout "${layout_1234_transposed}"
 	assert_success
@@ -714,12 +714,12 @@ layout_1234_transposed="
 	assert_layout "${layout_1234_transposed}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname -l1/2/3/4 -t" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname -l1,2,3,4 -t" {
 	run_tmex
 	assert_layout "${layout_1234_transposed}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname -l/1/2/3/4/ -t" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname -l,1,2,3,4, -t" {
 	run_tmex
 	assert_layout "${layout_1234_transposed}"
 	assert_success
@@ -730,12 +730,12 @@ layout_1234_transposed="
 	assert_layout "${layout_1234_transposed}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname -tl1/2/3/4" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname -tl1,2,3,4" {
 	run_tmex
 	assert_layout "${layout_1234_transposed}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname -tl/1/2/3/4/" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname -tl,1,2,3,4," {
 	run_tmex
 	assert_layout "${layout_1234_transposed}"
 	assert_success
@@ -746,12 +746,12 @@ layout_1234_transposed="
 	assert_layout "${layout_1234_transposed}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname -tl 1/2/3/4" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname -tl 1,2,3,4" {
 	run_tmex
 	assert_layout "${layout_1234_transposed}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname -tl /1/2/3/4/" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname -tl ,1,2,3,4," {
 	run_tmex
 	assert_layout "${layout_1234_transposed}"
 	assert_success
@@ -762,12 +762,12 @@ layout_1234_transposed="
 	assert_layout "${layout_1234_transposed}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname -tl=1/2/3/4" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname -tl=1,2,3,4" {
 	run_tmex
 	assert_layout "${layout_1234_transposed}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname -tl=/1/2/3/4/" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname -tl=,1,2,3,4," {
 	run_tmex
 	assert_layout "${layout_1234_transposed}"
 	assert_success
@@ -778,12 +778,12 @@ layout_1234_transposed="
 	assert_layout "${layout_1234_transposed}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout=1/2/3/4 --transpose" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname --layout=1,2,3,4 --transpose" {
 	run_tmex
 	assert_layout "${layout_1234_transposed}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout=/1/2/3/4/ --transpose" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname --layout=,1,2,3,4, --transpose" {
 	run_tmex
 	assert_layout "${layout_1234_transposed}"
 	assert_success
@@ -821,13 +821,13 @@ layout_123456="
 	assert_layout "${layout_123456}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname 1/[2{3/4}/5]/6" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname 1,[2{3,4},5],6" {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_123456}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname /1[/2{34}5]6/" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname ,1[,2{34}5]6," {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_123456}"
@@ -840,13 +840,13 @@ layout_123456="
 	assert_layout "${layout_123456}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname -l1/[2{3/4}/5]/6" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname -l1,[2{3,4},5],6" {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_123456}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname -l/1[/2{34}5]6/" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname -l,1[,2{34}5]6," {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_123456}"
@@ -859,13 +859,13 @@ layout_123456="
 	assert_layout "${layout_123456}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname -l 1/[2{3/4}/5]/6" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname -l 1,[2{3,4},5],6" {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_123456}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname -l /1[/2{34}5]6/" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname -l ,1[,2{34}5]6," {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_123456}"
@@ -878,13 +878,13 @@ layout_123456="
 	assert_layout "${layout_123456}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout=1/[2{3/4}/5]/6" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname --layout=1,[2{3,4},5],6" {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_123456}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout=/1[/2{34}5]6/" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname --layout=,1[,2{34}5]6," {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_123456}"
@@ -897,13 +897,13 @@ layout_123456="
 	assert_layout "${layout_123456}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout 1/[2{3/4}/5]/6" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname --layout 1,[2{3,4},5],6" {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_123456}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout /1[/2{34}5]6/" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname --layout ,1[,2{34}5]6," {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_123456}"
@@ -941,12 +941,12 @@ layout_123456_transposed="
 	assert_layout "${layout_123456_transposed}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname -t 1/[2{3/4}/5]/6" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname -t 1,[2{3,4},5],6" {
 	run_tmex
 	assert_layout "${layout_123456_transposed}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname -t /1[/2{34}5]6/" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname -t ,1[,2{34}5]6," {
 	run_tmex
 	assert_layout "${layout_123456_transposed}"
 	assert_success
@@ -957,12 +957,12 @@ layout_123456_transposed="
 	assert_layout "${layout_123456_transposed}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname -l1/[2{3/4}/5]/6 -t" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname -l1,[2{3,4},5],6 -t" {
 	run_tmex
 	assert_layout "${layout_123456_transposed}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname -l/1[/2{34}5]6/ -t" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname -l,1[,2{34}5]6, -t" {
 	run_tmex
 	assert_layout "${layout_123456_transposed}"
 	assert_success
@@ -973,12 +973,12 @@ layout_123456_transposed="
 	assert_layout "${layout_123456_transposed}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname -tl1/[2{3/4}/5]/6" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname -tl1,[2{3,4},5],6" {
 	run_tmex
 	assert_layout "${layout_123456_transposed}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname -tl/1[/2{34}5]6/" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname -tl,1[,2{34}5]6," {
 	run_tmex
 	assert_layout "${layout_123456_transposed}"
 	assert_success
@@ -989,12 +989,12 @@ layout_123456_transposed="
 	assert_layout "${layout_123456_transposed}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname -tl 1/[2{3/4}/5]/6" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname -tl 1,[2{3,4},5],6" {
 	run_tmex
 	assert_layout "${layout_123456_transposed}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname -tl /1[/2{34}5]6/" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname -tl ,1[,2{34}5]6," {
 	run_tmex
 	assert_layout "${layout_123456_transposed}"
 	assert_success
@@ -1005,12 +1005,12 @@ layout_123456_transposed="
 	assert_layout "${layout_123456_transposed}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname -tl=1/[2{3/4}/5]/6" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname -tl=1,[2{3,4},5],6" {
 	run_tmex
 	assert_layout "${layout_123456_transposed}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname -tl=/1[/2{34}5]6/" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname -tl=,1[,2{34}5]6," {
 	run_tmex
 	assert_layout "${layout_123456_transposed}"
 	assert_success
@@ -1021,12 +1021,12 @@ layout_123456_transposed="
 	assert_layout "${layout_123456_transposed}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout=1/[2{3/4}/5]/6 --transpose" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname --layout=1,[2{3,4},5],6 --transpose" {
 	run_tmex
 	assert_layout "${layout_123456_transposed}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout=/1[/2{34}5]6/ --transpose" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname --layout=,1[,2{34}5]6, --transpose" {
 	run_tmex
 	assert_layout "${layout_123456_transposed}"
 	assert_success
@@ -1061,12 +1061,12 @@ split-window -v -p50
 	assert_layout "${layout_44}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname -l=4/4 a b c d e f g h" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname -l=4,4 a b c d e f g h" {
 	run_tmex
 	assert_layout "${layout_44}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname -l=/4/4/ a b c d e f g h" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname -l=,4,4, a b c d e f g h" {
 	run_tmex
 	assert_layout "${layout_44}"
 	assert_success
@@ -1113,12 +1113,12 @@ split-window -v -p50
 	assert_layout "${layout_444}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname -l=4/4/4 a b c d e f g h i j k l" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname -l=4,4,4 a b c d e f g h i j k l" {
 	run_tmex
 	assert_layout "${layout_444}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname -l=/4/4/4/ a b c d e f g h i j k l" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname -l=,4,4,4, a b c d e f g h i j k l" {
 	run_tmex
 	assert_layout "${layout_444}"
 	assert_success
@@ -1536,17 +1536,17 @@ layout_a_j="
 	refute_layout "${layout_1234}"
 	assert_failure
 }
-@test "${BATS_TEST_NUMBER} tmex -n 1/2/3/4 a b c d e f g h i j k" {
+@test "${BATS_TEST_NUMBER} tmex -n 1,2,3,4 a b c d e f g h i j k" {
 	run_tmex
-	assert_output -p "Invalid input: --layout=1/2/3/4 is too small for number of commands provided"
+	assert_output -p "Invalid input: --layout=1,2,3,4 is too small for number of commands provided"
 	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	refute_layout "${layout_1234}"
 	assert_failure
 }
-@test "${BATS_TEST_NUMBER} tmex -n /1/2/3/4/ a b c d e f g h i j k" {
+@test "${BATS_TEST_NUMBER} tmex -n ,1,2,3,4, a b c d e f g h i j k" {
 	run_tmex
-	assert_output -p "Invalid input: --layout=/1/2/3/4/ is too small for number of commands provided"
+	assert_output -p "Invalid input: --layout=,1,2,3,4, is too small for number of commands provided"
 	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	refute_layout "${layout_1234}"
@@ -1560,16 +1560,16 @@ layout_a_j="
 	refute_output -p "new-session -s testsessionname"
 	assert_failure
 }
-@test "${BATS_TEST_NUMBER} tmex -n 1/[2{3/4}/5]/6 a b c d e f g h i j k l m n o" {
+@test "${BATS_TEST_NUMBER} tmex -n 1,[2{3,4},5],6 a b c d e f g h i j k l m n o" {
 	run_tmex
-	assert_output -p "Invalid input: --layout=1/[2{3/4}/5]/6 is too small for number of commands provided"
+	assert_output -p "Invalid input: --layout=1,[2{3,4},5],6 is too small for number of commands provided"
 	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	assert_failure
 }
-@test "${BATS_TEST_NUMBER} tmex -n /1[/2{/3/4}5/]6/ a b c d e f g h i j k l m n o" {
+@test "${BATS_TEST_NUMBER} tmex -n ,1[,2{,3,4}5,]6, a b c d e f g h i j k l m n o" {
 	run_tmex
-	assert_output -p "Invalid input: --layout=/1[/2{/3/4}5/]6/ is too small for number of commands provided"
+	assert_output -p "Invalid input: --layout=,1[,2{,3,4}5,]6, is too small for number of commands provided"
 	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	assert_failure
@@ -1583,17 +1583,17 @@ layout_a_j="
 	refute_layout "${layout_1234}"
 	assert_failure
 }
-@test "${BATS_TEST_NUMBER} tmex -nl1/2/3/4 a b c d e f g h i j k" {
+@test "${BATS_TEST_NUMBER} tmex -nl1,2,3,4 a b c d e f g h i j k" {
 	run_tmex
-	assert_output -p "Invalid input: --layout=1/2/3/4 is too small for number of commands provided"
+	assert_output -p "Invalid input: --layout=1,2,3,4 is too small for number of commands provided"
 	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	refute_layout "${layout_1234}"
 	assert_failure
 }
-@test "${BATS_TEST_NUMBER} tmex -nl/1/2/3/4/ a b c d e f g h i j k" {
+@test "${BATS_TEST_NUMBER} tmex -nl,1,2,3,4, a b c d e f g h i j k" {
 	run_tmex
-	assert_output -p "Invalid input: --layout=/1/2/3/4/ is too small for number of commands provided"
+	assert_output -p "Invalid input: --layout=,1,2,3,4, is too small for number of commands provided"
 	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	refute_layout "${layout_1234}"
@@ -1607,16 +1607,16 @@ layout_a_j="
 	refute_output -p "new-session -s testsessionname"
 	assert_failure
 }
-@test "${BATS_TEST_NUMBER} tmex -nl1/[2{3/4}/5]/6 a b c d e f g h i j k l m n o" {
+@test "${BATS_TEST_NUMBER} tmex -nl1,[2{3,4},5],6 a b c d e f g h i j k l m n o" {
 	run_tmex
-	assert_output -p "Invalid input: --layout=1/[2{3/4}/5]/6 is too small for number of commands provided"
+	assert_output -p "Invalid input: --layout=1,[2{3,4},5],6 is too small for number of commands provided"
 	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	assert_failure
 }
-@test "${BATS_TEST_NUMBER} tmex -nl/1[/2{/3/4}5/]6/ a b c d e f g h i j k l m n o" {
+@test "${BATS_TEST_NUMBER} tmex -nl,1[,2{,3,4}5,]6, a b c d e f g h i j k l m n o" {
 	run_tmex
-	assert_output -p "Invalid input: --layout=/1[/2{/3/4}5/]6/ is too small for number of commands provided"
+	assert_output -p "Invalid input: --layout=,1[,2{,3,4}5,]6, is too small for number of commands provided"
 	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	assert_failure
@@ -1629,16 +1629,16 @@ layout_a_j="
 	refute_output -p "new-session -s testsessionname"
 	assert_failure
 }
-@test "${BATS_TEST_NUMBER} tmex -nl 1/2/3/4 a b c d e f g h i j k" {
+@test "${BATS_TEST_NUMBER} tmex -nl 1,2,3,4 a b c d e f g h i j k" {
 	run_tmex
-	assert_output -p "Invalid input: --layout=1/2/3/4 is too small for number of commands provided"
+	assert_output -p "Invalid input: --layout=1,2,3,4 is too small for number of commands provided"
 	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	assert_failure
 }
-@test "${BATS_TEST_NUMBER} tmex -nl /1/2/3/4/ a b c d e f g h i j k" {
+@test "${BATS_TEST_NUMBER} tmex -nl ,1,2,3,4, a b c d e f g h i j k" {
 	run_tmex
-	assert_output -p "Invalid input: --layout=/1/2/3/4/ is too small for number of commands provided"
+	assert_output -p "Invalid input: --layout=,1,2,3,4, is too small for number of commands provided"
 	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	assert_failure
@@ -1651,16 +1651,16 @@ layout_a_j="
 	refute_output -p "new-session -s testsessionname"
 	assert_failure
 }
-@test "${BATS_TEST_NUMBER} tmex -nl 1/[2{3/4}/5]/6 a b c d e f g h i j k l m n o" {
+@test "${BATS_TEST_NUMBER} tmex -nl 1,[2{3,4},5],6 a b c d e f g h i j k l m n o" {
 	run_tmex
-	assert_output -p "Invalid input: --layout=1/[2{3/4}/5]/6 is too small for number of commands provided"
+	assert_output -p "Invalid input: --layout=1,[2{3,4},5],6 is too small for number of commands provided"
 	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	assert_failure
 }
-@test "${BATS_TEST_NUMBER} tmex -nl /1[/2{/3/4}5/]6/ a b c d e f g h i j k l m n o" {
+@test "${BATS_TEST_NUMBER} tmex -nl ,1[,2{,3,4}5,]6, a b c d e f g h i j k l m n o" {
 	run_tmex
-	assert_output -p "Invalid input: --layout=/1[/2{/3/4}5/]6/ is too small for number of commands provided"
+	assert_output -p "Invalid input: --layout=,1[,2{,3,4}5,]6, is too small for number of commands provided"
 	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	assert_failure
@@ -1674,17 +1674,17 @@ layout_a_j="
 	refute_layout "${layout_1234}"
 	assert_failure
 }
-@test "${BATS_TEST_NUMBER} tmex -nl=1/2/3/4 a b c d e f g h i j k" {
+@test "${BATS_TEST_NUMBER} tmex -nl=1,2,3,4 a b c d e f g h i j k" {
 	run_tmex
-	assert_output -p "Invalid input: --layout=1/2/3/4 is too small for number of commands provided"
+	assert_output -p "Invalid input: --layout=1,2,3,4 is too small for number of commands provided"
 	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	refute_layout "${layout_1234}"
 	assert_failure
 }
-@test "${BATS_TEST_NUMBER} tmex -nl=/1/2/3/4/ a b c d e f g h i j k" {
+@test "${BATS_TEST_NUMBER} tmex -nl=,1,2,3,4, a b c d e f g h i j k" {
 	run_tmex
-	assert_output -p "Invalid input: --layout=/1/2/3/4/ is too small for number of commands provided"
+	assert_output -p "Invalid input: --layout=,1,2,3,4, is too small for number of commands provided"
 	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	refute_layout "${layout_1234}"
@@ -1698,36 +1698,36 @@ layout_a_j="
 	refute_output -p "new-session -s testsessionname"
 	assert_failure
 }
-@test "${BATS_TEST_NUMBER} tmex -nl=1/[2{3/4}/5]/6 a b c d e f g h i j k l m n o" {
+@test "${BATS_TEST_NUMBER} tmex -nl=1,[2{3,4},5],6 a b c d e f g h i j k l m n o" {
 	run_tmex
-	assert_output -p "Invalid input: --layout=1/[2{3/4}/5]/6 is too small for number of commands provided"
+	assert_output -p "Invalid input: --layout=1,[2{3,4},5],6 is too small for number of commands provided"
 	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	assert_failure
 }
-@test "${BATS_TEST_NUMBER} tmex -nl=/1[/2{/3/4}5/]6/ a b c d e f g h i j k l m n o" {
+@test "${BATS_TEST_NUMBER} tmex -nl=,1[,2{,3,4}5,]6, a b c d e f g h i j k l m n o" {
 	run_tmex
-	assert_output -p "Invalid input: --layout=/1[/2{/3/4}5/]6/ is too small for number of commands provided"
+	assert_output -p "Invalid input: --layout=,1[,2{,3,4}5,]6, is too small for number of commands provided"
 	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	assert_failure
 }
 
-@test "${BATS_TEST_NUMBER} tmex -nf=abc -l=/1[/2{/3/4}5/]6 a b c d e f g h i j k l m n o" {
+@test "${BATS_TEST_NUMBER} tmex -nf=abc -l=,1[,2{,3,4}5,]6 a b c d e f g h i j k l m n o" {
 	run_tmex
 	assert_output -p "Invalid input: --focus (-f) arg value must be an integer"
 	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	assert_failure
 }
-@test "${BATS_TEST_NUMBER} tmex -nf= -l=/1[/2{/3/4}5/]6 a b c d e f g h i j k l m n o" {
+@test "${BATS_TEST_NUMBER} tmex -nf= -l=,1[,2{,3,4}5,]6 a b c d e f g h i j k l m n o" {
 	run_tmex
 	assert_output -p "Invalid input: --focus (-f) arg value must be an integer"
 	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	assert_failure
 }
-@test "${BATS_TEST_NUMBER} tmex -nf -l=/1[/2{/3/4}5/]6 a b c d e f g h i j k l m n o" {
+@test "${BATS_TEST_NUMBER} tmex -nf -l=,1[,2{,3,4}5,]6 a b c d e f g h i j k l m n o" {
 	run_tmex
 	assert_output -p "Invalid input: --focus (-f) arg value must be an integer"
 	assert_output -p "Usage:"

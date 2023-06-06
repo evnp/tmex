@@ -114,16 +114,9 @@ function processargs () {
   argmodified="${arg//\{grid\}/${emptybraces}}"
   argmodified="${arg//\{G\}/${emptybraces}}"
   argmodified="${arg//\{GRID\}/${emptybraces}}"
-  if [[ -z "${arglayout}" && "${argmodified}" =~ ^[][}{0-9/.]+$ ]]; then
-    # ^ ensure arg only contains [] {} 0-9 /
-    if ! [[ "${argmodified}" =~ {[^}{]*[^0-9/][^}{]*} ]]; then
-      # ^ ensure arg doesn't have any { } groups which contain non-numeric chars
-      if ! [[ "${argmodified}" =~ [^0-9.]\. ]]; then
-        # ^ ensure arg doesn't have any . characters preceeded by non-numeric chars
-        (( argidx++ )) || true
-        arglayout="${arg}"
-      fi
-    fi
+  if [[ -z "${arglayout}" && "${argmodified}" =~ ^[][}{0-9,+-]+$ ]]; then
+    (( argidx++ )) || true
+    arglayout="${arg}"
   fi
 
   # use rest of args as shell commands
@@ -222,8 +215,8 @@ function validatelayout () {
 
   minsize="$1"
 
-  # if layout contains characters other than 0-9, [, ], {, }, /, ., exit with error
-  if ! [[ "${arglayout}" =~ ^[][}{0-9/.]+$ ]]; then
+  # if layout contains characters other than 0-9, [, ], {, }, or comma, exit with error
+  if ! [[ "${arglayout}" =~ ^[][}{0-9,]+$ ]]; then
     echo ""
     echo "Invalid input: --layout=${arglayoutoriginal} must contain only numeric characters and [ ] { } brackets"
     echo ""
@@ -231,8 +224,8 @@ function validatelayout () {
     exit 1
   fi
 
-  # if layout contains non-numeric non-slash characters within { } brackets, exit with error
-  if [[ "${arglayout}" =~ {[^}{]*[^0-9/][^}{]*} ]]; then
+  # if layout contains non-numeric non-comma characters within { } brackets, exit with error
+  if [[ "${arglayout}" =~ {[^}{]*[^0-9,][^}{]*} ]]; then
     echo ""
     echo "Invalid input: --layout=${arglayoutoriginal} cannot include non-numeric characters within { } brackets"
     echo ""
@@ -240,10 +233,28 @@ function validatelayout () {
     exit 1
   fi
 
-  # if layout contains non-numeric non-dot characters preceeding '.' exit with error
-  if [[ "${arglayout}" =~ [^0-9.]\. ]]; then
+  # if layout contains non-numeric non-plus characters preceeding '+' exit with error
+  if [[ "${arglayout}" =~ [^0-9+]\+ ]]; then
     echo ""
-    echo "Invalid input: --layout=${arglayoutoriginal} cannot include '.' immediately preceeded by non-numeric character"
+    echo "Invalid input: --layout=${arglayoutoriginal} cannot include '+' immediately preceeded by non-numeric character"
+    echo ""
+    echo "${usage}"
+    exit 1
+  fi
+
+  # if layout contains non-numeric non-minus characters preceeding '-' exit with error
+  if [[ "${arglayout}" =~ [^0-9-]\- ]]; then
+    echo ""
+    echo "Invalid input: --layout=${arglayoutoriginal} cannot include '+' immediately preceeded by non-numeric character"
+    echo ""
+    echo "${usage}"
+    exit 1
+  fi
+
+  # if layout contains multiple groups of '+' or '-' exit with error
+  if [[ "${arglayout}" =~ [+-]+[^+-]+[+-]+ ]]; then
+    echo ""
+    echo "Invalid input: --layout=${arglayoutoriginal} cannot multiple groups of '+' and '-' characters"
     echo ""
     echo "${usage}"
     exit 1
@@ -252,14 +263,14 @@ function validatelayout () {
   layoutsizesum=0
   sizebracketsopen=FALSE
   multidigitvalue='-1'
-  if [[ "${arglayout}" =~ ^[0-9]+/ ]]; then
+  if [[ "${arglayout}" =~ ^[0-9]+, ]]; then
     multidigitvalue=''
   fi
   for (( idx = 0; idx < ${#arglayout}; idx++ )); do
     char="${arglayout:${idx}:1}"
     nextchar="${layout:$(( idx + 1 )):1}"
 
-    if [[ "${char}" == "/" ]]; then
+    if [[ "${char}" == "," ]]; then
       if [[ "${nextchar}" =~ ^[0-9]$ ]]; then
         multidigitvalue=''
       fi
@@ -378,11 +389,11 @@ function split1d () {
   fi
 
   # convert sizing string to sizearr:
-  # sizing: "1/2/3"  -> [1, 2, 3]
+  # sizing: "1,2,3"  -> [1, 2, 3]
   # sizing: ""       -> []
-  # sizing: "2/3"    -> [2, 3]
-  # sizing: "12/13"  -> [12, 13]
-  # NOTE: leading/trailing slashes on these strings are acceptable
+  # sizing: "2,3"    -> [2, 3]
+  # sizing: "12,13"  -> [12, 13]
+  # NOTE: leading/trailing commas on these strings are acceptable
   sizesum="${numpanes}"
   sizearr=()
   multidigitvalue=''
@@ -396,7 +407,6 @@ function split1d () {
       multidigitvalue=''
     fi
   done
-  # echo "${sizing}" "${sizesum}" "${sizearr[@]:-}"
 
   # if more than 2 panes and numpanes is even, split down the middle
   if (( numpanes > 2 && numpanes % 2 == 0 )); then
@@ -420,9 +430,9 @@ function split1d () {
     selectpane "${direction}" "UL" 1
 
     # keep splitting - 1st half of panes, then select pane at middle, then 2nd half
-    split1d "${direction}" "${half}" "$( IFS='/'; echo "${sizearr[@]:0:half}" )" "${cmds[@]:0:half}"
+    split1d "${direction}" "${half}" "$( IFS=','; echo "${sizearr[@]:0:half}" )" "${cmds[@]:0:half}"
     selectpane "${direction}" "DR" 1
-    split1d "${direction}" "${half}" "$( IFS='/'; echo "${sizearr[@]:half}" )" "${cmds[@]:half}"
+    split1d "${direction}" "${half}" "$( IFS=','; echo "${sizearr[@]:half}" )" "${cmds[@]:half}"
 
   # if only 2 panes or numpanes is odd, split off first pane
   elif (( numpanes >= 2 )); then
@@ -438,7 +448,7 @@ function split1d () {
 
     # if more than 2 panes, keep splitting
     if (( numpanes > 2 && numpanes % 2 > 0 )); then
-      split1d "${direction}" "$(( numpanes - 1 ))" "$( IFS='/'; echo "${sizearr[@]:1}" )" "${cmds[@]:1}"
+      split1d "${direction}" "$(( numpanes - 1 ))" "$( IFS=','; echo "${sizearr[@]:1}" )" "${cmds[@]:1}"
     fi
   fi
 }
@@ -470,21 +480,21 @@ function split2d () {
   # e.g. "12{31}[3[45]{21}]{12}6"
   # -> ["1", "11",   "3[45]{21}", "111111"]  # sublayouts
   # -> [ 1,   2,      12,          6      ]  # sublayoutpanecounts
-  # -> ["",  "3/1/", "1/2/",      ""      ]  # sublayoutsizings
+  # -> ["",  "3,1,", "1,2,",      ""      ]  # sublayoutsizings
   depth=0
   sublayouts=()
   sublayoutpanecounts=()
   sublayoutsizings=()
   sizebracketsopen=FALSE
   multidigitvalue='-1'
-  if [[ "${layout}" =~ ^[0-9]+/ ]]; then
+  if [[ "${layout}" =~ ^[0-9]+, ]]; then
     multidigitvalue=''
   fi
   for (( idx = 0; idx < ${#layout}; idx++ )); do
     char="${layout:${idx}:1}"
     nextchar="${layout:$(( idx + 1 )):1}"
 
-    if [[ "${char}" == "/" ]]; then
+    if [[ "${char}" == "," ]]; then
       if [[ "${nextchar}" =~ ^[0-9]$ ]]; then
         multidigitvalue='-1'
       fi
@@ -508,7 +518,7 @@ function split2d () {
     elif [[ "${char}" == '}' ]]; then
       sizebracketsopen=FALSE
     elif [[ "${sizebracketsopen}" == TRUE ]] && (( depth == 0 )); then
-      sublayoutsizings[${#sublayoutsizings[@]} - 1]+="${char}/"
+      sublayoutsizings[${#sublayoutsizings[@]} - 1]+="${char},"
     fi
 
     if [[ "${char}" == ']' ]]; then
@@ -766,7 +776,7 @@ For more information, see https://github.com/evnp/tmex
     # --- Top Level Sizing --- #
     # if layout starts with { } bracket sizing, automatically wrap the whole thing
     # in a sublayout and transpose it, so that top-level sizing is applied
-    pattern="^(\{[0-9/]+\})"
+    pattern="^(\{[0-9,]+\})"
     if [[ "${arglayout}" =~ ${pattern} ]]; then
       toplevelsizing="${BASH_REMATCH[1]}"
       arglayout="[${arglayout/${toplevelsizing}/}]${toplevelsizing}"
