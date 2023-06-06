@@ -508,41 +508,24 @@ shorthand_layout_987654321="
 
 @test "${BATS_TEST_NUMBER} tmex testsessionname --layout 3{}34" {
 	run_tmex
-	assert_output -p "new-session -s testsessionname"
-	assert_layout "${layout_1234}"
-	assert_success
+	assert_output -p "Invalid input: --layout=3{}34 cannot include empty { } brackets"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	assert_failure
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout 3{g}34" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname --layout 3{+}34" {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_1234}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout 3{grid}34" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname --layout 3{+}3,4" {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_1234}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout 3{G}34" {
-	run_tmex
-	assert_output -p "new-session -s testsessionname"
-	assert_layout "${layout_1234}"
-	assert_success
-}
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout 3{GRID}34" {
-	run_tmex
-	assert_output -p "new-session -s testsessionname"
-	assert_layout "${layout_1234}"
-	assert_success
-}
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout 3{}3,4" {
-	run_tmex
-	assert_output -p "new-session -s testsessionname"
-	assert_layout "${layout_1234}"
-	assert_success
-}
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout ,3{},3,4," {
+@test "${BATS_TEST_NUMBER} tmex testsessionname --layout ,3{+},3,4," {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_1234}"
@@ -575,97 +558,45 @@ layout_grid5="
 
 @test "${BATS_TEST_NUMBER} tmex testsessionname --layout 3[5{}]4" {
 	run_tmex
-	assert_output -p "new-session -s testsessionname"
-	assert_layout "${layout_grid5}"
-	assert_success
+	assert_output -p "Invalid input: --layout=3[5{}]4 cannot include empty { } brackets"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	assert_failure
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout 3[5{g}]4" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname --layout 3[5{+}]4" {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_grid5}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout 3[5{grid}]4" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname --layout 3,[5{+},]4" {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_grid5}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout 3[5{G}]4" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname --layout 3,[5{+}],4" {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_grid5}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout 3[5{GRID}]4" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname --layout 3[,5{+},]4" {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_grid5}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout 3,[5{},]4" {
-	run_tmex
-	assert_output -p "new-session -s testsessionname"
-	assert_layout "${layout_grid5}"
-	assert_success
-}
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout 3,[5{}],4" {
-	run_tmex
-	assert_output -p "new-session -s testsessionname"
-	assert_layout "${layout_grid5}"
-	assert_success
-}
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout 3[,5{},]4" {
-	run_tmex
-	assert_output -p "new-session -s testsessionname"
-	assert_layout "${layout_grid5}"
-	assert_success
-}
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout ,3[5{}],4," {
+@test "${BATS_TEST_NUMBER} tmex testsessionname --layout ,3[5{+}],4," {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_grid5}"
 	assert_success
 }
 
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout {}3[5]4" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname --layout {+}3[5]4" {
 	run_tmex
-	assert_output -p "Invalid input: --layout={}3[5]4 cannot start with {} clause"
-	assert_output -p "Usage:"
-	refute_output -p "new-session -s testsessionname"
-	assert_failure
-}
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout {g}3[5]4" {
-	run_tmex
-	assert_output -p "Invalid input: --layout={g}3[5]4 cannot start with {g} clause"
-	assert_output -p "Usage:"
-	refute_output -p "new-session -s testsessionname"
-	assert_failure
-}
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout {grid}3[5]4" {
-	run_tmex
-	assert_output -p "Invalid input: --layout={grid}3[5]4 cannot start with {grid} clause"
-	assert_output -p "Usage:"
-	refute_output -p "new-session -s testsessionname"
-	assert_failure
-}
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout {G}3[5]4" {
-	run_tmex
-	assert_output -p "Invalid input: --layout={G}3[5]4 cannot start with {G} clause"
-	assert_output -p "Usage:"
-	refute_output -p "new-session -s testsessionname"
-	assert_failure
-}
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout {GRID}3[5]4" {
-	run_tmex
-	assert_output -p "Invalid input: --layout={GRID}3[5]4 cannot start with {GRID} clause"
-	assert_output -p "Usage:"
-	refute_output -p "new-session -s testsessionname"
-	assert_failure
-}
-@test "${BATS_TEST_NUMBER} tmex testsessionname --layout {GRID},3[,5],4," {
-	run_tmex
-	assert_output -p "Invalid input: --layout={GRID},3[,5],4, cannot start with {GRID} clause"
+	assert_output -p "Invalid input: --layout={+}3[5]4 cannot start with {+} clause"
 	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	assert_failure

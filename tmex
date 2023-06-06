@@ -6,7 +6,7 @@
 set -euo pipefail
 
 function processargs () {
-  local args argidx arg flags argmodified emptybraces idx char
+  local args argidx arg flags idx char
 
   args=( "${@-}" )
   argidx=0
@@ -108,13 +108,7 @@ function processargs () {
 
   # if next arg is a valid layout, use it as layout instead of shell command
   arg="${args[argidx]-}"
-  # remove {g} {grid} {G} {GRID} sections from arg before validating layout
-  emptybraces='{}'
-  argmodified="${arg//\{g\}/${emptybraces}}"
-  argmodified="${arg//\{grid\}/${emptybraces}}"
-  argmodified="${arg//\{G\}/${emptybraces}}"
-  argmodified="${arg//\{GRID\}/${emptybraces}}"
-  if [[ -z "${arglayout}" && "${argmodified}" =~ ^[][}{0-9,+-]+$ ]]; then
+  if [[ -z "${arglayout}" && "${arg}" =~ ^[][}{0-9,+-]+$ ]]; then
     (( argidx++ )) || true
     arglayout="${arg}"
   fi
@@ -228,6 +222,15 @@ function validatelayout () {
   if [[ "${arglayout}" =~ {[^}{]*[^0-9,][^}{]*} ]]; then
     echo ""
     echo "Invalid input: --layout=${arglayoutoriginal} cannot include non-numeric characters within { } brackets"
+    echo ""
+    echo "${usage}"
+    exit 1
+  fi
+
+  # if layout contains empty { } brackets, exit with error
+  if [[ "${arglayout}" == *'{}'* ]]; then
+    echo ""
+    echo "Invalid input: --layout=${arglayoutoriginal} cannot include empty { } brackets"
     echo ""
     echo "${usage}"
     exit 1
@@ -755,9 +758,9 @@ For more information, see https://github.com/evnp/tmex
     arglayoutoriginal="${arglayout}"
 
     # --- Grid Sub-Layouts --- #
-    # for each set of digits within layout followed by {} {g} {grid} {G} {GRID}
+    # for each set of digits within layout followed by {+}
     # replace with a default grid sub-layout with size matching digits:
-    pattern="([0-9]+)\{(g|grid)?\}"
+    pattern="([0-9]+)\{\+\}"
     shopt -s nocasematch
     while [[ "${arglayout}" =~ ${pattern} ]]; do
       layoutsize="${BASH_REMATCH[1]}"
@@ -767,13 +770,13 @@ For more information, see https://github.com/evnp/tmex
       # so that slashes in adjacent sections of parent layout don't trigger multi-digit
       # counting logic within the new sub-layout:
       arglayout="$( sed -E 's/([0-9])/[[\1]]/g' <<< "${arglayout}" )"
-      arglayout="${parentlayout/${layoutsize}\{${BASH_REMATCH[2]}\}/${arglayout}}"
+      arglayout="${parentlayout/${layoutsize}\{+\}/${arglayout}}"
     done
     shopt -u nocasematch
-    # if layout _starts_ with any of {} {g} {grid} {G} {GRID} clauses, exit with error
-    if [[ "${arglayout}" =~ ^(\{\}) || "${arglayout}" =~ ^(\{g(rid)?\}) || "${arglayout}" =~ ^(\{G(RID)?\}) ]]; then
+    # if layout _starts_ with {+} exit with error
+    if [[ "${arglayout}" == '{+}'* ]]; then
       echo ""
-      echo "Invalid input: --layout=${arglayoutoriginal} cannot start with ${BASH_REMATCH[1]} clause"
+      echo "Invalid input: --layout=${arglayoutoriginal} cannot start with {+} clause"
       echo ""
       echo "${usage}"
       exit 1
