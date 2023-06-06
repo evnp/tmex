@@ -781,9 +781,10 @@ For more information, see https://github.com/evnp/tmex
   [[ "${argtranspose}" == TRUE ]] && flag='v' || flag='h'
   split2d "${flag}" "${arglayout}" '' "${argcmds[@]-}"
 
-  # if [[ -n "${argfocus}" ]]; then
-  #   tmuxargs+=( ';' 'select-pane' 4 )
-  # fi
+  # select a pane if focus arg was provided
+  if [[ -n "${argfocus}" ]]; then
+    tmuxargs+=( ';' 'select-pane' "-t${argfocus}" )
+  fi
 
   # if running shell-less, command exit will kill tmux pane which makes troubleshooting hard
   # set remain-on-exit on - more of a sane default since user will see when a command failed

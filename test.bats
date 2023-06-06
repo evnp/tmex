@@ -5,7 +5,7 @@ load './node_modules/bats-assert/load'
 
 ORIGINAL_PATH="$PATH"
 
-setup_file() {
+function setup_file() {
 	# ensure TMUX_PANE is not set at beginning of test so that tests can be run
 	# from within tmux (TMUX_PANE handling is tested explicitly at end of suite)
 	unset TMUX_PANE
@@ -13,13 +13,13 @@ setup_file() {
 	mock_tmux
 }
 
-teardown_file() {
+function teardown_file() {
 	unset TMUX_PANE
 	unset TMUX_VERSION
 	restore_tmux
 }
 
-mock_tmux() {
+function mock_tmux() {
 	mkdir testbin
 	export PATH="./testbin:$PATH"
 	cat <<-EOF > ./testbin/tmux
@@ -49,16 +49,17 @@ mock_tmux() {
 	chmod +x ./testbin/tmux
 }
 
-restore_tmux() {
+function restore_tmux() {
 	rm -rf testbin
 	export PATH="$ORIGINAL_PATH"
 }
 
-run_tmex() {
+function run_tmex() {
 	local cmd
 	cmd="${BATS_TEST_DESCRIPTION/${BATS_TEST_NUMBER} /}"
 	cmd="${cmd/tmex/${BATS_TEST_DIRNAME}/tmex}"
 	if [[ "${cmd}" =~ ^([A-Z_]+=[^ ]*) ]]; then
+		# handle env var declarations placed before test command
 		export "${BASH_REMATCH[1]}"
 		run ${cmd/${BASH_REMATCH[1]} /}
 	else
@@ -131,7 +132,7 @@ run_tmex() {
 	assert_success
 }
 
-function print_layout () {
+function print_layout() {
 	layout="$1"
 
 	IFS=$';'
@@ -150,7 +151,7 @@ function print_layout () {
 	echo "${expected}"
 }
 
-function assert_layout () {
+function assert_layout() {
 	local layout
 	local command
 	local expected
@@ -283,6 +284,47 @@ layout_1234="
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_1234}"
 	assert_success
+}
+
+@test "${BATS_TEST_NUMBER} tmex testsessionname -f5 1234" {
+	run_tmex
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234} select-pane -t5"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname -l1234 -f-5" {
+	run_tmex
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234} select-pane -t-5"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname -l 1234 --focus=0" {
+	run_tmex
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234} select-pane -t0"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname -f 15 1234" {
+	run_tmex
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234} select-pane -t15"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname --layout 1234 -f=abcdefg" {
+	run_tmex
+	assert_output -p "Invalid input: --focus (-f) arg value must be an integer"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	refute_layout "${layout_1234}"
+	assert_failure
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname -fl1234" {
+	run_tmex
+	assert_output -p "Invalid input: --focus (-f) arg value must be an integer"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	refute_layout "${layout_1234}"
+	assert_failure
 }
 
 @test "${BATS_TEST_NUMBER} tmex testsessionname --layout {1111}1234" {
@@ -589,26 +631,44 @@ layout_grid5="
 @test "${BATS_TEST_NUMBER} tmex testsessionname --layout {}3[5]4" {
 	run_tmex
 	assert_output -p "Invalid input: --layout={}3[5]4 cannot start with {} clause"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	assert_failure
 }
 @test "${BATS_TEST_NUMBER} tmex testsessionname --layout {g}3[5]4" {
 	run_tmex
 	assert_output -p "Invalid input: --layout={g}3[5]4 cannot start with {g} clause"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	assert_failure
 }
 @test "${BATS_TEST_NUMBER} tmex testsessionname --layout {grid}3[5]4" {
 	run_tmex
 	assert_output -p "Invalid input: --layout={grid}3[5]4 cannot start with {grid} clause"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	assert_failure
 }
 @test "${BATS_TEST_NUMBER} tmex testsessionname --layout {G}3[5]4" {
 	run_tmex
 	assert_output -p "Invalid input: --layout={G}3[5]4 cannot start with {G} clause"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	assert_failure
 }
 @test "${BATS_TEST_NUMBER} tmex testsessionname --layout {GRID}3[5]4" {
 	run_tmex
 	assert_output -p "Invalid input: --layout={GRID}3[5]4 cannot start with {GRID} clause"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	assert_failure
 }
 @test "${BATS_TEST_NUMBER} tmex testsessionname --layout {GRID}/3[/5]/4/" {
 	run_tmex
 	assert_output -p "Invalid input: --layout={GRID}/3[/5]/4/ cannot start with {GRID} clause"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	assert_failure
 }
 
 layout_1234_transposed="
@@ -1471,118 +1531,208 @@ layout_a_j="
 @test "${BATS_TEST_NUMBER} tmex -n 1234 a b c d e f g h i j k" {
 	run_tmex
 	assert_output -p "Invalid input: --layout=1234 is too small for number of commands provided"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	refute_layout "${layout_1234}"
+	assert_failure
 }
 @test "${BATS_TEST_NUMBER} tmex -n 1/2/3/4 a b c d e f g h i j k" {
 	run_tmex
 	assert_output -p "Invalid input: --layout=1/2/3/4 is too small for number of commands provided"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	refute_layout "${layout_1234}"
+	assert_failure
 }
 @test "${BATS_TEST_NUMBER} tmex -n /1/2/3/4/ a b c d e f g h i j k" {
 	run_tmex
 	assert_output -p "Invalid input: --layout=/1/2/3/4/ is too small for number of commands provided"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	refute_layout "${layout_1234}"
+	assert_failure
 }
 
 @test "${BATS_TEST_NUMBER} tmex -n 1[2{34}5]6 a b c d e f g h i j k l m n o" {
 	run_tmex
 	assert_output -p "Invalid input: --layout=1[2{34}5]6 is too small for number of commands provided"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	assert_failure
 }
 @test "${BATS_TEST_NUMBER} tmex -n 1/[2{3/4}/5]/6 a b c d e f g h i j k l m n o" {
 	run_tmex
 	assert_output -p "Invalid input: --layout=1/[2{3/4}/5]/6 is too small for number of commands provided"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	assert_failure
 }
 @test "${BATS_TEST_NUMBER} tmex -n /1[/2{/3/4}5/]6/ a b c d e f g h i j k l m n o" {
 	run_tmex
 	assert_output -p "Invalid input: --layout=/1[/2{/3/4}5/]6/ is too small for number of commands provided"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	assert_failure
 }
 
 @test "${BATS_TEST_NUMBER} tmex -nl1234 a b c d e f g h i j k" {
 	run_tmex
 	assert_output -p "Invalid input: --layout=1234 is too small for number of commands provided"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	refute_layout "${layout_1234}"
+	assert_failure
 }
 @test "${BATS_TEST_NUMBER} tmex -nl1/2/3/4 a b c d e f g h i j k" {
 	run_tmex
 	assert_output -p "Invalid input: --layout=1/2/3/4 is too small for number of commands provided"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	refute_layout "${layout_1234}"
+	assert_failure
 }
 @test "${BATS_TEST_NUMBER} tmex -nl/1/2/3/4/ a b c d e f g h i j k" {
 	run_tmex
 	assert_output -p "Invalid input: --layout=/1/2/3/4/ is too small for number of commands provided"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	refute_layout "${layout_1234}"
+	assert_failure
 }
 
 @test "${BATS_TEST_NUMBER} tmex -nl1[2{34}5]6 a b c d e f g h i j k l m n o" {
 	run_tmex
 	assert_output -p "Invalid input: --layout=1[2{34}5]6 is too small for number of commands provided"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	assert_failure
 }
 @test "${BATS_TEST_NUMBER} tmex -nl1/[2{3/4}/5]/6 a b c d e f g h i j k l m n o" {
 	run_tmex
 	assert_output -p "Invalid input: --layout=1/[2{3/4}/5]/6 is too small for number of commands provided"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	assert_failure
 }
 @test "${BATS_TEST_NUMBER} tmex -nl/1[/2{/3/4}5/]6/ a b c d e f g h i j k l m n o" {
 	run_tmex
 	assert_output -p "Invalid input: --layout=/1[/2{/3/4}5/]6/ is too small for number of commands provided"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	assert_failure
 }
 
 @test "${BATS_TEST_NUMBER} tmex -nl 1234 a b c d e f g h i j k" {
 	run_tmex
 	assert_output -p "Invalid input: --layout=1234 is too small for number of commands provided"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	assert_failure
 }
 @test "${BATS_TEST_NUMBER} tmex -nl 1/2/3/4 a b c d e f g h i j k" {
 	run_tmex
 	assert_output -p "Invalid input: --layout=1/2/3/4 is too small for number of commands provided"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	assert_failure
 }
 @test "${BATS_TEST_NUMBER} tmex -nl /1/2/3/4/ a b c d e f g h i j k" {
 	run_tmex
 	assert_output -p "Invalid input: --layout=/1/2/3/4/ is too small for number of commands provided"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	assert_failure
 }
 
 @test "${BATS_TEST_NUMBER} tmex -nl 1[2{34}5]6 a b c d e f g h i j k l m n o" {
 	run_tmex
 	assert_output -p "Invalid input: --layout=1[2{34}5]6 is too small for number of commands provided"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	assert_failure
 }
 @test "${BATS_TEST_NUMBER} tmex -nl 1/[2{3/4}/5]/6 a b c d e f g h i j k l m n o" {
 	run_tmex
 	assert_output -p "Invalid input: --layout=1/[2{3/4}/5]/6 is too small for number of commands provided"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	assert_failure
 }
 @test "${BATS_TEST_NUMBER} tmex -nl /1[/2{/3/4}5/]6/ a b c d e f g h i j k l m n o" {
 	run_tmex
 	assert_output -p "Invalid input: --layout=/1[/2{/3/4}5/]6/ is too small for number of commands provided"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	assert_failure
 }
 
 @test "${BATS_TEST_NUMBER} tmex -nl=1234 a b c d e f g h i j k" {
 	run_tmex
 	assert_output -p "Invalid input: --layout=1234 is too small for number of commands provided"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	refute_layout "${layout_1234}"
+	assert_failure
 }
 @test "${BATS_TEST_NUMBER} tmex -nl=1/2/3/4 a b c d e f g h i j k" {
 	run_tmex
 	assert_output -p "Invalid input: --layout=1/2/3/4 is too small for number of commands provided"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	refute_layout "${layout_1234}"
+	assert_failure
 }
 @test "${BATS_TEST_NUMBER} tmex -nl=/1/2/3/4/ a b c d e f g h i j k" {
 	run_tmex
 	assert_output -p "Invalid input: --layout=/1/2/3/4/ is too small for number of commands provided"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	refute_layout "${layout_1234}"
+	assert_failure
 }
 
 @test "${BATS_TEST_NUMBER} tmex -nl=1[2{34}5]6 a b c d e f g h i j k l m n o" {
 	run_tmex
 	assert_output -p "Invalid input: --layout=1[2{34}5]6 is too small for number of commands provided"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	assert_failure
 }
 @test "${BATS_TEST_NUMBER} tmex -nl=1/[2{3/4}/5]/6 a b c d e f g h i j k l m n o" {
 	run_tmex
 	assert_output -p "Invalid input: --layout=1/[2{3/4}/5]/6 is too small for number of commands provided"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	assert_failure
 }
 @test "${BATS_TEST_NUMBER} tmex -nl=/1[/2{/3/4}5/]6/ a b c d e f g h i j k l m n o" {
 	run_tmex
 	assert_output -p "Invalid input: --layout=/1[/2{/3/4}5/]6/ is too small for number of commands provided"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	assert_failure
 }
 
 @test "${BATS_TEST_NUMBER} tmex -nf=abc -l=/1[/2{/3/4}5/]6 a b c d e f g h i j k l m n o" {
 	run_tmex
 	assert_output -p "Invalid input: --focus (-f) arg value must be an integer"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	assert_failure
 }
 @test "${BATS_TEST_NUMBER} tmex -nf= -l=/1[/2{/3/4}5/]6 a b c d e f g h i j k l m n o" {
 	run_tmex
 	assert_output -p "Invalid input: --focus (-f) arg value must be an integer"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	assert_failure
 }
 @test "${BATS_TEST_NUMBER} tmex -nf -l=/1[/2{/3/4}5/]6 a b c d e f g h i j k l m n o" {
 	run_tmex
 	assert_output -p "Invalid input: --focus (-f) arg value must be an integer"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	assert_failure
 }
 
 # ensure nested tmex commands will select and split their current pane
