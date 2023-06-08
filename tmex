@@ -210,7 +210,7 @@ function validatelayout () {
   minsize="$1"
 
   # if layout contains characters other than 0-9, [, ], {, }, or comma, exit with error
-  if ! [[ "${arglayout}" =~ ^[][}{0-9,]+$ ]]; then
+  if ! [[ "${arglayout}" =~ ^[][}{0-9,+-]+$ ]]; then
     echo ""
     echo "Invalid input: --layout=${arglayoutoriginal} must contain only numeric characters and [ ] { } brackets"
     echo ""
@@ -271,7 +271,7 @@ function validatelayout () {
   fi
   for (( idx = 0; idx < ${#arglayout}; idx++ )); do
     char="${arglayout:${idx}:1}"
-    nextchar="${layout:$(( idx + 1 )):1}"
+    nextchar="${arglayout:$(( idx + 1 )):1}"
 
     if [[ "${char}" == "," ]]; then
       if [[ "${nextchar}" =~ ^[0-9]$ ]]; then
@@ -296,7 +296,7 @@ function validatelayout () {
       sizebracketsopen=TRUE
     elif [[ "${char}" == '}' ]]; then
       sizebracketsopen=FALSE
-    elif [[ "${sizebracketsopen}" == FALSE && "${char}" =~ ^[0-9]+$ ]]; then
+    elif [[ "${sizebracketsopen:-}" == FALSE && "${char}" =~ ^[0-9]+$ ]]; then
       (( layoutsizesum += char )) || true
     fi
   done
@@ -526,7 +526,7 @@ function split2d () {
       sizebracketsopen=TRUE
     elif [[ "${char}" == '}' ]]; then
       sizebracketsopen=FALSE
-    elif [[ "${sizebracketsopen}" == TRUE ]] && (( depth == 0 )); then
+    elif [[ "${sizebracketsopen:-}" == TRUE ]] && (( depth == 0 )); then
       sublayoutsizings[${#sublayoutsizings[@]} - 1]+="${char},"
     fi
 
@@ -537,7 +537,7 @@ function split2d () {
     if (( depth > 0 )); then
       sublayouts[${#sublayouts[@]} - 1]+="${char}"
 
-      if [[ "${char}" =~ ^[0-9]+$ && "${sizebracketsopen}" == FALSE ]]; then
+      if [[ "${char}" =~ ^[0-9]+$ && "${sizebracketsopen:-}" == FALSE ]]; then
         (( sublayoutpanecounts[${#sublayoutpanecounts[@]} - 1] += char )) || true
       fi
     fi
@@ -551,7 +551,7 @@ function split2d () {
       (( depth += 1 )) || true
     fi
 
-    if [[ "${char}" =~ ^[0-9]+$ && "${sizebracketsopen}" == FALSE ]] && (( depth == 0 )); then
+    if [[ "${char}" =~ ^[0-9]+$ && "${sizebracketsopen:-}" == FALSE ]] && (( depth == 0 )); then
       sublayout=$( printf '%0.s1' $( seq 1 "${char}" ) ) # "111..1" str len == char
       sublayouts+=( "${sublayout}" )
       sublayoutpanecounts+=( "${char}" )
@@ -605,7 +605,8 @@ function main () {
   local argnpm argprint argreattach argsession argshellless argtranspose argversion
 
   local tmuxargs cmd idx flag output pattern version tmuxversion usage help
-  local layoutsize toplevelsizing parentlayout
+  local layoutsize layoutsizesum multidigitvalue toplevelsizing parentlayout
+  local partiallayout sizebracketsopen
 
   # Construct and execute a tmux command that runs a set of commands inside a layout.
   # Params:
@@ -785,11 +786,75 @@ For more information, see https://github.com/evnp/tmex
     # --- Top Level Sizing --- #
     # if layout starts with { } bracket sizing, automatically wrap the whole thing
     # in a sublayout and transpose it, so that top-level sizing is applied
-    pattern="^(\{[0-9,]+\})"
-    if [[ "${arglayout}" =~ ${pattern} ]]; then
+    if [[ "${arglayout}" =~ ^(\{[0-9,]+\}) ]]; then
       toplevelsizing="${BASH_REMATCH[1]}"
       arglayout="[${arglayout/${toplevelsizing}/}]${toplevelsizing}"
       [[ "${argtranspose}" == TRUE ]] && argtranspose=FALSE || argtranspose=TRUE
+    fi
+
+    # --- Inter-Layout Pane Focus --- #
+    # if a digit (or digits) representing a set of panes in a layout is followed by
+    # any number of + or - chars, select the pane within that set corresponding with
+    # the index represented by the number of + or - chars,
+    # eg. +++ : pane index 2 (3rd from start), ---- : pane index -4 (4th from last)
+    if [[ -z "${argfocus}" && "${arglayout}" =~ ^([^+-]*)([+-]+) ]]; then
+      partiallayout="${BASH_REMATCH[1]}"
+      if [[ "${BASH_REMATCH[2]}" == '+'* ]]; then
+        argfocus="${#BASH_REMATCH[2]}"
+      else
+        argfocus="-${#BASH_REMATCH[2]}"
+      fi
+      echo "$partiallayout" "${BASH_REMATCH[2]}" "$argfocus"
+      multidigitvalue='-1'
+      if [[ "${partiallayout}" =~ ^[0-9]+, ]]; then
+        multidigitvalue=''
+      fi
+      sizebracketsopen=FALSE
+      for (( idx = 0; idx < ${#partiallayout}; idx++ )); do
+        char="${partiallayout:${idx}:1}"
+        nextchar="${partiallayout:$(( idx + 1 )):1}"
+
+        if [[ "${char}" == "," ]]; then
+          if [[ "${nextchar}" =~ ^[0-9]$ ]]; then
+            multidigitvalue=''
+          fi
+          continue
+        elif [[ "${multidigitvalue}" != '-1' && "${char}" =~ ^[0-9]$ ]]; then
+          multidigitvalue+="${char}"
+          if [[ "${nextchar}" =~ ^[0-9]$ ]]; then
+            continue
+          else
+            char="${multidigitvalue}"
+            multidigitvalue='-1'
+          fi
+        else
+          multidigitvalue='-1'
+        fi
+
+        if [[ "${char}" == '0' ]]; then
+          continue
+        elif [[ "${char}" == '{' ]]; then
+          sizebracketsopen=TRUE
+        elif [[ "${char}" == '}' ]]; then
+          sizebracketsopen=FALSE
+        elif [[ "${sizebracketsopen:-}" == FALSE && "${char}" =~ ^[0-9]+$ ]]; then
+          (( argfocus += char )) || true
+        fi
+      done
+      # if +++ chars are in use, algorithm is as follows:
+      # - sum number of panes in each row/col PRECEEDING row/col with selected pane
+      # - to accomplish this, sum all row/cols up to and INCLUDING selected,
+      #   then subtract that one at the end
+      # - also subtract 1 since positive select-pane operations should be 0-indexed
+      # - the resulting integer is the selected pane index, and is used as argfocus
+      # if +++ chars are in use, algorithm is as follows:
+      # - sum all row/cols up to and INCLUDING selected
+      # - no decrement by 1 needed since negative select-pane operations are 1-indexed
+      # - the resulting integer is the selected pane index, and is used as argfocus
+      if [[ "${arglayout}" =~ [0-9]\+ ]]; then
+        (( argfocus -= char )) || true
+        (( argfocus -= 1 )) || true
+      fi
     fi
   fi
 
