@@ -8,11 +8,11 @@ set -euo pipefail
 function processargs () {
   local args argidx arg flags idx char
 
-  args=( "${@-}" )
+  args=( "${@:-}" )
   argidx=0
 
   # session name
-  argsession="${args[argidx]-}"
+  argsession="${args[argidx]:-}"
 
   # check if we're skipping session name, if it matches another arg type
   if [[ "${argsession}" =~ ^--(detached|help|kill|npm|print|reattach|shellless|transpose|version)$ ]]; then
@@ -26,14 +26,14 @@ function processargs () {
   fi
 
   while true; do
-    arg="${args[argidx]-}"
+    arg="${args[argidx]:-}"
     if [[ "${arg}" =~ ^(-([dhknprstv]*)l|--layout) ]]; then
       (( argidx++ )) || true
       if [[ "${arg}" != '--layout' ]]; then
         arg="${arg/-${BASH_REMATCH[2]}/-}"
       fi
       if [[ "${arg}" == "-l" || "${arg}" == '--layout' ]]; then
-        arg="${args[argidx]-}"
+        arg="${args[argidx]:-}"
         (( argidx++ )) || true
       fi
       arglayout="${arg}"
@@ -48,7 +48,7 @@ function processargs () {
         arg="${arg/-${BASH_REMATCH[2]}/-}"
       fi
       if [[ "${arg}" == "-f" || "${arg}" == "--focus" ]]; then
-        arg="${args[argidx]-}"
+        arg="${args[argidx]:-}"
         (( argidx++ )) || true
       fi
       argfocus="${arg}"
@@ -107,7 +107,7 @@ function processargs () {
   done
 
   # if next arg is a valid layout, use it as layout instead of shell command
-  arg="${args[argidx]-}"
+  arg="${args[argidx]:-}"
   if [[ -z "${arglayout}" && "${arg}" =~ ^[][}{0-9,+-]+$ ]]; then
     (( argidx++ )) || true
     arglayout="${arg}"
@@ -118,7 +118,7 @@ function processargs () {
 
   # allow omission of session name if --npm is set
   if [[ -z "${argsession}" && "${argnpm}" == TRUE ]]; then
-    argsession="${npm_package_name-}"  # default to avoid 'unbound local variable' issues
+    argsession="${npm_package_name:-}"  # default to avoid 'unbound local variable' issues
 
     # if env var is undefined we're probably running manually instead of from an npm script;
     # try and pull package name from npm env manually
@@ -134,9 +134,9 @@ function processargs () {
       # treat this arg as the session name to kill:
       argsession="${args[1]}"
       argcmds=()  # since arg is now session name, remove from argcmds
-    elif [[ -n "${TMUX_PANE-}" ]]; then
+    elif [[ -n "${TMUX_PANE:-}" ]]; then
       # otherwise, if we're currently in a tmux session, kill that session:
-      argsession="${TMUX_PANE-}"
+      argsession="${TMUX_PANE:-}"
     fi
   fi
 
@@ -378,7 +378,7 @@ function split1d () {
   numpanes="$2"
   sizing="$3"
 
-  shift 3; cmds=( "${@-}" )
+  shift 3; cmds=( "${@:-}" )
 
   # support for percentage values under `split-pane -l<value>%` was added in tmux 3.1
   # and `split-pane -p<value>` was deprecated (fully removed in tmux 3.4)
@@ -429,7 +429,7 @@ function split1d () {
 
     # split pane down the middle (adjusted according to size array)
     tmuxargs+=( ";" "split-window" "-${direction}" "${pctprefix}${percentage}${pctsuffix}" )
-    executecmd "${cmds[${half}]-}"
+    executecmd "${cmds[${half}]:-}"
     selectpane "${direction}" "UL" 1
 
     # keep splitting - 1st half of panes, then select pane at middle, then 2nd half
@@ -453,7 +453,7 @@ function split1d () {
 
     # split off first pane (adjusted according to size array)
     tmuxargs+=( ";" "split-window" "-${direction}" "${pctprefix}${percentage}${pctsuffix}" )
-    executecmd "${cmds[1]-}"
+    executecmd "${cmds[1]:-}"
 
     # if more than 2 panes, keep splitting
     if (( numpanes > 2 && numpanes % 2 > 0 )); then
@@ -483,7 +483,7 @@ function split2d () {
   layout="$2"
   sizing="$3"
 
-  shift 3; cmds=( "${@-}" )
+  shift 3; cmds=( "${@:-}" )
 
   # expand layout string into three arrays:
   # e.g. "12{31}[3[45]{21}]{12}6"
@@ -548,7 +548,7 @@ function split2d () {
         sublayoutpanecounts+=( 0 )
         sublayoutsizings+=( "" )
       fi
-      (( depth += 1 )) || true
+      (( depth++ )) || true
     fi
 
     if [[ "${char}" =~ ^[0-9]+$ && "${sizebracketsopen:-}" == FALSE ]] && (( depth == 0 )); then
@@ -567,7 +567,7 @@ function split2d () {
 
   for (( idx = 0; idx < numsublayouts; idx++ )); do
     sublayoutpanecount="${sublayoutpanecounts[${idx}]}"
-    initialcmds+=( "${cmds[${initialcmdidx}]-}" )
+    initialcmds+=( "${cmds[${initialcmdidx}]:-}" )
     (( initialcmdidx += sublayoutpanecount )) || true
   done
   split1d "${direction}" "${numsublayouts}" "${sizing}" "${initialcmds[@]}"
@@ -591,9 +591,9 @@ function split2d () {
 
     # if layout contains only columns of 1, we can split 1-dimensional
     if [[ "${sublayout}" =~ ^1+$ ]]; then
-      split1d "${flag}" "${sublayoutpanecount}" "${sublayoutsizing}" "${subcmds[@]-}"
+      split1d "${flag}" "${sublayoutpanecount}" "${sublayoutsizing}" "${subcmds[@]:-}"
     else
-      split2d "${flag}" "${sublayout}" "${sublayoutsizing}" "${subcmds[@]-}"
+      split2d "${flag}" "${sublayout}" "${sublayoutsizing}" "${subcmds[@]:-}"
     fi
 
     (( initialcmdidx += sublayoutpanecount )) || true
@@ -601,6 +601,22 @@ function split2d () {
 }
 
 function buildtmuxargs() {
+  local pattern flag idx char nextchar
+  local layoutsize partiallayout parentlayout
+  local toplevelsizing sizebracketsopen multidigitvalue
+
+  # Construct a tmux command that runs a set of commands inside a layout.
+  # During normal operation, this will only be called once by the `main` function.
+  # If multi-window mode is in use, it will be called once for each tmux window.
+  # Params:
+  #   $@ args [array<any>] subset of script args relevant to the current tmux command
+  # Modifies external:
+  #   ${tmuxargs}
+  #   ${argcmds}
+  #   ${arglayout}
+  #   ${argtranspose}
+  #   ${argfocus}
+
   processargs "$@"
 
   if [[ "${arghelp}" == TRUE ]]; then
@@ -637,22 +653,28 @@ function buildtmuxargs() {
   fi
 
   # if we're already in a tmux pane, further split the pane rather than nesting tmux sessions
-  paneid="${TMUX_PANE-}"
-  if [[ -n "${paneid}" ]]; then
+  if [[ -n "${TMUX_PANE:-}" ]]; then
     # ensure we're not in "shell-less" mode; this would fail to run the 1st command in the 1st
     # pane since the pane would die after executing the nested tmex command
     if [[ "${argshellless}" == TRUE ]]; then
       echo "Error: --shellless mode cannot be used when nesting tmex commands"
       exit 1
     fi
-    tmuxargs+=( 'select-window' '-t' "${paneid}" ';' 'select-pane' '-t' "${paneid}" )
+    tmuxargs+=( 'select-window' '-t' "${TMUX_PANE}" ';' 'select-pane' '-t' "${TMUX_PANE}" )
 
-  # otherwise start a new session
+  # otherwise start a new session OR window
   else
     if (( ${#tmuxargs[@]} > 0 )); then
-      tmuxargs+=( ';' 'new-window' )
+      if [[ -n "${argwindow}" && "${argwindow}" != '-' ]]; then
+        tmuxargs+=( ';' 'new-window' '-n' "${argwindow}" )
+      else
+        tmuxargs+=( ';' 'new-window' )
+      fi
     else
       tmuxargs+=( 'new-session' '-s' "${argsession}" )
+      if [[ -n "${argwindow}" && "${argwindow}" != '-' ]]; then
+        tmuxargs+=( ';' 'rename-window' "${argwindow}" )
+      fi
     fi
 
     # if running in "detached" mode, add -d flag
@@ -661,7 +683,7 @@ function buildtmuxargs() {
     fi
   fi
 
-  executecmd "${argcmds[0]-}"
+  executecmd "${argcmds[0]:-}"
 
   # if layout is not specified, generate a default
   if [[ -z "${arglayout}" ]]; then
@@ -673,7 +695,6 @@ function buildtmuxargs() {
     # for each set of digits within layout followed by {+}
     # replace with a default grid sub-layout with size matching digits:
     pattern="([0-9]+)\{\+\}"
-    shopt -s nocasematch
     while [[ "${arglayout}" =~ ${pattern} ]]; do
       layoutsize="${BASH_REMATCH[1]}"
       parentlayout="${arglayout}"
@@ -684,7 +705,6 @@ function buildtmuxargs() {
       arglayout="$( sed -E 's/([0-9])/[[\1]]/g' <<< "${arglayout}" )"
       arglayout="${parentlayout/${layoutsize}\{+\}/${arglayout}}"
     done
-    shopt -u nocasematch
     # if layout _starts_ with {+} exit with error
     if [[ "${arglayout}" == '{+}'* ]]; then
       echo ""
@@ -774,21 +794,26 @@ function buildtmuxargs() {
 
   # append layout commands onto tmuxargs
   [[ "${argtranspose}" == TRUE ]] && flag='v' || flag='h'
-  split2d "${flag}" "${arglayout}" '' "${argcmds[@]-}"
+  split2d "${flag}" "${arglayout}" '' "${argcmds[@]:-}"
 
   # select a pane if focus arg was provided
   if [[ -n "${argfocus}" ]]; then
     tmuxargs+=( ';' 'select-pane' "-t${argfocus}" )
+  fi
+
+  # if running shell-less, command exit will kill tmux pane which makes troubleshooting hard
+  # set remain-on-exit on - more of a sane default since user will see when a command failed
+  if [[ "${argshellless}" == TRUE ]]; then
+    tmuxargs+=( ';' 'set-window-option' 'remain-on-exit' 'on' )
   fi
 }
 
 function main () {
   local argdetached argfocus arghelp argkill arglayout arglayoutoriginal argcmds
   local argnpm argprint argreattach argsession argshellless argtranspose argversion
+  local argwindow
 
-  local args tmexargs tmuxargs cmd idx flag output pattern version tmuxversion usage
-  local layoutsize layoutsizesum multidigitvalue toplevelsizing parentlayout help
-  local partiallayout sizebracketsopen
+  local args tmexargs tmuxargs idx output version tmuxversion usage help
 
   # Construct and execute a tmux command that runs a set of commands inside a layout.
   # Params:
@@ -859,7 +884,6 @@ tmex <session-name>                - session name required unless --npm or --kil
 For more information, see https://github.com/evnp/tmex
 '
 
-  # Parse args into vars:
   argdetached=FALSE  # optional - if TRUE, invoke tmux with -d flag (detached session)
   argfocus=''        # optional - tmux pane to select by index
   arghelp=FALSE      # optional - if TRUE, display usage message and exit
@@ -868,6 +892,7 @@ For more information, see https://github.com/evnp/tmex
   argprint=FALSE     # optional - if TRUE, print final tmux command to console instead of executing it
   argreattach=FALSE  # optional - if TRUE, re-attach to existing tmux session isntead of replacing it
   argsession=''      # required - session name
+  argwindow=''       # optional - window name
   argshellless=FALSE # optional - if TRUE, execute commands standalone instead of in a shell
   argtranspose=FALSE # optional - if TRUE, layout in left-to-right instead of top-to-bottom orientation
   argversion=FALSE   # optional - if TRUE, display version and exit
@@ -877,28 +902,45 @@ For more information, see https://github.com/evnp/tmex
   tmuxargs=()
 
   # --- Multi-Window Management --- #
-  if [[ " ${*:-} " == *' -w '* || " ${*:-} " == *' --window '* ]]; then
+  if ! [[ " ${*:-} " == *' -w '* || " ${*:-} " == *' --window '* ]]; then
+    # not using multiple windows - build tmux args normally
+    buildtmuxargs "$@"
+  else
     args=( "${@}" )
     tmexargs=()
     for (( idx = 0; idx <= ${#args[@]}; idx++ )); do
-      if (( idx == ${#args[@]} )) || [[ "${args[idx]}" == '-w' || "${args[idx]}" == '--window' ]]; then
-        if (( ${#tmexargs} > 0 )); then
-          buildtmuxargs "${tmexargs[@]}"
+      if (( idx == ${#args[@]} )) || [[ "${args[idx]}" =~ ^(-w|--window) ]]; then
+        if [[ -n "${argwindow}" ]]; then
+          if (( ${#tmuxargs} == 0 )); then
+            buildtmuxargs "${tmexargs[@]:-}"
+          else
+            buildtmuxargs "${argsession}" "${tmexargs[@]:-}"
+          fi
+          tmexargs=()
+          argwindow=''
+          argfocus=''
+          arglayout=''
+          argnpm=FALSE
+          argshellless=FALSE
+          argtranspose=FALSE
+          argcmds=''
         fi
-        tmexargs=()
+        if [[ "${args[idx]:-}" =~ ^(-w|--window)$ ]]; then
+          (( idx++ )) || true
+          argwindow="${args[idx]}"
+          if [[ -z "${argwindow}" ]]; then
+            argwindow='-'
+          fi
+        elif [[ "${args[idx]:-}" =~ ^(-w|--window)\=?(.*)$ ]]; then
+          argwindow="${BASH_REMATCH[2]}"
+          if [[ -z "${argwindow}" ]]; then
+            argwindow='-'
+          fi
+        fi
       else
         tmexargs+=( "${args[idx]}" )
       fi
     done
-  else
-    # not using multiple windows - build tmux args normally
-    buildtmuxargs "$@"
-  fi
-
-  # if running shell-less, command exit will kill tmux pane which makes troubleshooting hard
-  # set remain-on-exit on - more of a sane default since user will see when a command failed
-  if [[ "${argshellless}" == TRUE ]]; then
-    tmuxargs+=( ';' 'set-window-option' 'remain-on-exit' 'on' ';' )
   fi
 
   if [[ "${argprint}" == TRUE ]]; then
@@ -914,7 +956,7 @@ For more information, see https://github.com/evnp/tmex
     echo "${output}"
   else
     # either attach to an existing session or kill it based on specified behavior
-    if [[ -z "${paneid}" ]]; then # avoid doing this if we're already in tmux session
+    if [[ -z "${TMUX_PANE:-}" ]]; then # avoid doing this if we're already in tmux session
       if tmux has-session -t "${argsession}" 2>/dev/null; then
         if [[ "${argreattach}" == TRUE ]]; then
           tmux attach-session -t "${argsession}"
