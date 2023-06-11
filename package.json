@@ -9,13 +9,17 @@
     "testf": "run() { npm run -s lint && bats -f \"$@\" test.bats; }; run",
     "testi": "run() { npm run -s lint && bats -f \" $( cat test.bats | grep @test | cut -d' ' -f3- | head -$1 | tail -1 | sed 's/\" {$//' )$\" test.bats; }; run",
     "testn": "clear && npm run -s test | bats-notify",
-    "testw": "npm run -s test && fswatch -0 -o -r . | xargs -0 -n1 npm run test",
-    "testnw": "npm run -s testn && fswatch -0 -o -r . | xargs -0 -n1 npm run testn",
+    "testw": "run() { npm run -s test; fswatch -0 -o -r . | xargs -0 -n1 npm run test; }; run",
+    "testnw": "run() { npm run -s testn; fswatch -0 -o -r . | xargs -0 -n1 npm run testn; }; run",
+    "testfw": "run() { npm run -s testf \"$@\"; fswatch -0 -o -r . | xargs -0 -n1 npm run testf \"$@\"; }; run",
+    "testiw": "run() { npm run -s testi \"$@\"; fswatch -0 -o -r . | xargs -0 -n1 npm run testi \"$@\"; }; run",
     "tf": "npm run -s testf",
     "ti": "npm run -s testi",
     "tn": "npm run -s testn",
     "tw": "npm run -s testw",
-    "tnw": "npm run -s testnw"
+    "tnw": "npm run -s testnw",
+    "tfw": "npm run -s testfw",
+    "tiw": "npm run -s testiw"
   },
   "bin": {
     "tmex": "tmex"

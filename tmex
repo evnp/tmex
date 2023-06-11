@@ -108,7 +108,7 @@ function processargs () {
 
   # if next arg is a valid layout, use it as layout instead of shell command
   arg="${args[argidx]:-}"
-  if [[ -z "${arglayout}" && "${arg}" =~ ^[][}{0-9,+-]+$ ]]; then
+  if [[ -z "${arglayout}" && "${arg}" =~ ^[][}{0-9.+-]+$ ]]; then
     (( argidx++ )) || true
     arglayout="${arg}"
   fi
@@ -202,78 +202,55 @@ function generatelayout () {
 
 function validatelayout () {
   local minsize idx char nextchar layoutsizesum sizebracketsopen multidigitvalue
+  local invalidmsgs
 
   # Ensure layout is valid and large enough to contain specified size.
   # Params:
   #   $1 minsize [integer] minimum size of layout
 
   minsize="$1"
+  invalidmsgs=()
 
-  # if layout contains characters other than 0-9, [, ], {, }, or comma, exit with error
-  if ! [[ "${arglayout}" =~ ^[][}{0-9,+-]+$ ]]; then
-    echo ""
-    echo "Invalid input: --layout=${arglayoutoriginal} must contain only numeric characters and [ ] { } brackets"
-    echo ""
-    echo "${usage}"
-    exit 1
+  # don't allow any chars other than 0-9 '[' ']' '{' '}' '.' '+' '-'
+  if ! [[ "${arglayout}" =~ ^[][}{0-9.+-]+$ ]]; then
+    invalidmsgs+=( "must contain only numeric characters and [ ] { } brackets" )
   fi
-
-  # if layout contains non-numeric non-comma characters within { } brackets, exit with error
-  if [[ "${arglayout}" =~ {[^}{]*[^0-9,][^}{]*} ]]; then
-    echo ""
-    echo "Invalid input: --layout=${arglayoutoriginal} cannot include non-numeric characters within { } brackets"
-    echo ""
-    echo "${usage}"
-    exit 1
+  # don't allow non-numeric non-comma chars within { } brackets
+  if [[ "${arglayout}" =~ {[^}{]*[^0-9.][^}{]*} ]]; then
+    invalidmsgs+=( "cannot include non-numeric characters within { } brackets" )
   fi
-
-  # if layout contains empty { } brackets, exit with error
+  # don't allow empty { } brackets
   if [[ "${arglayout}" == *'{}'* ]]; then
-    echo ""
-    echo "Invalid input: --layout=${arglayoutoriginal} cannot include empty { } brackets"
-    echo ""
-    echo "${usage}"
-    exit 1
+    invalidmsgs+=( "cannot include empty { } brackets" )
   fi
-
-  # if layout contains non-numeric non-plus characters preceeding '+' exit with error
-  if [[ "${arglayout}" =~ [^0-9+]\+ ]]; then
-    echo ""
-    echo "Invalid input: --layout=${arglayoutoriginal} cannot include '+' immediately preceeded by non-numeric character"
-    echo ""
-    echo "${usage}"
-    exit 1
-  fi
-
-  # if layout contains non-numeric non-minus characters preceeding '-' exit with error
-  if [[ "${arglayout}" =~ [^0-9-]\- ]]; then
-    echo ""
-    echo "Invalid input: --layout=${arglayoutoriginal} cannot include '+' immediately preceeded by non-numeric character"
-    echo ""
-    echo "${usage}"
-    exit 1
-  fi
-
-  # if layout contains multiple groups of '+' or '-' exit with error
+  # don't allow  multiple groups of '+' or '-' chars
   if [[ "${arglayout}" =~ [+-]+[^+-]+[+-]+ ]]; then
-    echo ""
-    echo "Invalid input: --layout=${arglayoutoriginal} cannot multiple groups of '+' and '-' characters"
-    echo ""
-    echo "${usage}"
-    exit 1
+    invalidmsgs+=( "cannot multiple groups of '+' and '-' characters" )
+  fi
+  # don't allow plus immediately preceeded by non-numeric non-minus chars
+  if [[ "${arglayout}" =~ [^0-9+]\+ ]]; then
+    invalidmsgs+=( "cannot include '+' immediately preceeded by a non-numeric character" )
+  fi
+  # don't allow minus immediately preceeded by non-numeric non-minus chars
+  if [[ "${arglayout}" =~ [^0-9-]\- ]]; then
+    invalidmsgs+=( "cannot include '+' immediately preceeded by a non-numeric character" )
+  fi
+  # don't allow multiple dots in a row
+  if [[ "${arglayout}" == *'..'* ]]; then
+    invalidmsgs+=( "should not include multiple '.' characters in a row" )
   fi
 
   layoutsizesum=0
   sizebracketsopen=FALSE
   multidigitvalue='-1'
-  if [[ "${arglayout}" =~ ^[0-9]+, ]]; then
+  if [[ "${arglayout}" =~ ^[0-9]+\. ]]; then
     multidigitvalue=''
   fi
   for (( idx = 0; idx < ${#arglayout}; idx++ )); do
     char="${arglayout:${idx}:1}"
     nextchar="${arglayout:$(( idx + 1 )):1}"
 
-    if [[ "${char}" == "," ]]; then
+    if [[ "${char}" == '.' ]]; then
       if [[ "${nextchar}" =~ ^[0-9]$ ]]; then
         multidigitvalue=''
       fi
@@ -303,8 +280,15 @@ function validatelayout () {
 
   # if size exceeds sum of layout string digits, exit with error
   if (( minsize > layoutsizesum )); then
+    invalidmsgs+=( "is too small for number of commands provided" )
+  fi
+
+  if (( ${#invalidmsgs[@]} > 0 )); then
     echo ""
-    echo "Invalid input: --layout=${arglayoutoriginal} is too small for number of commands provided"
+    echo "Invalid input: --layout=${arglayoutoriginal}"
+    for (( idx = 0; idx < ${#invalidmsgs[@]}; idx++ )); do
+      echo "  - ${invalidmsgs[idx]}"
+    done
     echo ""
     echo "${usage}"
     exit 1
@@ -496,16 +480,19 @@ function split2d () {
   sublayoutsizings=()
   sizebracketsopen=FALSE
   multidigitvalue='-1'
-  if [[ "${layout}" =~ ^[0-9]+, ]]; then
+  if [[ "${layout}" =~ ^[0-9]+\. ]]; then
     multidigitvalue=''
   fi
   for (( idx = 0; idx < ${#layout}; idx++ )); do
     char="${layout:${idx}:1}"
     nextchar="${layout:$(( idx + 1 )):1}"
 
-    if [[ "${char}" == "," ]]; then
+    if [[ "${char}" == '.' ]]; then
       if [[ "${nextchar}" =~ ^[0-9]$ ]]; then
         multidigitvalue=''
+      fi
+      if (( depth > 0 )); then
+        sublayouts[${#sublayouts[@]} - 1]+="${char}"
       fi
       continue
     elif [[ "${multidigitvalue}" != '-1' && "${char}" =~ ^[0-9]$ ]]; then
@@ -524,6 +511,9 @@ function split2d () {
       continue
     elif [[ "${char}" == '{' ]]; then
       sizebracketsopen=TRUE
+      if [[ "${layout:$(( idx + 1 ))}" =~ ^[0-9]+\. ]]; then
+        multidigitvalue=''
+      fi
     elif [[ "${char}" == '}' ]]; then
       sizebracketsopen=FALSE
     elif [[ "${sizebracketsopen:-}" == TRUE ]] && (( depth == 0 )); then
@@ -560,6 +550,11 @@ function split2d () {
   done
 
   numsublayouts="${#sublayouts[@]}"
+  # echo "LAYOUT: ${layout}"
+  # echo "SUBLAYOUTS: ${sublayouts[*]}"
+  # echo "SUBLAYOUTPANECOUNTS: ${sublayoutpanecounts[*]}"
+  # echo "SUBLAYOUTSIZINGS: ${sublayoutsizings[*]}"
+  # echo "NUMSUBLAYOUTS: ${numsublayouts}"
 
   # construct initial set of panes
   initialcmds=()
@@ -717,7 +712,7 @@ function buildtmuxargs() {
     # --- Top Level Sizing --- #
     # if layout starts with { } bracket sizing, automatically wrap the whole thing
     # in a sublayout and transpose it, so that top-level sizing is applied
-    if [[ "${arglayout}" =~ ^(\{[0-9,]+\}) ]]; then
+    if [[ "${arglayout}" =~ ^(\{[0-9.]+\}) ]]; then
       toplevelsizing="${BASH_REMATCH[1]}"
       arglayout="[${arglayout/${toplevelsizing}/}]${toplevelsizing}"
       [[ "${argtranspose}" == TRUE ]] && argtranspose=FALSE || argtranspose=TRUE
@@ -737,7 +732,7 @@ function buildtmuxargs() {
       fi
       echo "$partiallayout" "${BASH_REMATCH[2]}" "$argfocus"
       multidigitvalue='-1'
-      if [[ "${partiallayout}" =~ ^[0-9]+, ]]; then
+      if [[ "${partiallayout}" =~ ^[0-9]+\. ]]; then
         multidigitvalue=''
       fi
       sizebracketsopen=FALSE
@@ -745,7 +740,7 @@ function buildtmuxargs() {
         char="${partiallayout:${idx}:1}"
         nextchar="${partiallayout:$(( idx + 1 )):1}"
 
-        if [[ "${char}" == "," ]]; then
+        if [[ "${char}" == '.' ]]; then
           if [[ "${nextchar}" =~ ^[0-9]$ ]]; then
             multidigitvalue=''
           fi
@@ -842,27 +837,27 @@ tmex <session-name> -nt 1224 "cmd a" "cmd b" "cmd c" ... etc.
                      |     |              |
            options --+     +-- layout     +-- shell commands
 
-tmex <session-name>                - session name required unless --npm or --kill set; all other args optional
+tmex <session-name>  ·············  session name required unless --npm or --kill set; all other args optional
   [-h|--help]
   [-v|--version]
-  [[-l|--layout] <0-9,/,[,],{,}>]  -l, --layout      layout string, each digit represents number of panes in column
-  [[-f|--focus] <0-9>]             -f, --focus       tmux pane to select by index, must be an integer
-  [-t|--transpose]                 -t, --transpose   build layout in left-to-right orientation instead of top-to-bottom
-  [-n|--npm]                       -n, --npm         if set, prefix each command with "npm run" for package.json scripts
-  [-p|--print]                     -p, --print       emit command as string of tmux args instead of invoking tmux directly
-  [-d|--detached]                  -d, --detached    invoke tmux with -d (detached session); useful for piping data to tmex
-  [-r|--reattach]                  -r, --reattach    if tmux session already exists, re-attach to it instead of replacing it
-  [-s|--shellless]                 -s, --shellless   if set, invoke commands directly with tmux instead of running inside shell
-  [-k|--kill]                      -k, --kill        kill the current or specified tmux session (all other arguments ignored)
+  [-l|--layout]  0-9 [ ] { } . - +  layout string, each digit represents number of panes in column
+  [-f|--focus]   0-9  ············  tmux pane to select by index, must be an integer, positive or negative
+  [-t|--transpose]  ··············  build layout in left-to-right orientation instead of top-to-bottom
+  [-n|--npm]  ····················  if set, prefix each command with "npm run" for package.json scripts
+  [-p|--print]  ··················  emit command as string of tmux args instead of invoking tmux directly
+  [-d|--detached]  ···············  invoke tmux with -d (detached session); useful for piping data to tmex
+  [-r|--reattach]  ···············  if tmux session already exists, re-attach to it instead of replacing it
+  [-s|--shellless]  ··············  if set, invoke commands directly with tmux instead of running inside shell
+  [-k|--kill]  ···················  kill the current or specified tmux session (all other arguments ignored)
   ["shell command 1"]
-  ["shell command 2"]              - shell commands that will be executed in each pane
+  ["shell command 2"]  ···········  shell commands that will be executed in each pane
   ...                               number of shell commands N must not exceed sum of layout
   ["shell command N"]
 '
   # shellcheck disable=SC2016
   help='-l, --layout
   If no layout is provided, a default will be generated to match the number of commands provided.
-  Otherwise, layout must be a string of digits 0-9, and [ ] { } chars. Each digit divides a column into a number of panes, e.g.
+  Otherwise, layout must be a string of 0-9 [ ] { } . - + chars. Each digit divides a column into a number of panes, e.g.
     $ tmex -n --layout=1224
   This layout produces 1 pane in the first column, 2 panes in the 2nd and 3rd columns, and 4 panes in the 4th column.
   [ ] and { } delineate sub-layouts and custom sizing. e.g.
