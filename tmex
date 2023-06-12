@@ -2,10 +2,9 @@
 
 # tmex 1.0.10
 
-# sanity - exit on any error; no unbound variables
 set -euo pipefail
 
-function processargs () {
+function processargs() {
   local args argidx arg flags idx char
 
   args=( "${@:-}" )
@@ -65,7 +64,7 @@ function processargs () {
         exit 1
       fi
 
-    elif [[ "${arg}" =~ ^--(detached|help|kill|npm|print|reattach|shellless|transpose|version)$ ]]; then
+    elif [[ "${arg}" =~ ^--(detached|help|kill|npm|print|reattach|shellless|transpose|version|simulator)$ ]]; then
       (( argidx++ )) || true
       arg="${arg#--}"  # remove "--" prefix
       case "${arg}" in
@@ -78,6 +77,7 @@ function processargs () {
         'transpose') argtranspose=TRUE;;
         'kill')      argkill=TRUE;;
         'version')   argversion=TRUE;;
+        'simulator') argsimulator=TRUE;;
       esac
     elif [[ "${arg}" =~ ^-[dhknprstv]+$ ]]; then
       (( argidx++ )) || true
@@ -165,7 +165,7 @@ function processargs () {
   argsession="${argsession//\\/\\\\}"
 }
 
-function generatelayout () {
+function generatelayout() {
   local size root quot rmdr
 
   # Generate a default layout based on specified size:
@@ -200,7 +200,7 @@ function generatelayout () {
   fi
 }
 
-function validatelayout () {
+function validatelayout() {
   local minsize idx char nextchar layoutsizesum sizebracketsopen multidigitvalue
   local invalidmsgs
 
@@ -295,7 +295,7 @@ function validatelayout () {
   fi
 }
 
-function selectpane () {
+function selectpane() {
   local direction flags repeat idx flag
 
   # Construct tmux select-pane args according to params.
@@ -317,7 +317,7 @@ function selectpane () {
   done
 }
 
-function executecmd () {
+function executecmd() {
   local cmd
 
   # Construct tmux args to execute a given command.
@@ -339,10 +339,9 @@ function executecmd () {
       tmuxargs+=( ";" "send-keys" "${cmd}" "Enter" )
     fi
   fi
-
 }
 
-function split1d () {
+function split1d() {
   local direction numpanes sizing cmds cmd idx char flag
   local half sizesum sizearr percentage pctprefix pctsuffix multidigitvalue
 
@@ -412,13 +411,13 @@ function split1d () {
     percentage=$(( 100 - percentage ))  # invert
 
     # split pane down the middle (adjusted according to size array)
-    tmuxargs+=( ";" "split-window" "-${direction}" "${pctprefix}${percentage}${pctsuffix}" )
+    tmuxargs+=( ';' 'split-window' "-${direction}" "${pctprefix}${percentage}${pctsuffix}" )
     executecmd "${cmds[${half}]:-}"
-    selectpane "${direction}" "UL" 1
+    selectpane "${direction}" 'UL' 1
 
     # keep splitting - 1st half of panes, then select pane at middle, then 2nd half
     split1d "${direction}" "${half}" "$( IFS=','; echo "${sizearr[@]:0:half}" )" "${cmds[@]:0:half}"
-    selectpane "${direction}" "DR" 1
+    selectpane "${direction}" 'DR' 1
     split1d "${direction}" "${half}" "$( IFS=','; echo "${sizearr[@]:half}" )" "${cmds[@]:half}"
 
   # if only 2 panes or numpanes is odd, split off first pane
@@ -436,7 +435,7 @@ function split1d () {
     # )"
 
     # split off first pane (adjusted according to size array)
-    tmuxargs+=( ";" "split-window" "-${direction}" "${pctprefix}${percentage}${pctsuffix}" )
+    tmuxargs+=( ';' 'split-window' "-${direction}" "${pctprefix}${percentage}${pctsuffix}" )
     executecmd "${cmds[1]:-}"
 
     # if more than 2 panes, keep splitting
@@ -446,8 +445,8 @@ function split1d () {
   fi
 }
 
-function split2d () {
-  local direction layout cmds idx char nextchar depth flag
+function split2d() {
+  local direction layout cmds idx jdx char nextchar depth flag
   local sublayouts numsublayouts
   local sublayoutpanecounts sublayoutpanecount sublayoutsizings
   local initialcmds initialcmdidx subcmds sizebracketsopen multidigitvalue
@@ -550,6 +549,8 @@ function split2d () {
   done
 
   numsublayouts="${#sublayouts[@]}"
+
+  # LAYOUT DEBUG LOGGING:
   # echo "LAYOUT: ${layout}"
   # echo "SUBLAYOUTS: ${sublayouts[*]}"
   # echo "SUBLAYOUTPANECOUNTS: ${sublayoutpanecounts[*]}"
@@ -561,14 +562,22 @@ function split2d () {
   initialcmdidx=0
 
   for (( idx = 0; idx < numsublayouts; idx++ )); do
-    sublayoutpanecount="${sublayoutpanecounts[${idx}]}"
-    initialcmds+=( "${cmds[${initialcmdidx}]:-}" )
+    sublayoutpanecount="${sublayoutpanecounts[idx]}"
+
+    if [[ "${argsimulator}" == TRUE ]]; then
+      # layout debug feature: print each pane's sublayout and sublayout parent,
+      # and keep the pane alive indefinitely for layout review
+      initialcmds+=( "echo 'LAYOUT'; echo '${sublayouts[idx]}'; sleep 100000" )
+    else
+      initialcmds+=( "${cmds[${initialcmdidx}]:-}" )
+    fi
+
     (( initialcmdidx += sublayoutpanecount )) || true
   done
   split1d "${direction}" "${numsublayouts}" "${sizing}" "${initialcmds[@]}"
 
   # select first pane
-  selectpane "${direction}" "UL" $(( numsublayouts - 1 ))
+  selectpane "${direction}" 'UL' $(( numsublayouts - 1 ))
 
   # split each pane as specified by layout
   initialcmdidx=0
@@ -578,11 +587,20 @@ function split2d () {
     sublayoutsizing="${sublayoutsizings[${idx}]}"
 
     if (( idx > 0 )); then
-      selectpane "${direction}" "DR" 1
+      selectpane "${direction}" 'DR' 1
     fi
 
     [[ "${direction}" == 'v' ]] && flag='h' || flag='v'
     subcmds=( "${cmds[@]:${initialcmdidx}:${sublayoutpanecount}}" )
+
+    # layout debug feature: print each pane's sublayout and sublayout parent,
+    # and keep the pane alive indefinitely for layout review
+    if [[ "${argsimulator}" == TRUE ]]; then
+      subcmds=()
+      for (( jdx = 0; jdx <= ( sublayoutpanecount + 1); jdx++ )); do
+        subcmds+=( "echo '${sublayoutpanecount}'; sleep 100000" )
+      done
+    fi
 
     # if layout contains only columns of 1, we can split 1-dimensional
     if [[ "${sublayout}" =~ ^1+$ ]]; then
@@ -678,7 +696,11 @@ function buildtmuxargs() {
     fi
   fi
 
-  executecmd "${argcmds[0]:-}"
+  if [[ "${argsimulator}" == TRUE ]]; then
+    executecmd "echo 'LAYOUT'; echo '${arglayout}'; sleep 100000"
+  else
+    executecmd "${argcmds[0]:-}"
+  fi
 
   # if layout is not specified, generate a default
   if [[ -z "${arglayout}" ]]; then
@@ -803,7 +825,7 @@ function buildtmuxargs() {
   fi
 }
 
-function main () {
+function main() {
   local argdetached argfocus arghelp argkill arglayout arglayoutoriginal argcmds
   local argnpm argprint argreattach argsession argshellless argtranspose argversion
   local argwindow
@@ -891,6 +913,7 @@ For more information, see https://github.com/evnp/tmex
   argshellless=FALSE # optional - if TRUE, execute commands standalone instead of in a shell
   argtranspose=FALSE # optional - if TRUE, layout in left-to-right instead of top-to-bottom orientation
   argversion=FALSE   # optional - if TRUE, display version and exit
+  argsimulator=FALSE # optional - if TRUE, use simulator-generated commands
   argcmds=''         # optional - list of commands to be executed in resulting panes
 
   # begin to construct tmux arguments
@@ -916,7 +939,6 @@ For more information, see https://github.com/evnp/tmex
           argfocus=''
           arglayout=''
           argnpm=FALSE
-          argshellless=FALSE
           argtranspose=FALSE
           argcmds=''
         fi

@@ -13,13 +13,15 @@
     "testnw": "run() { npm run -s testn; fswatch -0 -o -r . | xargs -0 -n1 npm run testn; }; run",
     "testfw": "run() { npm run -s testf \"$@\"; fswatch -0 -o -r . | xargs -0 -n1 npm run testf \"$@\"; }; run",
     "testiw": "run() { npm run -s testi \"$@\"; fswatch -0 -o -r . | xargs -0 -n1 npm run testi \"$@\"; }; run",
+    "simulate": "./simulator",
     "tf": "npm run -s testf",
     "ti": "npm run -s testi",
     "tn": "npm run -s testn",
     "tw": "npm run -s testw",
     "tnw": "npm run -s testnw",
     "tfw": "npm run -s testfw",
-    "tiw": "npm run -s testiw"
+    "tiw": "npm run -s testiw",
+    "s": "npm run -s simulate"
   },
   "bin": {
     "tmex": "tmex"
