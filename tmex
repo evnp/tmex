@@ -87,7 +87,7 @@ function processargs() {
       break
     fi
 
-    if [[ -n "${flags}" ]]; then
+    if [[ -n "${flags:-}" ]]; then
       for (( idx = 0; idx < ${#flags}; idx++ )); do
         char="${flags:idx:1}"
         case "${char}" in
@@ -128,7 +128,7 @@ function processargs() {
   fi
 
   # allow omission of session name if --kill is set
-  if [[ -z "${argsession}" && "${argkill}" == TRUE ]]; then
+  if [[ -z "${argsession}" && "${argkill:-}" == TRUE ]]; then
     if (( ${#args[@]} == 2 )) && ! [[ "${args[1]}" =~ ^- ]]; then
       # if there's only one other arg and it doesn't start with "-" or "--",
       # treat this arg as the session name to kill:
@@ -141,7 +141,7 @@ function processargs() {
   fi
 
   # warn and exit of --kill was specified but other arguments were provided
-  if [[ "${argkill}" == TRUE ]]; then
+  if [[ "${argkill:-}" == TRUE ]]; then
     if (( ${#argcmds[@]} > 0 )) || [[ "${argdetached}" == TRUE || "${argnpm}" == TRUE || "${argreattach}" == TRUE || "${argshellless}" == TRUE || "${argtranspose}" == TRUE ]]; then
       echo "You specified --kill (-k) but there are extra args."
       echo "Run command again without extra args if you want to kill the session."
@@ -646,7 +646,7 @@ function buildtmuxargs() {
   fi
 
   # if -k/--kill specified tmux session and exit:
-  if [[ "${argkill}" == TRUE ]]; then
+  if [[ "${argkill:-}" == TRUE ]]; then
     tmuxargs=("kill-session" "-t" "${argsession}")
     if [[ "${argprint}" == TRUE ]]; then
       echo "${tmuxargs[@]}"
