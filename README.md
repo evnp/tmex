@@ -16,6 +16,9 @@ A minimalist tmux layout manager - one shell script + tmux + zero other dependen
 
 **Contents** - [Usage](https://github.com/evnp/tmex#usage) | [Layout](https://github.com/evnp/tmex#layout) | [npm](https://github.com/evnp/tmex#npm) | [Install](https://github.com/evnp/tmex#install) | [Tests](https://github.com/evnp/tmex#tests) | [License](https://github.com/evnp/tmex#license)
 
+**New in [v2.0.0-rc.1](https://github.com/evnp/tmex/releases/tag/v2.0.0-rc.1)** 🐣 <br> [Multi-window management](https://github.com/evnp/tmex#multi-window-management-new-in-v200-rc1-) | [Focused-pane control](https://github.com/evnp/tmex#focused-pane-control-new-in-v200-rc1-) | [Multi-digit pane counts](https://github.com/evnp/tmex#multi-digit-pane-counts-new-in-v200-rc1-) | [Top-level sizing](https://github.com/evnp/tmex#top-level-layout-sizing-new-in-v200-rc1-) | [Grid sub-layouts](https://github.com/evnp/tmex#grid-sub-layouts-new-in-v200-rc1-)
+
+-------------
 Create a dashboard for your project with one command. No messing with configuration files. Just the full power of [`tmux`](https://github.com/tmux/tmux/wiki), plus an easy-yet-flexible layout system:
 ```sh
 tmex -n test lint "npm install"
@@ -33,7 +36,7 @@ package.json
     "server": "python -m http.server",
     "typecheck" "tsc --watch --noEmit",
 -   "start": "tmux new-session -s $npm_package_name 'npm run watch' \\; split-window 'npm run server' \\; split-window 'npm run typecheck'"
-+   "start": ✨"tmex -n watch server typecheck"✨
++   "start":✨"tmex -n watch server typecheck"✨
   }
 }
 ```
@@ -167,9 +170,45 @@ tmex your-session-name --layout={152}1[2{13}1]4{4112}
 ```
 Note that the sublayout `[2{13}1]` is treated as a single column when sizing is applied, so that set of panes as a whole receives `5` as its width relative to the other columns.
 
-Sometimes you might want a row/column of your layout to contain a grid of N panes, laid out using the default algorithm. This is done by placing an empty set of { } brackets _after_ a number of panes in the layout. This can be thought of as "requesting the default layout" for the preceeding set of panes.
+Top-level layout sizing (new in [v2.0.0-rc](https://github.com/evnp/tmex/releases/tag/v2.0.0-rc) 🐣)
+----------------------------------------------------------------------------------------------------
+Since a sizing clause like `{123}` always _follows_ a pane count number within a layout, you may be wondering how sizing could be applied to the "top level" columns (or rows) of a layout. For example, given the layout `234`, how could you:
+- make the first column `2` fill half the screen
+- make the second column `3` fill a third of the screen
+- make the third column `4` fill the remainder (one sixth) of the screen
+
+This special case is accomplished by placing the sizing clause at the _start_ of the layout (prior to [v2.0.0-rc](https://github.com/evnp/tmex/releases/tag/v2.0.0-rc), this would result in an invalid layout error):
 ```sh
-tmex your-session-name --layout=35{}4
+tmex your-session-name --layout={321}234
+>>>
+┌───────────────┬──────────┬─────┐
+│               │          │  4  │
+│               │    3     │     │
+│       2       │          ├─────┤
+│               ├──────────┤  4  │
+│               │          │     │
+├───────────────┤    3     ├─────┤
+│               │          │  4  │
+│               ├──────────┤     │
+│       2       │          ├─────┤
+│               │    3     │  4  │
+│               │          │     │
+└───────────────┴──────────┴─────┘
+```
+**NOTE:** This can be accomplished _without_ special casing, using sub-layouts and the transposition feature:
+```sh
+tmex your-session-name --transpose --layout=[234]{321}    # equivalent to --layout={321}234 above
+tmex your-session-name --layout=[[234]{321}]              # also equivalent
+```
+These may be functionally equivalent, but they're a far cry from intuitive! Feel free to use whichever of the three forms makes the most logical sense to you though.
+
+Grid sub-layouts (new in [v2.0.0-rc](https://github.com/evnp/tmex/releases/tag/v2.0.0-rc) 🐣)
+---------------------------------------------------------------------------------------------
+
+Sometimes you might want a row/column of your layout to contain a grid of N panes, laid out using the default algorithm. This is done by placing `{+}` _after_ a number of panes in the layout. This can be thought of as "requesting a grid layout" for the preceeding number of panes – `+` is a visual mnemonic in that it separates the space within `{ }` in a grid-like formation.
+```sh
+tmex your-session-name --layout=35{+}4
+>>>
 ┌─────┬─────┬─────┬─────┬─────┐
 │     │     │     │     │  4  │
 │  3  │     │     │     │     │
@@ -188,13 +227,66 @@ The layout above is equivalent to:
 ```sh
 tmex your-session-name --layout=31224
 ```
-because `5{}` is expanded to `122`, which is the default grid layout when 5 panes are required. You can experiment with commands such as `tmex your-session-name --layout=-7-` to see what default grid layout is produced for each number of panes. In general, each default grid layout attempts to equalize pane sizes, widths, and heights as much as possible, keeping the largest pane on the left with odd numbers of panes.
+because `5{+}` is expanded to `122`, which is the default grid layout when 5 panes are required. You can experiment with commands such as `tmex your-session-name --layout=7{+}` to see what default grid layout is produced for each number of panes. In general, each default grid layout attempts to equalize pane sizes, widths, and heights as much as possible, keeping the largest pane on the left with odd numbers of panes.
 
-These two variations are equivalent, and may be useful in scripts where maximal clarity is desired:
+Multi-digit pane counts (new in [v2.0.0-rc](https://github.com/evnp/tmex/releases/tag/v2.0.0-rc) 🐣)
+----------------------------------------------------------------------------------------------------
+For any of the layouts above, pane counts 10 and greater can be achieved by separating digits with `.` characters. For example:
 ```sh
-tmex your-session-name --layout=35{g}4
-tmex your-session-name --layout=35{grid}4
+tmex your-session-name --layout=8.10.12
 ```
+will produce a layout of 3 columns, the first with 8 panes, the second with 10 panes, and the third with 12 panes.
+
+These layouts are equivalent (the `.` characters have no effect when used with single-digit pane counts):
+```sh
+tmex your-session-name --layout=1234
+tmex your-session-name --layout=1.2.3.4
+```
+To understand whether a set of numeric characters will be treated as one multi-digit number, or a series of single-digit numbers, simply ask _Is this set of numeric characters adjacent to a `.` character?_ If so, they are multi-digit numbers; otherwise they are single-digit numbers.
+
+This general rule will help explain this more convoluted (but valid) layout:
+```sh
+tmex your-session-name --layout=11.[23]45[6.7]8.
+#                  multi-digit--^^  ^^|^^ ^|^ ^--multi-digit
+#                                     |    |
+#                          single-digit    multi-digit
+```
+`11.` is treated as multi-digit, and produces a column 11 panes. `23` are treated as a sublayout of single-digit pane counts, producing 5 panes total. `45` have no adjacent `.` characters so they produce columns of 4 and 5 panes. `6.7` are treated as multi-digit, but still produce separate rows (in their sublayout) of 6 and 7 panes respectively – the `.` has no effect. Finally, `8.` is treated as multi-digit due to the adjacent `.` but still produces a column of 8 panes – the `.` has no effect).
+
+Focused Pane Control (new in [v2.0.0-rc](https://github.com/evnp/tmex/releases/tag/v2.0.0-rc) 🐣)
+-------------------------------------------------------------------------------------------------
+
+There are a few different ways to select a specific pane to be "focused" – with cursor active inside it – when your layout is initialized.
+```sh
+tmex your-session-name --layout=135+7
+# the above will focus the first pane of the third column of your layout
+tmex your-session-name --layout=135++7
+# the above will focus the second pane of the third column of your layout
+tmex your-session-name --layout=135-7
+# the above will focus the last pane of the third column of your layout
+tmex your-session-name --layout=135---7
+# the above will focus the third-to-last pane of the third column of your layout
+```
+The above commands focus panes relative to the column they reside in. You can also select a pane to be focused relative to the entire sequence of panes in the layout:
+```sh
+tmex your-session-name --layout=1357 --focus=4
+# the above will focus the first pane of the third column of your layout
+# this happens to be equivalent to --layout=135+7 from above
+tmex your-session-name --layout=1357 -f=5      # shorthand argument
+# the above will focus the second pane of the third column of your layout
+# this happens to be equivalent to --layout=135++7 from above
+tmex your-session-name -f=-8 1357              # shorthand argument + shorthand layout
+# the above will focus the last pane of the third column of your layout
+# this happens to be equivalent to --layout=135-7 from above
+tmex your-session-name -f=-10 1357             # shorthand argument + shorthand layout
+# the above will focus the third-to-last pane of the third column of your layout
+# this happens to be equivalent to --layout=135---7 from above
+```
+
+Multi-window management (new in [v2.0.0-rc](https://github.com/evnp/tmex/releases/tag/v2.0.0-rc) 🐣)
+----------------------------------------------------------------------------------------------------
+
+TODO
 
 npm
 ------------
@@ -238,7 +330,7 @@ curl -o ~/bin/tmex https://raw.githubusercontent.com/evnp/tmex/master/tmex && ch
 tmex doesn't install tmux itself, so you'll also want to do that if you don't have tmux yet:
 ```sh
 tmex -n test lint "npm install"
-/Users/evan/bin/tmex: line 694: tmux: command not found
+>>> /Users/evan/bin/tmex: line 694: tmux: command not found
 
 brew install tmux      # OSX
 sudo apt install tmux  # Ubuntu, Debian
@@ -263,3 +355,4 @@ Non-OSX: replace `brew install fswatch` with package manager of choice (see [fsw
 License
 -------
 MIT
+
