@@ -310,6 +310,21 @@ tmex your-session-name --window '' 123 --window '' 44     # equivalent
 ```
 **NOTE** that `-w''` (no space between arg and value) does _not_ work, since shell string concatenation causes this to be treated as simply `-w` and the _next_ arg will be inadvertently used as the window name.
 
+Kill command (new in [v2.0.0-rc.1](https://github.com/evnp/tmex/releases/tag/v2.0.0-rc.1) 🐣)
+---------------------------------------------------------------------------------------------
+
+You can kill a tmux session from anywhere using
+```sh
+tmex -k your-session-name
+tmex your-session-name -k      # equivalent
+tmex your-session-name --kill  # equivalent
+```
+If you're _inside_ a tmux session at the moment, you can simply write
+```
+tmex -k
+```
+The session name will be inferred from the current ENV variables, and the session will be killed.
+
 npm
 ------------
 Simplify `package.json` scripts via `--npm` or `-n`. Commands will be prefixed with `npm run` (if necessary) and session name will default to `$npm_package_name`. This will expand to match the `name` field set in `package.json`.
