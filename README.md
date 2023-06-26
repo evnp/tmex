@@ -170,14 +170,14 @@ tmex your-session-name --layout={152}1[2{13}1]4{4112}
 ```
 Note that the sublayout `[2{13}1]` is treated as a single column when sizing is applied, so that set of panes as a whole receives `5` as its width relative to the other columns.
 
-Top-level layout sizing (new in [v2.0.0-rc](https://github.com/evnp/tmex/releases/tag/v2.0.0-rc) 🐣)
+Top-level layout sizing (new in [v2.0.0-rc.1](https://github.com/evnp/tmex/releases/tag/v2.0.0-rc.1) 🐣)
 ----------------------------------------------------------------------------------------------------
 Since a sizing clause like `{123}` always _follows_ a pane count number within a layout, you may be wondering how sizing could be applied to the "top level" columns (or rows) of a layout. For example, given the layout `234`, how could you:
 - make the first column `2` fill half the screen
 - make the second column `3` fill a third of the screen
 - make the third column `4` fill the remainder (one sixth) of the screen
 
-This special case is accomplished by placing the sizing clause at the _start_ of the layout (prior to [v2.0.0-rc](https://github.com/evnp/tmex/releases/tag/v2.0.0-rc), this would result in an invalid layout error):
+This special case is accomplished by placing the sizing clause at the _start_ of the layout (prior to [v2.0.0-rc.1](https://github.com/evnp/tmex/releases/tag/v2.0.0-rc.1), this would result in an invalid layout error):
 ```sh
 tmex your-session-name --layout={321}234
 >>>
@@ -202,7 +202,7 @@ tmex your-session-name --layout=[[234]{321}]              # also equivalent
 ```
 These may be functionally equivalent, but they're a far cry from intuitive! Feel free to use whichever of the three forms makes the most logical sense to you though.
 
-Grid sub-layouts (new in [v2.0.0-rc](https://github.com/evnp/tmex/releases/tag/v2.0.0-rc) 🐣)
+Grid sub-layouts (new in [v2.0.0-rc.1](https://github.com/evnp/tmex/releases/tag/v2.0.0-rc.1) 🐣)
 ---------------------------------------------------------------------------------------------
 
 Sometimes you might want a row/column of your layout to contain a grid of N panes, laid out using the default algorithm. This is done by placing `{+}` _after_ a number of panes in the layout. This can be thought of as "requesting a grid layout" for the preceeding number of panes – `+` is a visual mnemonic in that it separates the space within `{ }` in a grid-like formation.
@@ -229,7 +229,7 @@ tmex your-session-name --layout=31224
 ```
 because `5{+}` is expanded to `122`, which is the default grid layout when 5 panes are required. You can experiment with commands such as `tmex your-session-name --layout=7{+}` to see what default grid layout is produced for each number of panes. In general, each default grid layout attempts to equalize pane sizes, widths, and heights as much as possible, keeping the largest pane on the left with odd numbers of panes.
 
-Multi-digit pane counts (new in [v2.0.0-rc](https://github.com/evnp/tmex/releases/tag/v2.0.0-rc) 🐣)
+Multi-digit pane counts (new in [v2.0.0-rc.1](https://github.com/evnp/tmex/releases/tag/v2.0.0-rc.1) 🐣)
 ----------------------------------------------------------------------------------------------------
 For any of the layouts above, pane counts 10 and greater can be achieved by separating digits with `.` characters. For example:
 ```sh
@@ -253,7 +253,7 @@ tmex your-session-name --layout=11.[23]45[6.7]8.
 ```
 `11.` is treated as multi-digit, and produces a column 11 panes. `23` are treated as a sublayout of single-digit pane counts, producing 5 panes total. `45` have no adjacent `.` characters so they produce columns of 4 and 5 panes. `6.7` are treated as multi-digit, but still produce separate rows (in their sublayout) of 6 and 7 panes respectively – the `.` has no effect. Finally, `8.` is treated as multi-digit due to the adjacent `.` but still produces a column of 8 panes – the `.` has no effect).
 
-Focused Pane Control (new in [v2.0.0-rc](https://github.com/evnp/tmex/releases/tag/v2.0.0-rc) 🐣)
+Focused Pane Control (new in [v2.0.0-rc.1](https://github.com/evnp/tmex/releases/tag/v2.0.0-rc.1) 🐣)
 -------------------------------------------------------------------------------------------------
 
 There are a few different ways to select a specific pane to be "focused" – with cursor active inside it – when your layout is initialized.
@@ -283,10 +283,32 @@ tmex your-session-name -f=-10 1357             # shorthand argument + shorthand 
 # this happens to be equivalent to --layout=135---7 from above
 ```
 
-Multi-window management (new in [v2.0.0-rc](https://github.com/evnp/tmex/releases/tag/v2.0.0-rc) 🐣)
+Multi-window management (new in [v2.0.0-rc.1](https://github.com/evnp/tmex/releases/tag/v2.0.0-rc.1) 🐣)
 ----------------------------------------------------------------------------------------------------
 
-TODO
+You may want to create multiple tmux windows within your tmux session, and navigate between them using **CTRL+B→N** (next), **CTRL+B→P** (previous), **CTRL+B→[0-9]** (select by index).
+
+For example, you might want one window called `abc`, with 6 panes laid out `123`, and a second window called `efg` with 8 panes laid out `44`. To accomplish this, use the `--window` or `-w` option, which is unique in that it can be repeated any number of times within a tmex command:
+```sh
+tmex your-session-name --window abc 123 -w efg 44
+```
+Every series of arguments after an instance of `--window` or `-w` is treated as an entirely separate tmex invocation, with separate arguments and commands list. To pass some arguments to the command above (say, to focus panes) and provide some commands, you'd write:
+```sh
+tmex your-session-name -w abc -f4 123 "echo 'cmd1'" "echo 'cmd2'" -w efg -f-2 44 "echo 'cmd 3'"
+```
+You may be wondering what will happen if you put any args _before_ the first `-w` arg. This will work fine; the command will still produce two windows and the preceeding args will simply be used against the first window:
+```sh
+tmex your-session-name -l 123 -f4 -w abc "echo 'cmd1'" "echo 'cmd2'" -w efg -f-2 44 "echo 'cmd 3'"
+# equivalent to command directly above
+```
+Each `--window` or `-w` argument should be directly followed by the intended name of the window, which will label it in tmux's bottom bar and aid navigation. However, empty-string `''` provided as a name is entirely valid, and there's also a shorthand if you wish to omit a window's name (usually the shell name is used in its place, eg. `bash`):
+```sh
+tmex your-session-name -w- 123 -w- 44  # produce nameless tmux windows
+tmex your-session-name --window - 123 --window - 44       # equivalent
+tmex your-session-name -w '' 123 -w '' 44                 # equivalent
+tmex your-session-name --window '' 123 --window '' 44     # equivalent
+```
+**NOTE** that `-w''` (no space between arg and value) does _not_ work, since shell string concatenation causes this to be treated as simply `-w` and the _next_ arg will be inadvertently used as the window name.
 
 npm
 ------------
