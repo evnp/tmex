@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# tmex 1.0.10
+# tmex 2.0.0-rc.1
 
 set -euo pipefail
 
