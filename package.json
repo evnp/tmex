@@ -3,6 +3,7 @@
   "version": "1.0.10",
   "description": "A minimalist tmux layout manager - one shell script + tmux +  zero other dependencies",
   "main": "tmex",
+  "files": ["/tmex"],
   "scripts": {
     "lint": "shellcheck tmex",
     "test": "npm run -s lint && time bats --jobs 16 --no-parallelize-across-files test.bats",
