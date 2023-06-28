@@ -930,7 +930,7 @@ For more complete documentation, please see https://github.com/evnp/tmex#readme
   for (( idx = 0; idx <= ${#args[@]}; idx++ )); do
     if (( idx == ${#args[@]} )) || [[ "${args[idx]}" =~ ^(-w|--window) ]]; then
       if [[ -n "${argwindow}" ]]; then
-        if (( ${#tmuxargs} == 0 )); then
+        if (( ${#tmuxargs[@]} == 0 )); then
           buildtmuxargs "${tmexargs[@]:-}"
         else
           buildtmuxargs "${argsession}" "${tmexargs[@]:-}"
@@ -959,7 +959,7 @@ For more complete documentation, please see https://github.com/evnp/tmex#readme
       tmexargs+=( "${args[idx]}" )
     fi
   done
-  if (( ${#tmuxargs} == 0 )); then
+  if (( ${#tmuxargs[@]} == 0 )); then
     # not using multiple windows - build tmux args normally
     buildtmuxargs "$@"
   fi
