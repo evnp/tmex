@@ -294,11 +294,11 @@ tmex your-session-name --window abc 123 -w efg 44
 ```
 Every series of arguments after an instance of `--window` or `-w` is treated as an entirely separate tmex invocation, with separate arguments and commands list. To pass some arguments to the command above (say, to focus panes) and provide some commands, you'd write:
 ```sh
-tmex your-session-name -w abc -f4 123 "echo 'cmd1'" "echo 'cmd2'" -w efg -f-2 44 "echo 'cmd 3'"
+tmex your-session-name -w abc -f4 123 "cmd a" "cmd b" -w efg -f-2 44 "cmd c"
 ```
 You may be wondering what will happen if you put any args _before_ the first `-w` arg. This will work fine; the command will still produce two windows and the preceeding args will simply be used against the first window:
 ```sh
-tmex your-session-name -l 123 -f4 -w abc "echo 'cmd1'" "echo 'cmd2'" -w efg -f-2 44 "echo 'cmd 3'"
+tmex your-session-name -l 123 -f4 -w abc "cmd a" "cmd b" -w efg -f-2 44 "cmd c"
 # equivalent to command directly above
 ```
 Each `--window` or `-w` argument should be directly followed by the intended name of the window, which will label it in tmux's bottom bar and aid navigation. However, empty-string `''` provided as a name is entirely valid, and there's also a shorthand if you wish to omit a window's name (usually the shell name is used in its place, eg. `bash`):
