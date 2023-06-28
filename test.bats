@@ -1975,7 +1975,7 @@ function layout_with_new_pct_flags() {
 }
 @test "${BATS_TEST_NUMBER} README tmex your-session-name --layout=35{+}4" {
 	run_tmex
-	assert_output -p "BROKEN TMUX COMMAND, MAKES A GRID OF 35 PANES"
+	assert_output -p "new-session -s your-session-name ; split-window -h -p80 ; split-window -h -p50 ; select-pane -L ; split-window -h -p50 ; select-pane -R ; split-window -h -p50 ; select-pane -L ; select-pane -L ; select-pane -L ; select-pane -L ; split-window -v -p67 ; split-window -v -p50 ; select-pane -R ; select-pane -R ; split-window -v -p50 ; select-pane -R ; split-window -v -p50 ; select-pane -R ; split-window -v -p50 ; select-pane -U ; split-window -v -p50 ; select-pane -D ; split-window -v -p50"
 	assert_success
 }
 @test "${BATS_TEST_NUMBER} README tmex your-session-name --layout=31224" {
@@ -2141,7 +2141,7 @@ function layout_with_new_pct_flags() {
 }
 @test "${BATS_TEST_NUMBER} README TMUX_VERSION=3.3a tmex your-session-name --layout=35{+}4" {
 	run_tmex
-	assert_output -p "BROKEN TMUX COMMAND, MAKES A GRID OF 35 PANES"
+	assert_output -p "new-session -s your-session-name ; split-window -h -l80% ; split-window -h -l50% ; select-pane -L ; split-window -h -l50% ; select-pane -R ; split-window -h -l50% ; select-pane -L ; select-pane -L ; select-pane -L ; select-pane -L ; split-window -v -l67% ; split-window -v -l50% ; select-pane -R ; select-pane -R ; split-window -v -l50% ; select-pane -R ; split-window -v -l50% ; select-pane -R ; split-window -v -l50% ; select-pane -U ; split-window -v -l50% ; select-pane -D ; split-window -v -l50%"
 	assert_success
 }
 @test "${BATS_TEST_NUMBER} README TMUX_VERSION=3.3a tmex your-session-name --layout=31224" {

@@ -709,11 +709,13 @@ function buildtmuxargs() {
     arglayoutoriginal="${arglayout}"
 
     # --- Grid Sub-Layouts --- #
-    # for each set of digits within layout followed by {+}
+    # for each pane count followed by {+} within layout
     # replace with a default grid sub-layout with size matching digits:
-    pattern="([0-9]+)\{\+\}"
+    pattern="([0-9]|\.[0-9]+)\{\+\}"
+    # normally treat pane counts as single-digit, but if count
+    # is preceeded by a "." character allow multi-digit count
     while [[ "${arglayout}" =~ ${pattern} ]]; do
-      layoutsize="${BASH_REMATCH[1]}"
+      layoutsize="${BASH_REMATCH[1]/./}"  # remove possible "." from start of count
       parentlayout="${arglayout}"
       generatelayout "${layoutsize}"
       # wrap every pane count of new sub-layout within its own set of [[ ]] brackets,
@@ -721,6 +723,7 @@ function buildtmuxargs() {
       # counting logic within the new sub-layout:
       arglayout="$( sed -E 's/([0-9])/[[\1]]/g' <<< "${arglayout}" )"
       arglayout="${parentlayout/${layoutsize}\{+\}/${arglayout}}"
+      echo "ARGLAYOUT ${arglayout}"
     done
     # if layout _starts_ with {+} exit with error
     if [[ "${arglayout}" == '{+}'* ]]; then
@@ -940,7 +943,6 @@ For more complete documentation, please see https://github.com/evnp/tmex#readme
         argtranspose=FALSE
         argcmds=''
       fi
-      echo "ARGWINDOW?"
       if [[ "${args[idx]:-}" =~ ^(-w|--window)$ ]]; then
         (( idx++ )) || true
         argwindow="${args[idx]}"
@@ -948,7 +950,6 @@ For more complete documentation, please see https://github.com/evnp/tmex#readme
           argwindow='-'
         fi
       elif [[ "${args[idx]:-}" =~ ^(-w|--window)\=?(.*)$ ]]; then
-        echo "ARGWINDOW ${BASH_REMATCH[2]}"
         argwindow="${BASH_REMATCH[2]}"
         if [[ -z "${argwindow}" ]]; then
           argwindow='-'
