@@ -14,6 +14,7 @@
     "testfw": "run() { npm run -s testf \"$@\"; fswatch -0 -o -r . | xargs -0 -n1 npm run testf \"$@\"; }; run",
     "testiw": "run() { npm run -s testi \"$@\"; fswatch -0 -o -r . | xargs -0 -n1 npm run testi \"$@\"; }; run",
     "simulate": "./simulator",
+    "release": "npm pack && tar -xvzf *.tgz && rm -rf package *.tgz && echo $'\n'\"Press ENTER to publish the files above · CTRL+C to cancel · node $( node -v ) · npm $( npm -v )\"$'\n\n' && head -n 1 >/dev/null && npm publish",
     "tf": "npm run -s testf",
     "ti": "npm run -s testi",
     "tn": "npm run -s testn",
