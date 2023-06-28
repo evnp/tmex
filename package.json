@@ -38,6 +38,6 @@
     "bats-assert": "2.0.0",
     "bats-notify": "1.0.0",
     "bats-support": "git+https://github.com/ztombol/bats-support.git#v0.2.0",
-    "shellcheck": "0.4.4"
+    "shellcheck": "2.2.0"
   }
 }
