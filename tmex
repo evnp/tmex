@@ -752,7 +752,6 @@ function buildtmuxargs() {
       else
         argfocus="-${#BASH_REMATCH[2]}"
       fi
-      echo "$partiallayout" "${BASH_REMATCH[2]}" "$argfocus"
       multidigitvalue='-1'
       if [[ "${partiallayout}" =~ ^[0-9]+\. ]]; then
         multidigitvalue=''
@@ -923,44 +922,45 @@ For more complete documentation, please see https://github.com/evnp/tmex#readme
   tmuxargs=()
 
   # --- Multi-Window Management --- #
-  if ! [[ " ${*:-} " == *' -w '* || " ${*:-} " == *' --window '* ]]; then
+  args=( "${@:-}" )
+  tmexargs=()
+  for (( idx = 0; idx <= ${#args[@]}; idx++ )); do
+    if (( idx == ${#args[@]} )) || [[ "${args[idx]}" =~ ^(-w|--window) ]]; then
+      if [[ -n "${argwindow}" ]]; then
+        if (( ${#tmuxargs} == 0 )); then
+          buildtmuxargs "${tmexargs[@]:-}"
+        else
+          buildtmuxargs "${argsession}" "${tmexargs[@]:-}"
+        fi
+        tmexargs=()
+        argwindow=''
+        argfocus=''
+        arglayout=''
+        argnpm=FALSE
+        argtranspose=FALSE
+        argcmds=''
+      fi
+      echo "ARGWINDOW?"
+      if [[ "${args[idx]:-}" =~ ^(-w|--window)$ ]]; then
+        (( idx++ )) || true
+        argwindow="${args[idx]}"
+        if [[ -z "${argwindow}" ]]; then
+          argwindow='-'
+        fi
+      elif [[ "${args[idx]:-}" =~ ^(-w|--window)\=?(.*)$ ]]; then
+        echo "ARGWINDOW ${BASH_REMATCH[2]}"
+        argwindow="${BASH_REMATCH[2]}"
+        if [[ -z "${argwindow}" ]]; then
+          argwindow='-'
+        fi
+      fi
+    else
+      tmexargs+=( "${args[idx]}" )
+    fi
+  done
+  if (( ${#tmuxargs} == 0 )); then
     # not using multiple windows - build tmux args normally
     buildtmuxargs "$@"
-  else
-    args=( "${@}" )
-    tmexargs=()
-    for (( idx = 0; idx <= ${#args[@]}; idx++ )); do
-      if (( idx == ${#args[@]} )) || [[ "${args[idx]}" =~ ^(-w|--window) ]]; then
-        if [[ -n "${argwindow}" ]]; then
-          if (( ${#tmuxargs} == 0 )); then
-            buildtmuxargs "${tmexargs[@]:-}"
-          else
-            buildtmuxargs "${argsession}" "${tmexargs[@]:-}"
-          fi
-          tmexargs=()
-          argwindow=''
-          argfocus=''
-          arglayout=''
-          argnpm=FALSE
-          argtranspose=FALSE
-          argcmds=''
-        fi
-        if [[ "${args[idx]:-}" =~ ^(-w|--window)$ ]]; then
-          (( idx++ )) || true
-          argwindow="${args[idx]}"
-          if [[ -z "${argwindow}" ]]; then
-            argwindow='-'
-          fi
-        elif [[ "${args[idx]:-}" =~ ^(-w|--window)\=?(.*)$ ]]; then
-          argwindow="${BASH_REMATCH[2]}"
-          if [[ -z "${argwindow}" ]]; then
-            argwindow='-'
-          fi
-        fi
-      else
-        tmexargs+=( "${args[idx]}" )
-      fi
-    done
   fi
 
   if [[ "${argprint}" == TRUE ]]; then
