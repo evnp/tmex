@@ -1,0 +1,418 @@
+.TH "TMEX" "1" "June 2023"
+.SH "NAME"
+\fBtmex – a minimalist tmux layout manager\fR
+.SH DESCRIPTION
+.br
+Basic usage:
+.RS 2
+.nf
+tmex your\-session\-name "cmd a" "cmd b" "cmd c" \.\.\. etc\.
+.fi
+.RE
+.P
+With options and custom layout provided:
+.RS 2
+.nf
+tmex your\-session\-name \-\-npm \-\-layout=1224 \-\-transpose "cmd a" "cmd b" "cmd c" \.\.\. etc\.
+.fi
+.RE
+.P
+Shorthand:
+.RS 2
+.nf
+tmex your\-session\-name \-nt 1224 "cmd a" "cmd b" "cmd c" \.\.\. etc\.
+                        │     │              │
+              options ──┘     └── layout     └── shell commands
+.fi
+.RE
+.P
+Session name optional if \fB\-\-npm\fP or \fB\-n\fP is set :
+.RS 2
+.nf
+tmex \-nt 1224 "cmd a" "cmd b" "cmd c" \.\.\. etc\.
+.fi
+.RE
+.P
+Full options list (also accessible via \fBtmex \-h\fP):
+.RS 2
+.nf
+tmex <session\-name>                \- session name required unless \-\-npm set; all other args optional
+  [\-h|\-\-help]
+  [\-v|\-\-version]
+  [[\-l|\-\-layout] <1\-9,[,],{,}>]    \-l, \-\-layout      layout string, each digit represents number of panes in column
+  [\-t|\-\-transpose]                 \-t, \-\-transpose   build layout in left\-to\-right orientation instead of top\-to\-bottom
+  [\-n|\-\-npm]                       \-n, \-\-npm         if set, prefix each command with "npm run" for package\.json scripts
+  [\-p|\-\-print]                     \-p, \-\-print       emit command as string of tmux args instead of invoking tmux directly
+  [\-d|\-\-detached]                  \-d, \-\-detached    invoke tmux with \-d ; useful for piping data to tmex
+  [\-r|\-\-reattach]                  \-r, \-\-reattach    if tmux session already exists, re\-attach to it instead of replacing it
+  [\-k|\-\-kill]                      \-k, \-\-kill        kill the current or specified tmux session 
+  [\-s|\-\-shellless]                 \-s, \-\-shellless   if set, invoke commands directly with tmux instead of running inside shell
+  ["shell command 1"]
+  ["shell command 2"]              \- shell commands that will be executed in each pane
+\|\.\.\.                                number of shell commands N must not exceed sum of layout
+  ["shell command N"]
+.fi
+.RE
+.SH Layout
+.P
+If no layout is provided, a sensible default will be generated to match the number of commands provided\. However, layouts are fully customizable via \fB\-\-layout\fP or \fB\-l\fP :
+.RS 2
+.nf
+tmex your\-session\-name 1224
+# or
+tmex your\-session\-name \-l 1224
+# or
+tmex your\-session\-name \-\-layout=1224
+>>>                             │
+   1─────2─────2─────4──────────┘
+┌─────┬─────┬─────┬─────┐
+│     │     │     │  f  │
+│     │  b  │  d  ├─────┤
+│     │     │     │  g  │
+│  a  ├─────┼─────┼─────┤
+│     │     │     │  h  │
+│     │  c  │  e  ├─────┤
+│     │     │     │  i  │
+└─────┴─────┴─────┴─────┘
+.fi
+.RE
+.P
+Each digit of \fB1224\fP specifies the number of panes each column will be split into\. To operate on rows instead of columns, transpose layout left\-to\-right instead of top\-to\-bottom with \fB\-\-transpose\fP or \fB\-t\fP:
+.RS 2
+.nf
+tmex your\-session\-name \-\-transpose \-\-layout=1224
+>>>                                         │
+┌───────────────────────┐                   │
+│           a           │ 1─────────────────┘
+├───────────┬───────────┤ │
+│     b     │     c     │ 2
+├───────────┼───────────┤ │
+│     d     │     e     │ 2
+├─────┬─────┼─────┬─────┤ │
+│  f  │  g  │  h  │  i  │ 4
+└─────┴─────┴─────┴─────┘
+.fi
+.RE
+.P
+Layouts may be arbitrarily complex via sublayouts \fB[xyz]\fP and custom sizing \fB{xyz}\fP:
+.RS 2
+.nf
+tmex your\-session\-name \-\-layout=1[2{13}1]4{4112}
+>>>                                 │      │
+           ┌────────────────────────┘      │
+┌───────┬──│────┬───────┐                  │
+│       │  │    │       │                  │
+│       │ 1│3   │   4──────────────────────┘
+│       │  │    │   │   │
+│       ├──┴────┼───1───┤
+│       │       ├───1───┤
+│       │       ├───│───┤
+│       │       │   2   │
+└───────┴───────┴───────┘
+.fi
+.RE
+.P
+In the example above, the layout \fB1[2{13}1]4{4112}\fP contains the sublayout \fB[2{13}1]\fP which is constructed in the second column of the full layout\. This in turn specifies relative sizing \fB2{13}\fP for its first 2 panes, meaning the 2nd pane will be 3x the size of the 1st \. The 3rd column of the full layout \fB4{4112}\fP also defines custom sizing of panes \.
+.P
+If you want to change the widths of columns at the top level of the layout, you'll need to prefix the layout with a set of widths:
+.RS 2
+.nf
+tmex your\-session\-name \-\-layout={152}1[2{13}1]4{4112}
+>>>
+├─1─┼───────5───────┼──2───┤
+┌───┬────┬──────────┬──────┐
+│   │    │          │      │
+│   │  1 │    3     │  4   │
+│   │    │          │      │
+│   ├────┴──────────┼──1───┤
+│   │               ├──1───┤
+│   │               ├──────┤
+│   │               │  2   │
+└───┴───────────────┴──────┘
+.fi
+.RE
+.P
+Note that the sublayout \fB[2{13}1]\fP is treated as a single column when sizing is applied, so that set of panes as a whole receives \fB5\fP as its width relative to the other columns\.
+.SH Top\-level layout sizing 
+.P
+Since a sizing clause like \fB{123}\fP always \fIfollows\fR a pane count number within a layout, you may be wondering how sizing could be applied to the "top level" columns  of a layout\. For example, given the layout \fB234\fP, how could you:
+
+.RS 1
+.IP \(bu 2
+make the first column \fB2\fP fill half the screen
+.IP \(bu 2
+make the second column \fB3\fP fill a third of the screen
+.IP \(bu 2
+make the third column \fB4\fP fill the remainder  of the screen
+
+.RE
+.P
+This special case is accomplished by placing the sizing clause at the \fIstart\fR of the layout :
+.RS 2
+.nf
+tmex your\-session\-name \-\-layout={321}234
+>>>
+┌───────────────┬──────────┬─────┐
+│               │          │  4  │
+│               │    3     │     │
+│       2       │          ├─────┤
+│               ├──────────┤  4  │
+│               │          │     │
+├───────────────┤    3     ├─────┤
+│               │          │  4  │
+│               ├──────────┤     │
+│       2       │          ├─────┤
+│               │    3     │  4  │
+│               │          │     │
+└───────────────┴──────────┴─────┘
+.fi
+.RE
+.P
+\fBNOTE:\fR This can be accomplished \fIwithout\fR special casing, using sub\-layouts and the transposition feature:
+.RS 2
+.nf
+tmex your\-session\-name \-\-transpose \-\-layout=[234]{321}    # equivalent to \-\-layout={321}234 above
+tmex your\-session\-name \-\-layout=[[234]{321}]              # also equivalent
+.fi
+.RE
+.P
+These may be functionally equivalent, but they're a far cry from intuitive! Feel free to use whichever of the three forms makes the most logical sense to you though\.
+.SH Grid sub\-layouts 
+.P
+Sometimes you might want a row/column of your layout to contain a grid of N panes, laid out using the default algorithm\. This is done by placing \fB{+}\fP \fIafter\fR a number of panes in the layout\. This can be thought of as "requesting a grid layout" for the preceeding number of panes – \fB+\fP is a visual mnemonic in that it separates the space within \fB{ }\fP in a grid\-like formation\.
+.RS 2
+.nf
+tmex your\-session\-name \-\-layout=35{+}4
+>>>
+┌─────┬─────┬─────┬─────┬─────┐
+│     │     │     │     │  4  │
+│  3  │     │     │     │     │
+│     │     │  5  │  5  ├─────┤
+├─────┤     │     │     │  4  │
+│     │     │     │     │     │
+│  3  │  5  ├─────┼─────┼─────┤
+│     │     │     │     │  4  │
+├─────┤     │     │     │     │
+│     │     │  5  │  5  ├─────┤
+│  3  │     │     │     │  4  │
+│     │     │     │     │     │
+└─────┴─────┴─────┴─────┴─────┘
+.fi
+.RE
+.P
+The layout above is equivalent to:
+.RS 2
+.nf
+tmex your\-session\-name \-\-layout=31224
+.fi
+.RE
+.P
+because \fB5{+}\fP is expanded to \fB122\fP, which is the default grid layout when 5 panes are required\. You can experiment with commands such as \fBtmex your\-session\-name \-\-layout=7{+}\fP to see what default grid layout is produced for each number of panes\. In general, each default grid layout attempts to equalize pane sizes, widths, and heights as much as possible, keeping the largest pane on the left with odd numbers of panes\.
+.SH Multi\-digit pane counts 
+.P
+For any of the layouts above, pane counts 10 and greater can be achieved by separating digits with \fB\|\.\fP characters\. For example:
+.RS 2
+.nf
+tmex your\-session\-name \-\-layout=8\.10\.12
+.fi
+.RE
+.P
+will produce a layout of 3 columns, the first with 8 panes, the second with 10 panes, and the third with 12 panes\.
+.P
+These layouts are equivalent (the \fB\|\.\fP characters have no effect when used with single\-digit pane counts):
+.RS 2
+.nf
+tmex your\-session\-name \-\-layout=1234
+tmex your\-session\-name \-\-layout=1\.2\.3\.4
+.fi
+.RE
+.P
+To understand whether a set of numeric characters will be treated as one multi\-digit number, or a series of single\-digit numbers, simply ask \fIIs this set of numeric characters adjacent to a \fB\|\.\fP character?\fR If so, they are multi\-digit numbers; otherwise they are single\-digit numbers\.
+.P
+This general rule will help explain this more convoluted  layout:
+.RS 2
+.nf
+tmex your\-session\-name \-\-layout=11\.[23]45[6\.7]8\.
+#                  multi\-digit\-\-^^  ^^|^^ ^|^ ^\-\-multi\-digit
+#                                     |    |
+#                          single\-digit    multi\-digit
+.fi
+.RE
+.P
+\fB11\.\fP is treated as multi\-digit, and produces a column 11 panes\. \fB23\fP are treated as a sublayout of single\-digit pane counts, producing 5 panes total\. \fB45\fP have no adjacent \fB\|\.\fP characters so they produce columns of 4 and 5 panes\. \fB6\.7\fP are treated as multi\-digit, but still produce separate rows  of 6 and 7 panes respectively – the \fB\|\.\fP has no effect\. Finally, \fB8\.\fP is treated as multi\-digit due to the adjacent \fB\|\.\fP but still produces a column of 8 panes – the \fB\|\.\fP has no effect)\.
+.SH Focused Pane Control 
+.P
+There are a few different ways to select a specific pane to be "focused" – with cursor active inside it – when your layout is initialized\.
+.RS 2
+.nf
+tmex your\-session\-name \-\-layout=135+7
+# the above will focus the first pane of the third column of your layout
+tmex your\-session\-name \-\-layout=135++7
+# the above will focus the second pane of the third column of your layout
+tmex your\-session\-name \-\-layout=135\-7
+# the above will focus the last pane of the third column of your layout
+tmex your\-session\-name \-\-layout=135\-\-\-7
+# the above will focus the third\-to\-last pane of the third column of your layout
+.fi
+.RE
+.P
+The above commands focus panes relative to the column they reside in\. You can also select a pane to be focused relative to the entire sequence of panes in the layout:
+.RS 2
+.nf
+tmex your\-session\-name \-\-layout=1357 \-\-focus=4
+# the above will focus the first pane of the third column of your layout
+# this happens to be equivalent to \-\-layout=135+7 from above
+tmex your\-session\-name \-\-layout=1357 \-f=5      # shorthand argument
+# the above will focus the second pane of the third column of your layout
+# this happens to be equivalent to \-\-layout=135++7 from above
+tmex your\-session\-name \-f=\-8 1357              # shorthand argument + shorthand layout
+# the above will focus the last pane of the third column of your layout
+# this happens to be equivalent to \-\-layout=135\-7 from above
+tmex your\-session\-name \-f=\-10 1357             # shorthand argument + shorthand layout
+# the above will focus the third\-to\-last pane of the third column of your layout
+# this happens to be equivalent to \-\-layout=135\-\-\-7 from above
+.fi
+.RE
+.SH Multi\-window management 
+.P
+You may want to create multiple tmux windows within your tmux session, and navigate between them using \fBCTRL+B→N\fR , \fBCTRL+B→P\fR , \fBCTRL+B→[0\-9]\fR \.
+.P
+For example, you might want one window called \fBabc\fP, with 6 panes laid out \fB123\fP, and a second window called \fBefg\fP with 8 panes laid out \fB44\fP\|\. To accomplish this, use the \fB\-\-window\fP or \fB\-w\fP option, which is unique in that it can be repeated any number of times within a tmex command:
+.RS 2
+.nf
+tmex your\-session\-name \-\-window abc 123 \-w efg 44
+.fi
+.RE
+.P
+Every series of arguments after an instance of \fB\-\-window\fP or \fB\-w\fP is treated as an entirely separate tmex invocation, with separate arguments and commands list\. To pass some arguments to the command above  and provide some commands, you'd write:
+.RS 2
+.nf
+tmex your\-session\-name \-w abc \-f4 123 "cmd a" "cmd b" \-w efg \-f\-2 44 "cmd c"
+.fi
+.RE
+.P
+You may be wondering what will happen if you put any args \fIbefore\fR the first \fB\-w\fP arg\. This will work fine; the command will still produce two windows and the preceeding args will simply be used against the first window:
+.RS 2
+.nf
+tmex your\-session\-name \-l 123 \-f4 \-w abc "cmd a" "cmd b" \-w efg \-f\-2 44 "cmd c"
+# equivalent to command directly above
+.fi
+.RE
+.P
+Each \fB\-\-window\fP or \fB\-w\fP argument should be directly followed by the intended name of the window, which will label it in tmux's bottom bar and aid navigation\. However, empty\-string \fB&#39;&#39;\fP provided as a name is entirely valid, and there's also a shorthand if you wish to omit a window's name (usually the shell name is used in its place, eg\. \fBbash\fP):
+.RS 2
+.nf
+tmex your\-session\-name \-w\- 123 \-w\- 44  # produce nameless tmux windows
+tmex your\-session\-name \-\-window \- 123 \-\-window \- 44       # equivalent
+tmex your\-session\-name \-w '' 123 \-w '' 44                 # equivalent
+tmex your\-session\-name \-\-window '' 123 \-\-window '' 44     # equivalent
+.fi
+.RE
+.P
+\fBNOTE\fR that \fB\-w&#39;&#39;\fP  does \fInot\fR work, since shell string concatenation causes this to be treated as simply \fB\-w\fP and the \fInext\fR arg will be inadvertently used as the window name\.
+.SH Kill command 
+.P
+You can kill a tmux session from anywhere using
+.RS 2
+.nf
+tmex \-k your\-session\-name
+tmex your\-session\-name \-k      # equivalent
+tmex your\-session\-name \-\-kill  # equivalent
+.fi
+.RE
+.P
+If you're \fIinside\fR a tmux session at the moment, you can simply write
+.RS 2
+.nf
+tmex \-k
+.fi
+.RE
+.P
+The session name will be inferred from the current ENV variables, and the session will be killed\.
+.SH npm
+.P
+Simplify \fBpackage\.json\fP scripts via \fB\-\-npm\fP or \fB\-n\fP\|\. Commands will be prefixed with \fBnpm run\fP  and session name will default to \fB$npm_package_name\fP\|\. This will expand to match the \fBname\fP field set in \fBpackage\.json\fP\|\.
+.P
+\fBNOTE:\fR tmux replaces \fB\|\.\fP→\fB_\fP, \fB:\fP→\fB_\fP, \fB\\\fP→\fB\\\\\fP when setting session names, so your final session name may not exactly match the \fBname\fP specified in \fBpackage\.json\fP (or the name you provide via the \fB<session\-name>\fP argument at the command line)\.
+.RS 2
+.nf
+cat package\.json | grep name
+>>> "name": "special\-project"
+
+tmex \-n watch server typecheck
+>>>
+┌───────────┬───────────┐
+│ npm run   │ npm run   │
+│ watch     │ server    │
+│           ├───────────┤
+│           │ npm run   │
+│           │ typecheck │
+└───────────┴───────────┘
+session : special\-project
+.fi
+.RE
+.SH Install
+.P
+Install as a build tool in a package:
+.RS 2
+.nf
+npm install \-\-save\-dev tmex
+.fi
+.RE
+.P
+Install globally for use with any set of \fBpackage\.json\fP scripts or arbitrary commands:
+.RS 2
+.nf
+npm install \-g tmex
+.fi
+.RE
+.P
+or sans\-npm:
+.RS 2
+.nf
+curl \-o ~/bin/tmex https://raw\.githubusercontent\.com/evnp/tmex/master/tmex && chmod +x ~/bin/tmex
+# or /usr/local/bin or other bin of your choice 
+.fi
+.RE
+.P
+.UR https://raw.githubusercontent.com/evnp/tmex/master/tmex
+.I tmex
+.UE
+has no external dependencies other than tmux, but always read code before downloading to ensure it contains nothing unexpected\.
+.P
+tmex doesn't install tmux itself, so you'll also want to do that if you don't have tmux yet:
+.RS 2
+.nf
+tmex \-n test lint "npm install"
+>>> /Users/evan/bin/tmex: line 694: tmux: command not found
+
+brew install tmux      # OSX
+sudo apt install tmux  # Ubuntu, Debian
+.fi
+.RE
+.P
+or refer to https://github.com/tmux/tmux/wiki/Installing for install instructions applicable to your platform\.
+.SH Tests
+.P
+Run once:
+.RS 2
+.nf
+npm install
+npm test
+.fi
+.RE
+.P
+Use \fBfswatch\fP to re\-run tests on file changes:
+.RS 2
+.nf
+brew install fswatch
+npm install
+npm run testw
+.fi
+.RE
+.P
+Non\-OSX: replace \fBbrew install fswatch\fP with package manager of choice 
+.SH License
+.P
+MIT
+

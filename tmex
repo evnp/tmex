@@ -861,19 +861,19 @@ tmex <session-name> -nt 1224 "cmd a" "cmd b" "cmd c" ... etc.
                      |     |              |
            options --+     +-- layout     +-- shell commands
 
-tmex <session-name>  ·············  session name required unless --npm or --kill set; all other args optional
-  [-h|--help]    [-v|--version]
+tmex <session-name> ··············  session name required unless --npm or --kill set; all other args optional
+  [-h|--help]       [-v|--version]
   [-l|--layout]  0-9 [ ] { } . - +  layout string, each digit represents number of panes in column
-  [-f|--focus]   0-9  ············  tmux pane to select by index, must be an integer, positive or negative
-  [-w|--window] "window-name"  ···  separate sets of tmex args to start session with multiple tmux windows
-  [-t|--transpose]  ··············  build layout in left-to-right orientation instead of top-to-bottom
-  [-n|--npm]  ····················  if set, prefix each command with "npm run" for package.json scripts
-  [-p|--print]  ··················  emit command as string of tmux args instead of invoking tmux directly
-  [-d|--detached]  ···············  invoke tmux with -d (detached session); useful for piping data to tmex
-  [-r|--reattach]  ···············  if tmux session already exists, re-attach to it instead of replacing it
-  [-s|--shellless]  ··············  if set, invoke commands directly with tmux instead of running inside shell
-  [-k|--kill]  ···················  kill the current or specified tmux session (all other arguments ignored)
-  ["command 1" "command 2" ...]  ·  shell commands to be executed in each pane (num commands cannot exceed total pane count)
+  [-f|--focus]   0-9 ·············  tmux pane to select by index, must be an integer, positive or negative
+  [-w|--window] "window-name" ····  separate sets of tmex args to start session with multiple tmux windows
+  [-t|--transpose] ···············  build layout in left-to-right orientation instead of top-to-bottom
+  [-n|--npm] ·····················  if set, prefix each command with "npm run" for package.json scripts
+  [-p|--print] ···················  emit command as string of tmux args instead of invoking tmux directly
+  [-d|--detached] ················  invoke tmux with -d (detached session); useful for piping data to tmex
+  [-r|--reattach] ················  if tmux session already exists, re-attach to it instead of replacing it
+  [-s|--shellless] ···············  if set, invoke commands directly with tmux instead of running inside shell
+  [-k|--kill] ····················  kill the current or specified tmux session (all other arguments ignored)
+  ["command 1" "command 2" ...] ··  shell commands to be executed in each pane (num commands cannot exceed total pane count)
 '
   # shellcheck disable=SC2016
   help='-l, --layout

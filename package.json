@@ -1,9 +1,14 @@
 {
   "name": "tmex",
   "version": "2.0.0-rc.1",
-  "description": "A minimalist tmux layout manager - one shell script + tmux +  zero other dependencies",
+  "description": "A minimalist tmux layout manager - one shell script + tmux + zero other dependencies",
   "main": "tmex",
-  "files": ["/tmex"],
+  "files": [
+    "/tmex"
+  ],
+  "man": [
+    "./man/tmex.1"
+  ],
   "scripts": {
     "lint": "shellcheck tmex",
     "test": "npm run -s lint && time bats --jobs 16 --no-parallelize-across-files test.bats",
@@ -15,6 +20,7 @@
     "testfw": "run() { npm run -s testf \"$@\"; fswatch -0 -o -r . | xargs -0 -n1 npm run testf \"$@\"; }; run",
     "testiw": "run() { npm run -s testi \"$@\"; fswatch -0 -o -r . | xargs -0 -n1 npm run testi \"$@\"; }; run",
     "simulate": "./simulator",
+    "man": "sed '1,/^Usage$/d' README.md | sed '1s/^/DESCRIPTION\\nBasic usage:\\n/' | marked-man --name=tmex | sed -E 's/^(..Btmex)/\\1 – a minimalist tmux layout manager/' | tr '\\n' '\\r' | sed -E 's/\\([^\\)]*\\)//g' | tr '\\r' '\\n' > ./man/tmex.1",
     "release": "npm pack && tar -xvzf *.tgz && rm -rf package *.tgz && echo $'\n'\"Press ENTER to publish the files above · CTRL+C to cancel · node $( node -v ) · npm $( npm -v )\"$'\n\n' && head -n 1 >/dev/null && npm publish",
     "tf": "npm run -s testf",
     "ti": "npm run -s testi",
@@ -40,6 +46,7 @@
     "bats-assert": "2.0.0",
     "bats-notify": "1.0.0",
     "bats-support": "git+https://github.com/ztombol/bats-support.git#v0.2.0",
+    "marked-man": "1.3.3",
     "shellcheck": "2.2.0"
   }
 }
