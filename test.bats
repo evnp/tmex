@@ -223,24 +223,6 @@ layout_1234="
 	assert_layout "${layout_1234}"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname 1..2..3..4" {
-	run_tmex
-	assert_output -p "Invalid input: --layout=1..2..3..4"
-	assert_output -p "should not include multiple '.' characters in a row"
-	assert_output -p "Usage:"
-	refute_output -p "new-session -s testsessionname"
-	refute_layout "${layout_1234}"
-	assert_failure
-}
-@test "${BATS_TEST_NUMBER} tmex testsessionname .1..2..3..4." {
-	run_tmex
-	assert_output -p "Invalid input: --layout=.1..2..3..4."
-	assert_output -p "should not include multiple '.' characters in a row"
-	assert_output -p "Usage:"
-	refute_output -p "new-session -s testsessionname"
-	refute_layout "${layout_1234}"
-	assert_failure
-}
 
 @test "${BATS_TEST_NUMBER} tmex testsessionname -l1234" {
 	run_tmex
@@ -267,6 +249,24 @@ layout_1234="
 	assert_layout "${layout_1234}"
 	assert_success
 }
+@test "${BATS_TEST_NUMBER} tmex testsessionname -l 1..2..3..4" {
+	run_tmex
+	assert_output -p "Invalid input: --layout=1..2..3..4"
+	assert_output -p "should not include multiple '.' characters in a row"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	refute_layout "${layout_1234}"
+	assert_failure
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname -l .1..2..3..4." {
+	run_tmex
+	assert_output -p "Invalid input: --layout=.1..2..3..4."
+	assert_output -p "should not include multiple '.' characters in a row"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	refute_layout "${layout_1234}"
+	assert_failure
+}
 
 @test "${BATS_TEST_NUMBER} tmex testsessionname --layout=1234" {
 	run_tmex
@@ -280,6 +280,24 @@ layout_1234="
 	assert_layout "${layout_1234}"
 	assert_success
 }
+@test "${BATS_TEST_NUMBER} tmex testsessionname --layout=1..2..3..4" {
+	run_tmex
+	assert_output -p "Invalid input: --layout=1..2..3..4"
+	assert_output -p "should not include multiple '.' characters in a row"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	refute_layout "${layout_1234}"
+	assert_failure
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname --layout=.1..2..3..4." {
+	run_tmex
+	assert_output -p "Invalid input: --layout=.1..2..3..4."
+	assert_output -p "should not include multiple '.' characters in a row"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	refute_layout "${layout_1234}"
+	assert_failure
+}
 
 @test "${BATS_TEST_NUMBER} tmex testsessionname --layout 1234" {
 	run_tmex
@@ -292,6 +310,24 @@ layout_1234="
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_1234}"
 	assert_success
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname --layout 1..2..3..4" {
+	run_tmex
+	assert_output -p "Invalid input: --layout=1..2..3..4"
+	assert_output -p "should not include multiple '.' characters in a row"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	refute_layout "${layout_1234}"
+	assert_failure
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname --layout .1..2..3..4." {
+	run_tmex
+	assert_output -p "Invalid input: --layout=.1..2..3..4."
+	assert_output -p "should not include multiple '.' characters in a row"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	refute_layout "${layout_1234}"
+	assert_failure
 }
 
 @test "${BATS_TEST_NUMBER} tmex testsessionname -f5 1234" {
@@ -327,6 +363,39 @@ layout_1234="
 	assert_failure
 }
 @test "${BATS_TEST_NUMBER} tmex testsessionname -fl1234" {
+	run_tmex
+	assert_output -p "Invalid input: --focus (-f) arg value must be an integer"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	refute_layout "${layout_1234}"
+	assert_failure
+}
+
+@test "${BATS_TEST_NUMBER} tmex testsessionname 1234 -f5" {
+	run_tmex
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234} select-pane -t5"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname -f-5 -l1234 " {
+	run_tmex
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234} select-pane -t-5"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname --focus=0 -l 1234" {
+	run_tmex
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234} select-pane -t0"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname 1234 -f 15" {
+	run_tmex
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234} select-pane -t15"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname -f=abcdefg --layout 1234 " {
 	run_tmex
 	assert_output -p "Invalid input: --focus (-f) arg value must be an integer"
 	assert_output -p "Usage:"
@@ -679,6 +748,22 @@ layout_1234_transposed="
 	assert_success
 }
 
+@test "${BATS_TEST_NUMBER} tmex testsessionname 1234 -t" {
+	run_tmex
+	assert_layout "${layout_1234_transposed}"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname 1.2.3.4 -t " {
+	run_tmex
+	assert_layout "${layout_1234_transposed}"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname .1.2.3.4. -t" {
+	run_tmex
+	assert_layout "${layout_1234_transposed}"
+	assert_success
+}
+
 @test "${BATS_TEST_NUMBER} tmex testsessionname -l1234 -t" {
 	run_tmex
 	assert_layout "${layout_1234_transposed}"
@@ -754,6 +839,22 @@ layout_1234_transposed="
 	assert_success
 }
 @test "${BATS_TEST_NUMBER} tmex testsessionname --layout=.1.2.3.4. --transpose" {
+	run_tmex
+	assert_layout "${layout_1234_transposed}"
+	assert_success
+}
+
+@test "${BATS_TEST_NUMBER} tmex testsessionname --transpose --layout=1234" {
+	run_tmex
+	assert_layout "${layout_1234_transposed}"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname --transpose --layout=1.2.3.4" {
+	run_tmex
+	assert_layout "${layout_1234_transposed}"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname --transpose --layout=.1.2.3.4." {
 	run_tmex
 	assert_layout "${layout_1234_transposed}"
 	assert_success
@@ -922,6 +1023,22 @@ layout_123456_transposed="
 	assert_success
 }
 
+@test "${BATS_TEST_NUMBER} tmex testsessionname 1[2{34}5]6 -t" {
+	run_tmex
+	assert_layout "${layout_123456_transposed}"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname 1.[2{3.4}.5].6 -t" {
+	run_tmex
+	assert_layout "${layout_123456_transposed}"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname .1[.2{34}5]6. -t" {
+	run_tmex
+	assert_layout "${layout_123456_transposed}"
+	assert_success
+}
+
 @test "${BATS_TEST_NUMBER} tmex testsessionname -l1[2{34}5]6 -t" {
 	run_tmex
 	assert_layout "${layout_123456_transposed}"
@@ -997,6 +1114,22 @@ layout_123456_transposed="
 	assert_success
 }
 @test "${BATS_TEST_NUMBER} tmex testsessionname --layout=.1[.2{34}5]6. --transpose" {
+	run_tmex
+	assert_layout "${layout_123456_transposed}"
+	assert_success
+}
+
+@test "${BATS_TEST_NUMBER} tmex testsessionname --transpose --layout=1[2{34}5]6" {
+	run_tmex
+	assert_layout "${layout_123456_transposed}"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname --transpose --layout=1.[2{3.4}.5].6" {
+	run_tmex
+	assert_layout "${layout_123456_transposed}"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname --transpose --layout=.1[.2{34}5]6." {
 	run_tmex
 	assert_layout "${layout_123456_transposed}"
 	assert_success
@@ -1489,8 +1622,52 @@ layout_a_j="
 	"
 	assert_success
 }
+@test "${BATS_TEST_NUMBER} tmex 1234 -n a b c d e f g h i j" {
+	export npm_package_name="testpackagename"
+	run_tmex
+	assert_output -p "new-session -s testpackagename"
+	assert_layout "
+			 send-keys \"npm run a\" Enter
+		split-window -h -p50
+			 send-keys \"npm run d\" Enter
+		 select-pane -L
+		split-window -h -p50
+			 send-keys \"npm run b\" Enter
+		 select-pane -R
+		split-window -h -p50
+			 send-keys \"npm run g\" Enter
+		 select-pane -L
+		 select-pane -L
+		 select-pane -L
+		 select-pane -R
+		split-window -v -p50
+			 send-keys \"npm run c\" Enter
+		 select-pane -R
+		split-window -v -p67
+			 send-keys \"npm run e\" Enter
+		split-window -v -p50
+			 send-keys \"npm run f\" Enter
+		 select-pane -R
+		split-window -v -p50
+			 send-keys \"npm run i\" Enter
+		 select-pane -U
+		split-window -v -p50
+			 send-keys \"npm run h\" Enter
+		 select-pane -D
+		split-window -v -p50
+			 send-keys \"npm run j\" Enter
+	"
+	assert_success
+}
 
 @test "${BATS_TEST_NUMBER} tmex -n 1[2{34}5]6 a b c d e f g h i j" {
+	export npm_package_name="testpackagename"
+	run_tmex
+	assert_output -p "new-session -s testpackagename"
+	assert_layout "${layout_a_j}"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} tmex 1[2{34}5]6 -n a b c d e f g h i j" {
 	export npm_package_name="testpackagename"
 	run_tmex
 	assert_output -p "new-session -s testpackagename"
@@ -1525,6 +1702,33 @@ layout_a_j="
 	refute_layout "${layout_1234}"
 	assert_failure
 }
+@test "${BATS_TEST_NUMBER} tmex 1234 -n a b c d e f g h i j k" {
+	run_tmex
+	assert_output -p "Invalid input: --layout=1234"
+	assert_output -p "is too small for number of commands provided"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	refute_layout "${layout_1234}"
+	assert_failure
+}
+@test "${BATS_TEST_NUMBER} tmex 1.2.3.4 -n a b c d e f g h i j k" {
+	run_tmex
+	assert_output -p "Invalid input: --layout=1.2.3.4"
+	assert_output -p "is too small for number of commands provided"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	refute_layout "${layout_1234}"
+	assert_failure
+}
+@test "${BATS_TEST_NUMBER} tmex .1.2.3.4. -n a b c d e f g h i j k" {
+	run_tmex
+	assert_output -p "Invalid input: --layout=.1.2.3.4."
+	assert_output -p "is too small for number of commands provided"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	refute_layout "${layout_1234}"
+	assert_failure
+}
 
 @test "${BATS_TEST_NUMBER} tmex -n 1[2{34}5]6 a b c d e f g h i j k l m n o" {
 	run_tmex
@@ -1543,6 +1747,30 @@ layout_a_j="
 	assert_failure
 }
 @test "${BATS_TEST_NUMBER} tmex -n .1[.2{.3.4}5.]6. a b c d e f g h i j k l m n o" {
+	run_tmex
+	assert_output -p "Invalid input: --layout=.1[.2{.3.4}5.]6."
+	assert_output -p "is too small for number of commands provided"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	assert_failure
+}
+@test "${BATS_TEST_NUMBER} tmex  1[2{34}5]6 -n a b c d e f g h i j k l m n o" {
+	run_tmex
+	assert_output -p "Invalid input: --layout=1[2{34}5]6"
+	assert_output -p "is too small for number of commands provided"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	assert_failure
+}
+@test "${BATS_TEST_NUMBER} tmex 1.[2{3.4}.5].6 -n a b c d e f g h i j k l m n o" {
+	run_tmex
+	assert_output -p "Invalid input: --layout=1.[2{3.4}.5].6"
+	assert_output -p "is too small for number of commands provided"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	assert_failure
+}
+@test "${BATS_TEST_NUMBER} tmex .1[.2{.3.4}5.]6. -n a b c d e f g h i j k l m n o" {
 	run_tmex
 	assert_output -p "Invalid input: --layout=.1[.2{.3.4}5.]6."
 	assert_output -p "is too small for number of commands provided"
@@ -1923,7 +2151,17 @@ function layout_with_new_pct_flags() {
 	assert_output -p "new-session -s your-session-name ; send-keys \"npm run cmdA\" Enter ; split-window -v -p50 ; select-pane -U ; split-window -v -p50 ; send-keys \"npm run cmdB\" Enter ; select-pane -D ; split-window -v -p50 ; select-pane -U ; select-pane -U ; select-pane -U ; select-pane -D ; split-window -h -p50 ; send-keys \"npm run cmdC\" Enter ; select-pane -D ; split-window -h -p50 ; select-pane -D ; split-window -h -p50 ; select-pane -L ; split-window -h -p50 ; select-pane -R ; split-window -h -p50"
 	assert_success
 }
+@test "${BATS_TEST_NUMBER} README tmex your-session-name 1224 --transpose --npm cmdA cmdB cmdC" {
+	run_tmex
+	assert_output -p "new-session -s your-session-name ; send-keys \"npm run cmdA\" Enter ; split-window -v -p50 ; select-pane -U ; split-window -v -p50 ; send-keys \"npm run cmdB\" Enter ; select-pane -D ; split-window -v -p50 ; select-pane -U ; select-pane -U ; select-pane -U ; select-pane -D ; split-window -h -p50 ; send-keys \"npm run cmdC\" Enter ; select-pane -D ; split-window -h -p50 ; select-pane -D ; split-window -h -p50 ; select-pane -L ; split-window -h -p50 ; select-pane -R ; split-window -h -p50"
+	assert_success
+}
 @test "${BATS_TEST_NUMBER} README tmex your-session-name -nt 1224 cmdA cmdB cmdC" {
+	run_tmex
+	assert_output -p "new-session -s your-session-name ; send-keys \"npm run cmdA\" Enter ; split-window -v -p50 ; select-pane -U ; split-window -v -p50 ; send-keys \"npm run cmdB\" Enter ; select-pane -D ; split-window -v -p50 ; select-pane -U ; select-pane -U ; select-pane -U ; select-pane -D ; split-window -h -p50 ; send-keys \"npm run cmdC\" Enter ; select-pane -D ; split-window -h -p50 ; select-pane -D ; split-window -h -p50 ; select-pane -L ; split-window -h -p50 ; select-pane -R ; split-window -h -p50"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} README tmex your-session-name 1224 -nt cmdA cmdB cmdC" {
 	run_tmex
 	assert_output -p "new-session -s your-session-name ; send-keys \"npm run cmdA\" Enter ; split-window -v -p50 ; select-pane -U ; split-window -v -p50 ; send-keys \"npm run cmdB\" Enter ; select-pane -D ; split-window -v -p50 ; select-pane -U ; select-pane -U ; select-pane -U ; select-pane -D ; split-window -h -p50 ; send-keys \"npm run cmdC\" Enter ; select-pane -D ; split-window -h -p50 ; select-pane -D ; split-window -h -p50 ; select-pane -L ; split-window -h -p50 ; select-pane -R ; split-window -h -p50"
 	assert_success
@@ -1948,6 +2186,11 @@ function layout_with_new_pct_flags() {
 	assert_output -p "new-session -s your-session-name ; split-window -v -p50 ; select-pane -U ; split-window -v -p50 ; select-pane -D ; split-window -v -p50 ; select-pane -U ; select-pane -U ; select-pane -U ; select-pane -D ; split-window -h -p50 ; select-pane -D ; split-window -h -p50 ; select-pane -D ; split-window -h -p50 ; select-pane -L ; split-window -h -p50 ; select-pane -R ; split-window -h -p50"
 	assert_success
 }
+@test "${BATS_TEST_NUMBER} README tmex your-session-name --layout=1224 --transpose" {
+	run_tmex
+	assert_output -p "new-session -s your-session-name ; split-window -v -p50 ; select-pane -U ; split-window -v -p50 ; select-pane -D ; split-window -v -p50 ; select-pane -U ; select-pane -U ; select-pane -U ; select-pane -D ; split-window -h -p50 ; select-pane -D ; split-window -h -p50 ; select-pane -D ; split-window -h -p50 ; select-pane -L ; split-window -h -p50 ; select-pane -R ; split-window -h -p50"
+	assert_success
+}
 @test "${BATS_TEST_NUMBER} README tmex your-session-name --layout=1[2{13}1]4{4112}" {
 	run_tmex
 	assert_output -p "new-session -s your-session-name ; split-window -h -p67 ; split-window -h -p50 ; select-pane -L ; select-pane -L ; select-pane -R ; split-window -v -p50 ; select-pane -U ; split-window -h -p75 ; select-pane -D ; select-pane -R ; split-window -v -p37 ; select-pane -U ; split-window -v -p20 ; select-pane -D ; split-window -v -p67"
@@ -1964,6 +2207,11 @@ function layout_with_new_pct_flags() {
 	assert_success
 }
 @test "${BATS_TEST_NUMBER} README tmex your-session-name --transpose --layout=[234]{321}" {
+	run_tmex
+	assert_output -p "new-session -s your-session-name ; split-window -h -p50 ; split-window -h -p33 ; select-pane -L ; select-pane -L ; split-window -v -p50 ; select-pane -R ; split-window -v -p67 ; split-window -v -p50 ; select-pane -R ; split-window -v -p50 ; select-pane -U ; split-window -v -p50 ; select-pane -D ; split-window -v -p50"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} README tmex your-session-name --layout=[234]{321} --transpose" {
 	run_tmex
 	assert_output -p "new-session -s your-session-name ; split-window -h -p50 ; split-window -h -p33 ; select-pane -L ; select-pane -L ; split-window -v -p50 ; select-pane -R ; split-window -v -p67 ; split-window -v -p50 ; select-pane -R ; split-window -v -p50 ; select-pane -U ; split-window -v -p50 ; select-pane -D ; split-window -v -p50"
 	assert_success
@@ -2028,7 +2276,17 @@ function layout_with_new_pct_flags() {
 	assert_output -p "new-session -s your-session-name ; split-window -h -p50 ; select-pane -L ; split-window -h -p50 ; select-pane -R ; split-window -h -p50 ; select-pane -L ; select-pane -L ; select-pane -L ; select-pane -R ; split-window -v -p67 ; split-window -v -p50 ; select-pane -R ; split-window -v -p80 ; split-window -v -p50 ; select-pane -U ; split-window -v -p50 ; select-pane -D ; split-window -v -p50 ; select-pane -R ; split-window -v -p86 ; split-window -v -p50 ; select-pane -U ; split-window -v -p67 ; split-window -v -p50 ; select-pane -D ; split-window -v -p67 ; split-window -v -p50 ; select-pane -t4"
 	assert_success
 }
+@test "${BATS_TEST_NUMBER} README tmex your-session-name --focus=4 --layout=1357" {
+	run_tmex
+	assert_output -p "new-session -s your-session-name ; split-window -h -p50 ; select-pane -L ; split-window -h -p50 ; select-pane -R ; split-window -h -p50 ; select-pane -L ; select-pane -L ; select-pane -L ; select-pane -R ; split-window -v -p67 ; split-window -v -p50 ; select-pane -R ; split-window -v -p80 ; split-window -v -p50 ; select-pane -U ; split-window -v -p50 ; select-pane -D ; split-window -v -p50 ; select-pane -R ; split-window -v -p86 ; split-window -v -p50 ; select-pane -U ; split-window -v -p67 ; split-window -v -p50 ; select-pane -D ; split-window -v -p67 ; split-window -v -p50 ; select-pane -t4"
+	assert_success
+}
 @test "${BATS_TEST_NUMBER} README tmex your-session-name --layout=1357 -f=5" {
+	run_tmex
+	assert_output -p "new-session -s your-session-name ; split-window -h -p50 ; select-pane -L ; split-window -h -p50 ; select-pane -R ; split-window -h -p50 ; select-pane -L ; select-pane -L ; select-pane -L ; select-pane -R ; split-window -v -p67 ; split-window -v -p50 ; select-pane -R ; split-window -v -p80 ; split-window -v -p50 ; select-pane -U ; split-window -v -p50 ; select-pane -D ; split-window -v -p50 ; select-pane -R ; split-window -v -p86 ; split-window -v -p50 ; select-pane -U ; split-window -v -p67 ; split-window -v -p50 ; select-pane -D ; split-window -v -p67 ; split-window -v -p50 ; select-pane -t5"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} README tmex your-session-name -f=5 --layout=1357" {
 	run_tmex
 	assert_output -p "new-session -s your-session-name ; split-window -h -p50 ; select-pane -L ; split-window -h -p50 ; select-pane -R ; split-window -h -p50 ; select-pane -L ; select-pane -L ; select-pane -L ; select-pane -R ; split-window -v -p67 ; split-window -v -p50 ; select-pane -R ; split-window -v -p80 ; split-window -v -p50 ; select-pane -U ; split-window -v -p50 ; select-pane -D ; split-window -v -p50 ; select-pane -R ; split-window -v -p86 ; split-window -v -p50 ; select-pane -U ; split-window -v -p67 ; split-window -v -p50 ; select-pane -D ; split-window -v -p67 ; split-window -v -p50 ; select-pane -t5"
 	assert_success
@@ -2038,7 +2296,17 @@ function layout_with_new_pct_flags() {
 	assert_output -p "new-session -s your-session-name ; split-window -h -p50 ; select-pane -L ; split-window -h -p50 ; select-pane -R ; split-window -h -p50 ; select-pane -L ; select-pane -L ; select-pane -L ; select-pane -R ; split-window -v -p67 ; split-window -v -p50 ; select-pane -R ; split-window -v -p80 ; split-window -v -p50 ; select-pane -U ; split-window -v -p50 ; select-pane -D ; split-window -v -p50 ; select-pane -R ; split-window -v -p86 ; split-window -v -p50 ; select-pane -U ; split-window -v -p67 ; split-window -v -p50 ; select-pane -D ; split-window -v -p67 ; split-window -v -p50 ; select-pane -t-8"
 	assert_success
 }
+@test "${BATS_TEST_NUMBER} README tmex your-session-name 1357 -f=-8" {
+	run_tmex
+	assert_output -p "new-session -s your-session-name ; split-window -h -p50 ; select-pane -L ; split-window -h -p50 ; select-pane -R ; split-window -h -p50 ; select-pane -L ; select-pane -L ; select-pane -L ; select-pane -R ; split-window -v -p67 ; split-window -v -p50 ; select-pane -R ; split-window -v -p80 ; split-window -v -p50 ; select-pane -U ; split-window -v -p50 ; select-pane -D ; split-window -v -p50 ; select-pane -R ; split-window -v -p86 ; split-window -v -p50 ; select-pane -U ; split-window -v -p67 ; split-window -v -p50 ; select-pane -D ; split-window -v -p67 ; split-window -v -p50 ; select-pane -t-8"
+	assert_success
+}
 @test "${BATS_TEST_NUMBER} README tmex your-session-name -f=-10 1357" {
+	run_tmex
+	assert_output -p "new-session -s your-session-name ; split-window -h -p50 ; select-pane -L ; split-window -h -p50 ; select-pane -R ; split-window -h -p50 ; select-pane -L ; select-pane -L ; select-pane -L ; select-pane -R ; split-window -v -p67 ; split-window -v -p50 ; select-pane -R ; split-window -v -p80 ; split-window -v -p50 ; select-pane -U ; split-window -v -p50 ; select-pane -D ; split-window -v -p50 ; select-pane -R ; split-window -v -p86 ; split-window -v -p50 ; select-pane -U ; split-window -v -p67 ; split-window -v -p50 ; select-pane -D ; split-window -v -p67 ; split-window -v -p50 ; select-pane -t-10"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} README tmex your-session-name 1357 -f=-10" {
 	run_tmex
 	assert_output -p "new-session -s your-session-name ; split-window -h -p50 ; select-pane -L ; split-window -h -p50 ; select-pane -R ; split-window -h -p50 ; select-pane -L ; select-pane -L ; select-pane -L ; select-pane -R ; split-window -v -p67 ; split-window -v -p50 ; select-pane -R ; split-window -v -p80 ; split-window -v -p50 ; select-pane -U ; split-window -v -p50 ; select-pane -D ; split-window -v -p50 ; select-pane -R ; split-window -v -p86 ; split-window -v -p50 ; select-pane -U ; split-window -v -p67 ; split-window -v -p50 ; select-pane -D ; split-window -v -p67 ; split-window -v -p50 ; select-pane -t-10"
 	assert_success
@@ -2048,12 +2316,27 @@ function layout_with_new_pct_flags() {
 	assert_output -p "new-session -s your-session-name ; rename-window abc ; split-window -h -p67 ; split-window -h -p50 ; select-pane -L ; select-pane -L ; select-pane -R ; split-window -v -p50 ; select-pane -R ; split-window -v -p67 ; split-window -v -p50 ; new-window -n efg ; split-window -h -p50 ; select-pane -L ; split-window -v -p50 ; select-pane -U ; split-window -v -p50 ; select-pane -D ; split-window -v -p50 ; select-pane -R ; split-window -v -p50 ; select-pane -U ; split-window -v -p50 ; select-pane -D ; split-window -v -p50"
 	assert_success
 }
+@test "${BATS_TEST_NUMBER} README tmex your-session-name 123 --window abc -w efg 44" {
+	run_tmex
+	assert_output -p "new-session -s your-session-name ; rename-window abc ; split-window -h -p67 ; split-window -h -p50 ; select-pane -L ; select-pane -L ; select-pane -R ; split-window -v -p50 ; select-pane -R ; split-window -v -p67 ; split-window -v -p50 ; new-window -n efg ; split-window -h -p50 ; select-pane -L ; split-window -v -p50 ; select-pane -U ; split-window -v -p50 ; select-pane -D ; split-window -v -p50 ; select-pane -R ; split-window -v -p50 ; select-pane -U ; split-window -v -p50 ; select-pane -D ; split-window -v -p50"
+	assert_success
+}
 @test "${BATS_TEST_NUMBER} README tmex your-session-name -w abc -f4 123 cmdA cmdB -w efg -f-2 44 cmdC" {
 	run_tmex
 	assert_output -p "new-session -s your-session-name ; rename-window abc ; send-keys cmdA Enter ; split-window -h -p67 ; send-keys cmdB Enter ; split-window -h -p50 ; select-pane -L ; select-pane -L ; select-pane -R ; split-window -v -p50 ; select-pane -R ; split-window -v -p67 ; split-window -v -p50 ; select-pane -t4 ; new-window -n efg ; send-keys cmdC Enter ; split-window -h -p50 ; select-pane -L ; split-window -v -p50 ; select-pane -U ; split-window -v -p50 ; select-pane -D ; split-window -v -p50 ; select-pane -R ; split-window -v -p50 ; select-pane -U ; split-window -v -p50 ; select-pane -D ; split-window -v -p50 ; select-pane -t-2"
 	assert_success
 }
+@test "${BATS_TEST_NUMBER} README tmex your-session-name 123 -w abc -f4 cmdA cmdB -w efg -f-2 44 cmdC" {
+	run_tmex
+	assert_output -p "new-session -s your-session-name ; rename-window abc ; send-keys cmdA Enter ; split-window -h -p67 ; send-keys cmdB Enter ; split-window -h -p50 ; select-pane -L ; select-pane -L ; select-pane -R ; split-window -v -p50 ; select-pane -R ; split-window -v -p67 ; split-window -v -p50 ; select-pane -t4 ; new-window -n efg ; send-keys cmdC Enter ; split-window -h -p50 ; select-pane -L ; split-window -v -p50 ; select-pane -U ; split-window -v -p50 ; select-pane -D ; split-window -v -p50 ; select-pane -R ; split-window -v -p50 ; select-pane -U ; split-window -v -p50 ; select-pane -D ; split-window -v -p50 ; select-pane -t-2"
+	assert_success
+}
 @test "${BATS_TEST_NUMBER} README tmex your-session-name -l 123 -f4 -w abc cmdA cmdB -w efg -f-2 44 cmdC" {
+	run_tmex
+	assert_output -p "new-session -s your-session-name ; rename-window abc ; send-keys cmdA Enter ; split-window -h -p67 ; send-keys cmdB Enter ; split-window -h -p50 ; select-pane -L ; select-pane -L ; select-pane -R ; split-window -v -p50 ; select-pane -R ; split-window -v -p67 ; split-window -v -p50 ; select-pane -t4 ; new-window -n efg ; send-keys cmdC Enter ; split-window -h -p50 ; select-pane -L ; split-window -v -p50 ; select-pane -U ; split-window -v -p50 ; select-pane -D ; split-window -v -p50 ; select-pane -R ; split-window -v -p50 ; select-pane -U ; split-window -v -p50 ; select-pane -D ; split-window -v -p50 ; select-pane -t-2"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} README tmex your-session-name -f4 -l 123 -w abc cmdA cmdB -w efg 44 -f-2 cmdC" {
 	run_tmex
 	assert_output -p "new-session -s your-session-name ; rename-window abc ; send-keys cmdA Enter ; split-window -h -p67 ; send-keys cmdB Enter ; split-window -h -p50 ; select-pane -L ; select-pane -L ; select-pane -R ; split-window -v -p50 ; select-pane -R ; split-window -v -p67 ; split-window -v -p50 ; select-pane -t4 ; new-window -n efg ; send-keys cmdC Enter ; split-window -h -p50 ; select-pane -L ; split-window -v -p50 ; select-pane -U ; split-window -v -p50 ; select-pane -D ; split-window -v -p50 ; select-pane -R ; split-window -v -p50 ; select-pane -U ; split-window -v -p50 ; select-pane -D ; split-window -v -p50 ; select-pane -t-2"
 	assert_success
@@ -2089,7 +2372,17 @@ function layout_with_new_pct_flags() {
 	assert_output -p "new-session -s your-session-name ; send-keys \"npm run cmdA\" Enter ; split-window -v -l50% ; select-pane -U ; split-window -v -l50% ; send-keys \"npm run cmdB\" Enter ; select-pane -D ; split-window -v -l50% ; select-pane -U ; select-pane -U ; select-pane -U ; select-pane -D ; split-window -h -l50% ; send-keys \"npm run cmdC\" Enter ; select-pane -D ; split-window -h -l50% ; select-pane -D ; split-window -h -l50% ; select-pane -L ; split-window -h -l50% ; select-pane -R ; split-window -h -l50%"
 	assert_success
 }
+@test "${BATS_TEST_NUMBER} README TMUX_VERSION=3.3a tmex your-session-name 1224 --transpose --npm cmdA cmdB cmdC" {
+	run_tmex
+	assert_output -p "new-session -s your-session-name ; send-keys \"npm run cmdA\" Enter ; split-window -v -l50% ; select-pane -U ; split-window -v -l50% ; send-keys \"npm run cmdB\" Enter ; select-pane -D ; split-window -v -l50% ; select-pane -U ; select-pane -U ; select-pane -U ; select-pane -D ; split-window -h -l50% ; send-keys \"npm run cmdC\" Enter ; select-pane -D ; split-window -h -l50% ; select-pane -D ; split-window -h -l50% ; select-pane -L ; split-window -h -l50% ; select-pane -R ; split-window -h -l50%"
+	assert_success
+}
 @test "${BATS_TEST_NUMBER} README TMUX_VERSION=3.3a tmex your-session-name -nt 1224 cmdA cmdB cmdC" {
+	run_tmex
+	assert_output -p "new-session -s your-session-name ; send-keys \"npm run cmdA\" Enter ; split-window -v -l50% ; select-pane -U ; split-window -v -l50% ; send-keys \"npm run cmdB\" Enter ; select-pane -D ; split-window -v -l50% ; select-pane -U ; select-pane -U ; select-pane -U ; select-pane -D ; split-window -h -l50% ; send-keys \"npm run cmdC\" Enter ; select-pane -D ; split-window -h -l50% ; select-pane -D ; split-window -h -l50% ; select-pane -L ; split-window -h -l50% ; select-pane -R ; split-window -h -l50%"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} README TMUX_VERSION=3.3a tmex your-session-name 1224 -nt cmdA cmdB cmdC" {
 	run_tmex
 	assert_output -p "new-session -s your-session-name ; send-keys \"npm run cmdA\" Enter ; split-window -v -l50% ; select-pane -U ; split-window -v -l50% ; send-keys \"npm run cmdB\" Enter ; select-pane -D ; split-window -v -l50% ; select-pane -U ; select-pane -U ; select-pane -U ; select-pane -D ; split-window -h -l50% ; send-keys \"npm run cmdC\" Enter ; select-pane -D ; split-window -h -l50% ; select-pane -D ; split-window -h -l50% ; select-pane -L ; split-window -h -l50% ; select-pane -R ; split-window -h -l50%"
 	assert_success
@@ -2114,6 +2407,11 @@ function layout_with_new_pct_flags() {
 	assert_output -p "new-session -s your-session-name ; split-window -v -l50% ; select-pane -U ; split-window -v -l50% ; select-pane -D ; split-window -v -l50% ; select-pane -U ; select-pane -U ; select-pane -U ; select-pane -D ; split-window -h -l50% ; select-pane -D ; split-window -h -l50% ; select-pane -D ; split-window -h -l50% ; select-pane -L ; split-window -h -l50% ; select-pane -R ; split-window -h -l50%"
 	assert_success
 }
+@test "${BATS_TEST_NUMBER} README TMUX_VERSION=3.3a tmex your-session-name --layout=1224 --transpose" {
+	run_tmex
+	assert_output -p "new-session -s your-session-name ; split-window -v -l50% ; select-pane -U ; split-window -v -l50% ; select-pane -D ; split-window -v -l50% ; select-pane -U ; select-pane -U ; select-pane -U ; select-pane -D ; split-window -h -l50% ; select-pane -D ; split-window -h -l50% ; select-pane -D ; split-window -h -l50% ; select-pane -L ; split-window -h -l50% ; select-pane -R ; split-window -h -l50%"
+	assert_success
+}
 @test "${BATS_TEST_NUMBER} README TMUX_VERSION=3.3a tmex your-session-name --layout=1[2{13}1]4{4112}" {
 	run_tmex
 	assert_output -p "new-session -s your-session-name ; split-window -h -l67% ; split-window -h -l50% ; select-pane -L ; select-pane -L ; select-pane -R ; split-window -v -l50% ; select-pane -U ; split-window -h -l75% ; select-pane -D ; select-pane -R ; split-window -v -l37% ; select-pane -U ; split-window -v -l20% ; select-pane -D ; split-window -v -l67%"
@@ -2130,6 +2428,11 @@ function layout_with_new_pct_flags() {
 	assert_success
 }
 @test "${BATS_TEST_NUMBER} README TMUX_VERSION=3.3a tmex your-session-name --transpose --layout=[234]{321}" {
+	run_tmex
+	assert_output -p "new-session -s your-session-name ; split-window -h -l50% ; split-window -h -l33% ; select-pane -L ; select-pane -L ; split-window -v -l50% ; select-pane -R ; split-window -v -l67% ; split-window -v -l50% ; select-pane -R ; split-window -v -l50% ; select-pane -U ; split-window -v -l50% ; select-pane -D ; split-window -v -l50%"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} README TMUX_VERSION=3.3a tmex your-session-name --layout=[234]{321} --transpose" {
 	run_tmex
 	assert_output -p "new-session -s your-session-name ; split-window -h -l50% ; split-window -h -l33% ; select-pane -L ; select-pane -L ; split-window -v -l50% ; select-pane -R ; split-window -v -l67% ; split-window -v -l50% ; select-pane -R ; split-window -v -l50% ; select-pane -U ; split-window -v -l50% ; select-pane -D ; split-window -v -l50%"
 	assert_success
@@ -2194,7 +2497,17 @@ function layout_with_new_pct_flags() {
 	assert_output -p "new-session -s your-session-name ; split-window -h -l50% ; select-pane -L ; split-window -h -l50% ; select-pane -R ; split-window -h -l50% ; select-pane -L ; select-pane -L ; select-pane -L ; select-pane -R ; split-window -v -l67% ; split-window -v -l50% ; select-pane -R ; split-window -v -l80% ; split-window -v -l50% ; select-pane -U ; split-window -v -l50% ; select-pane -D ; split-window -v -l50% ; select-pane -R ; split-window -v -l86% ; split-window -v -l50% ; select-pane -U ; split-window -v -l67% ; split-window -v -l50% ; select-pane -D ; split-window -v -l67% ; split-window -v -l50% ; select-pane -t4"
 	assert_success
 }
+@test "${BATS_TEST_NUMBER} README TMUX_VERSION=3.3a tmex your-session-name --focus=4 --layout=1357" {
+	run_tmex
+	assert_output -p "new-session -s your-session-name ; split-window -h -l50% ; select-pane -L ; split-window -h -l50% ; select-pane -R ; split-window -h -l50% ; select-pane -L ; select-pane -L ; select-pane -L ; select-pane -R ; split-window -v -l67% ; split-window -v -l50% ; select-pane -R ; split-window -v -l80% ; split-window -v -l50% ; select-pane -U ; split-window -v -l50% ; select-pane -D ; split-window -v -l50% ; select-pane -R ; split-window -v -l86% ; split-window -v -l50% ; select-pane -U ; split-window -v -l67% ; split-window -v -l50% ; select-pane -D ; split-window -v -l67% ; split-window -v -l50% ; select-pane -t4"
+	assert_success
+}
 @test "${BATS_TEST_NUMBER} README TMUX_VERSION=3.3a tmex your-session-name --layout=1357 -f=5" {
+	run_tmex
+	assert_output -p "new-session -s your-session-name ; split-window -h -l50% ; select-pane -L ; split-window -h -l50% ; select-pane -R ; split-window -h -l50% ; select-pane -L ; select-pane -L ; select-pane -L ; select-pane -R ; split-window -v -l67% ; split-window -v -l50% ; select-pane -R ; split-window -v -l80% ; split-window -v -l50% ; select-pane -U ; split-window -v -l50% ; select-pane -D ; split-window -v -l50% ; select-pane -R ; split-window -v -l86% ; split-window -v -l50% ; select-pane -U ; split-window -v -l67% ; split-window -v -l50% ; select-pane -D ; split-window -v -l67% ; split-window -v -l50% ; select-pane -t5"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} README TMUX_VERSION=3.3a tmex your-session-name -f=5 --layout=1357" {
 	run_tmex
 	assert_output -p "new-session -s your-session-name ; split-window -h -l50% ; select-pane -L ; split-window -h -l50% ; select-pane -R ; split-window -h -l50% ; select-pane -L ; select-pane -L ; select-pane -L ; select-pane -R ; split-window -v -l67% ; split-window -v -l50% ; select-pane -R ; split-window -v -l80% ; split-window -v -l50% ; select-pane -U ; split-window -v -l50% ; select-pane -D ; split-window -v -l50% ; select-pane -R ; split-window -v -l86% ; split-window -v -l50% ; select-pane -U ; split-window -v -l67% ; split-window -v -l50% ; select-pane -D ; split-window -v -l67% ; split-window -v -l50% ; select-pane -t5"
 	assert_success
@@ -2204,7 +2517,17 @@ function layout_with_new_pct_flags() {
 	assert_output -p "new-session -s your-session-name ; split-window -h -l50% ; select-pane -L ; split-window -h -l50% ; select-pane -R ; split-window -h -l50% ; select-pane -L ; select-pane -L ; select-pane -L ; select-pane -R ; split-window -v -l67% ; split-window -v -l50% ; select-pane -R ; split-window -v -l80% ; split-window -v -l50% ; select-pane -U ; split-window -v -l50% ; select-pane -D ; split-window -v -l50% ; select-pane -R ; split-window -v -l86% ; split-window -v -l50% ; select-pane -U ; split-window -v -l67% ; split-window -v -l50% ; select-pane -D ; split-window -v -l67% ; split-window -v -l50% ; select-pane -t-8"
 	assert_success
 }
+@test "${BATS_TEST_NUMBER} README TMUX_VERSION=3.3a tmex your-session-name 1357 -f=-8" {
+	run_tmex
+	assert_output -p "new-session -s your-session-name ; split-window -h -l50% ; select-pane -L ; split-window -h -l50% ; select-pane -R ; split-window -h -l50% ; select-pane -L ; select-pane -L ; select-pane -L ; select-pane -R ; split-window -v -l67% ; split-window -v -l50% ; select-pane -R ; split-window -v -l80% ; split-window -v -l50% ; select-pane -U ; split-window -v -l50% ; select-pane -D ; split-window -v -l50% ; select-pane -R ; split-window -v -l86% ; split-window -v -l50% ; select-pane -U ; split-window -v -l67% ; split-window -v -l50% ; select-pane -D ; split-window -v -l67% ; split-window -v -l50% ; select-pane -t-8"
+	assert_success
+}
 @test "${BATS_TEST_NUMBER} README TMUX_VERSION=3.3a tmex your-session-name -f=-10 1357" {
+	run_tmex
+	assert_output -p "new-session -s your-session-name ; split-window -h -l50% ; select-pane -L ; split-window -h -l50% ; select-pane -R ; split-window -h -l50% ; select-pane -L ; select-pane -L ; select-pane -L ; select-pane -R ; split-window -v -l67% ; split-window -v -l50% ; select-pane -R ; split-window -v -l80% ; split-window -v -l50% ; select-pane -U ; split-window -v -l50% ; select-pane -D ; split-window -v -l50% ; select-pane -R ; split-window -v -l86% ; split-window -v -l50% ; select-pane -U ; split-window -v -l67% ; split-window -v -l50% ; select-pane -D ; split-window -v -l67% ; split-window -v -l50% ; select-pane -t-10"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} README TMUX_VERSION=3.3a tmex your-session-name 1357 -f=-10" {
 	run_tmex
 	assert_output -p "new-session -s your-session-name ; split-window -h -l50% ; select-pane -L ; split-window -h -l50% ; select-pane -R ; split-window -h -l50% ; select-pane -L ; select-pane -L ; select-pane -L ; select-pane -R ; split-window -v -l67% ; split-window -v -l50% ; select-pane -R ; split-window -v -l80% ; split-window -v -l50% ; select-pane -U ; split-window -v -l50% ; select-pane -D ; split-window -v -l50% ; select-pane -R ; split-window -v -l86% ; split-window -v -l50% ; select-pane -U ; split-window -v -l67% ; split-window -v -l50% ; select-pane -D ; split-window -v -l67% ; split-window -v -l50% ; select-pane -t-10"
 	assert_success
@@ -2214,12 +2537,27 @@ function layout_with_new_pct_flags() {
 	assert_output -p "new-session -s your-session-name ; rename-window abc ; split-window -h -l67% ; split-window -h -l50% ; select-pane -L ; select-pane -L ; select-pane -R ; split-window -v -l50% ; select-pane -R ; split-window -v -l67% ; split-window -v -l50% ; new-window -n efg ; split-window -h -l50% ; select-pane -L ; split-window -v -l50% ; select-pane -U ; split-window -v -l50% ; select-pane -D ; split-window -v -l50% ; select-pane -R ; split-window -v -l50% ; select-pane -U ; split-window -v -l50% ; select-pane -D ; split-window -v -l50%"
 	assert_success
 }
+@test "${BATS_TEST_NUMBER} README TMUX_VERSION=3.3a tmex your-session-name 123 --window abc -w efg 44" {
+	run_tmex
+	assert_output -p "new-session -s your-session-name ; rename-window abc ; split-window -h -l67% ; split-window -h -l50% ; select-pane -L ; select-pane -L ; select-pane -R ; split-window -v -l50% ; select-pane -R ; split-window -v -l67% ; split-window -v -l50% ; new-window -n efg ; split-window -h -l50% ; select-pane -L ; split-window -v -l50% ; select-pane -U ; split-window -v -l50% ; select-pane -D ; split-window -v -l50% ; select-pane -R ; split-window -v -l50% ; select-pane -U ; split-window -v -l50% ; select-pane -D ; split-window -v -l50%"
+	assert_success
+}
 @test "${BATS_TEST_NUMBER} README TMUX_VERSION=3.3a tmex your-session-name -w abc -f4 123 cmdA cmdB -w efg -f-2 44 cmdC" {
 	run_tmex
 	assert_output -p "new-session -s your-session-name ; rename-window abc ; send-keys cmdA Enter ; split-window -h -l67% ; send-keys cmdB Enter ; split-window -h -l50% ; select-pane -L ; select-pane -L ; select-pane -R ; split-window -v -l50% ; select-pane -R ; split-window -v -l67% ; split-window -v -l50% ; select-pane -t4 ; new-window -n efg ; send-keys cmdC Enter ; split-window -h -l50% ; select-pane -L ; split-window -v -l50% ; select-pane -U ; split-window -v -l50% ; select-pane -D ; split-window -v -l50% ; select-pane -R ; split-window -v -l50% ; select-pane -U ; split-window -v -l50% ; select-pane -D ; split-window -v -l50% ; select-pane -t-2"
 	assert_success
 }
+@test "${BATS_TEST_NUMBER} README TMUX_VERSION=3.3a tmex your-session-name 123 -w abc -f4 cmdA cmdB -w efg -f-2 44 cmdC" {
+	run_tmex
+	assert_output -p "new-session -s your-session-name ; rename-window abc ; send-keys cmdA Enter ; split-window -h -l67% ; send-keys cmdB Enter ; split-window -h -l50% ; select-pane -L ; select-pane -L ; select-pane -R ; split-window -v -l50% ; select-pane -R ; split-window -v -l67% ; split-window -v -l50% ; select-pane -t4 ; new-window -n efg ; send-keys cmdC Enter ; split-window -h -l50% ; select-pane -L ; split-window -v -l50% ; select-pane -U ; split-window -v -l50% ; select-pane -D ; split-window -v -l50% ; select-pane -R ; split-window -v -l50% ; select-pane -U ; split-window -v -l50% ; select-pane -D ; split-window -v -l50% ; select-pane -t-2"
+	assert_success
+}
 @test "${BATS_TEST_NUMBER} README TMUX_VERSION=3.3a tmex your-session-name -l 123 -f4 -w abc cmdA cmdB -w efg -f-2 44 cmdC" {
+	run_tmex
+	assert_output -p "new-session -s your-session-name ; rename-window abc ; send-keys cmdA Enter ; split-window -h -l67% ; send-keys cmdB Enter ; split-window -h -l50% ; select-pane -L ; select-pane -L ; select-pane -R ; split-window -v -l50% ; select-pane -R ; split-window -v -l67% ; split-window -v -l50% ; select-pane -t4 ; new-window -n efg ; send-keys cmdC Enter ; split-window -h -l50% ; select-pane -L ; split-window -v -l50% ; select-pane -U ; split-window -v -l50% ; select-pane -D ; split-window -v -l50% ; select-pane -R ; split-window -v -l50% ; select-pane -U ; split-window -v -l50% ; select-pane -D ; split-window -v -l50% ; select-pane -t-2"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} README TMUX_VERSION=3.3a tmex your-session-name -f4 -l 123 -w abc cmdA cmdB -w efg 44 -f-2 cmdC" {
 	run_tmex
 	assert_output -p "new-session -s your-session-name ; rename-window abc ; send-keys cmdA Enter ; split-window -h -l67% ; send-keys cmdB Enter ; split-window -h -l50% ; select-pane -L ; select-pane -L ; select-pane -R ; split-window -v -l50% ; select-pane -R ; split-window -v -l67% ; split-window -v -l50% ; select-pane -t4 ; new-window -n efg ; send-keys cmdC Enter ; split-window -h -l50% ; select-pane -L ; split-window -v -l50% ; select-pane -U ; split-window -v -l50% ; select-pane -D ; split-window -v -l50% ; select-pane -R ; split-window -v -l50% ; select-pane -U ; split-window -v -l50% ; select-pane -D ; split-window -v -l50% ; select-pane -t-2"
 	assert_success

@@ -108,13 +108,23 @@ function processargs() {
 
   # if next arg is a valid layout, use it as layout instead of shell command
   arg="${args[argidx]:-}"
-  if [[ -z "${arglayout}" && "${arg}" =~ ^[][}{0-9.+-]+$ ]]; then
+  if [[ -z "${arglayout}" && -z "$( validatelayout "${arg}" )" ]]; then
     (( argidx++ )) || true
     arglayout="${arg}"
+
+    # continue to parse args:
+    processargs "${argsession}" "${args[@]:argidx}"
+    return
   fi
 
   # use rest of args as shell commands
   argcmds=( "${args[@]:argidx}" )
+
+  # handle case where provided session name is actually a layout, and --npm was set so we don't need a session name:
+  if [[ "${argnpm}" == TRUE && -z "${arglayout}" && -n "${argsession}" && -z "$( validatelayout "${argsession}" )" ]]; then
+    arglayout="${argsession}"
+    argsession=''
+  fi
 
   # allow omission of session name if --npm is set
   if [[ -z "${argsession}" && "${argnpm}" == TRUE ]]; then
@@ -201,97 +211,89 @@ function generatelayout() {
 }
 
 function validatelayout() {
-  local minsize idx char nextchar layoutsizesum sizebracketsopen multidigitvalue
-  local invalidmsgs
+  local layout minsize idx char nextchar layoutsizesum
+  local sizebracketsopen multidigitvalue
 
   # Ensure layout is valid and large enough to contain specified size.
   # Params:
-  #   $1 minsize [integer] minimum size of layout
+  #   $1 layout [string] layout string to be validated
+  #   $2 minsize [integer] (optional) minimum size of layout
 
-  minsize="$1"
-  invalidmsgs=()
+  layout="$1"
+  minsize="${2:-}"
 
   # don't allow any chars other than 0-9 '[' ']' '{' '}' '.' '+' '-'
-  if ! [[ "${arglayout}" =~ ^[][}{0-9.+-]+$ ]]; then
-    invalidmsgs+=( "must contain only numeric characters and [ ] { } brackets" )
+  if ! [[ "${layout}" =~ ^[][}{0-9.+-]+$ ]]; then
+    echo "can only contain these characters: 0-9 [ ] { } . + -"
   fi
   # don't allow non-numeric non-comma chars within { } brackets
-  if [[ "${arglayout}" =~ {[^}{]*[^0-9.][^}{]*} ]]; then
-    invalidmsgs+=( "cannot include non-numeric characters within { } brackets" )
+  if [[ "${layout}" =~ {[^}{]*[^0-9.][^}{]*} ]]; then
+    echo "cannot include non-numeric characters within { } brackets"
   fi
   # don't allow empty { } brackets
-  if [[ "${arglayout}" == *'{}'* ]]; then
-    invalidmsgs+=( "cannot include empty { } brackets" )
+  if [[ "${layout}" == *'{}'* ]]; then
+    echo "cannot include empty { } brackets"
   fi
   # don't allow  multiple groups of '+' or '-' chars
-  if [[ "${arglayout}" =~ [+-]+[^+-]+[+-]+ ]]; then
-    invalidmsgs+=( "cannot multiple groups of '+' and '-' characters" )
+  if [[ "${layout}" =~ [+-]+[^+-]+[+-]+ ]]; then
+    echo "cannot multiple groups of '+' and '-' characters"
   fi
   # don't allow plus immediately preceeded by non-numeric non-minus chars
-  if [[ "${arglayout}" =~ [^0-9+]\+ ]]; then
-    invalidmsgs+=( "cannot include '+' immediately preceeded by a non-numeric character" )
+  if [[ "${layout}" =~ [^0-9+]\+ ]]; then
+    echo "cannot include '+' immediately preceeded by a non-numeric character"
   fi
   # don't allow minus immediately preceeded by non-numeric non-minus chars
-  if [[ "${arglayout}" =~ [^0-9-]\- ]]; then
-    invalidmsgs+=( "cannot include '+' immediately preceeded by a non-numeric character" )
+  if [[ "${layout}" =~ [^0-9-]\- ]]; then
+    echo "cannot include '+' immediately preceeded by a non-numeric character"
   fi
   # don't allow multiple dots in a row
-  if [[ "${arglayout}" == *'..'* ]]; then
-    invalidmsgs+=( "should not include multiple '.' characters in a row" )
+  if [[ "${layout}" == *'..'* ]]; then
+    echo "should not include multiple '.' characters in a row"
   fi
 
-  layoutsizesum=0
-  sizebracketsopen=FALSE
-  multidigitvalue='-1'
-  if [[ "${arglayout}" =~ ^[0-9]+\. ]]; then
-    multidigitvalue=''
-  fi
-  for (( idx = 0; idx < ${#arglayout}; idx++ )); do
-    char="${arglayout:${idx}:1}"
-    nextchar="${arglayout:$(( idx + 1 )):1}"
+  if [[ -n "${minsize:-}" ]]; then
+    layoutsizesum=0
+    sizebracketsopen=FALSE
+    multidigitvalue='-1'
+    if [[ "${layout}" =~ ^[0-9]+\. ]]; then
+      multidigitvalue=''
+    fi
+    for (( idx = 0; idx < ${#layout}; idx++ )); do
+      char="${layout:${idx}:1}"
+      nextchar="${layout:$(( idx + 1 )):1}"
 
-    if [[ "${char}" == '.' ]]; then
-      if [[ "${nextchar}" =~ ^[0-9]$ ]]; then
-        multidigitvalue=''
-      fi
-      continue
-    elif [[ "${multidigitvalue}" != '-1' && "${char}" =~ ^[0-9]$ ]]; then
-      multidigitvalue+="${char}"
-      if [[ "${nextchar}" =~ ^[0-9]$ ]]; then
+      if [[ "${char}" == '.' ]]; then
+        if [[ "${nextchar}" =~ ^[0-9]$ ]]; then
+          multidigitvalue=''
+        fi
         continue
+      elif [[ "${multidigitvalue}" != '-1' && "${char}" =~ ^[0-9]$ ]]; then
+        multidigitvalue+="${char}"
+        if [[ "${nextchar}" =~ ^[0-9]$ ]]; then
+          continue
+        else
+          char="${multidigitvalue}"
+          multidigitvalue='-1'
+        fi
       else
-        char="${multidigitvalue}"
         multidigitvalue='-1'
       fi
-    else
-      multidigitvalue='-1'
-    fi
 
-    if [[ "${char}" == '0' ]]; then
-      continue
-    elif [[ "${char}" == '{' ]]; then
-      sizebracketsopen=TRUE
-    elif [[ "${char}" == '}' ]]; then
-      sizebracketsopen=FALSE
-    elif [[ "${sizebracketsopen:-}" == FALSE && "${char}" =~ ^[0-9]+$ ]]; then
-      (( layoutsizesum += char )) || true
-    fi
-  done
-
-  # if size exceeds sum of layout string digits, exit with error
-  if (( minsize > layoutsizesum )); then
-    invalidmsgs+=( "is too small for number of commands provided" )
-  fi
-
-  if (( ${#invalidmsgs[@]} > 0 )); then
-    echo ""
-    echo "Invalid input: --layout=${arglayoutoriginal}"
-    for (( idx = 0; idx < ${#invalidmsgs[@]}; idx++ )); do
-      echo "  - ${invalidmsgs[idx]}"
+      if [[ "${char}" == '0' ]]; then
+        continue
+      elif [[ "${char}" == '{' ]]; then
+        sizebracketsopen=TRUE
+      elif [[ "${char}" == '}' ]]; then
+        sizebracketsopen=FALSE
+      elif [[ "${sizebracketsopen:-}" == FALSE && "${char}" =~ ^[0-9]+$ ]]; then
+        (( layoutsizesum += char )) || true
+      fi
     done
-    echo ""
-    echo "${usage}"
-    exit 1
+
+    # if size exceeds sum of layout string digits, exit with error
+    if (( minsize > layoutsizesum )); then
+      echo "is too small for number of commands provided"
+    fi
   fi
 }
 
@@ -615,7 +617,7 @@ function split2d() {
 
 function buildtmuxargs() {
   local pattern flag idx char nextchar
-  local layoutsize partiallayout parentlayout
+  local layoutsize partiallayout parentlayout invalidlayoutmsgs
   local toplevelsizing sizebracketsopen multidigitvalue
 
   # Construct a tmux command that runs a set of commands inside a layout.
@@ -723,7 +725,6 @@ function buildtmuxargs() {
       # counting logic within the new sub-layout:
       arglayout="$( sed -E 's/([0-9])/[[\1]]/g' <<< "${arglayout}" )"
       arglayout="${parentlayout/${layoutsize}\{+\}/${arglayout}}"
-      echo "ARGLAYOUT ${arglayout}"
     done
     # if layout _starts_ with {+} exit with error
     if [[ "${arglayout}" == '{+}'* ]]; then
@@ -809,7 +810,15 @@ function buildtmuxargs() {
   fi
 
   # ensure layout is large enough to contain commands provided
-  validatelayout "${#argcmds[@]}"
+  invalidlayoutmsgs="$( validatelayout "${arglayout}" "${#argcmds[@]}" )"
+  if [[ -n "${invalidlayoutmsgs}" ]]; then
+    echo ""
+    echo "Invalid input: --layout=${arglayoutoriginal}"
+    echo "  - ${invalidlayoutmsgs//$'\n'/$'\n'  - }"  # prefix message with hyphen
+    echo ""
+    echo "${usage}"
+    exit 1
+  fi
 
   # append layout commands onto tmuxargs
   [[ "${argtranspose}" == TRUE ]] && flag='v' || flag='h'
