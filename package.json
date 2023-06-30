@@ -4,7 +4,8 @@
   "description": "A minimalist tmux layout manager - one shell script + tmux + zero other dependencies",
   "main": "tmex",
   "files": [
-    "/tmex"
+    "/tmex",
+    "/man"
   ],
   "man": [
     "./man/tmex.1"
