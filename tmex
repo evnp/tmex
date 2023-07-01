@@ -222,33 +222,38 @@ function validatelayout() {
   layout="$1"
   minsize="${2:-}"
 
-  # don't allow any chars other than 0-9 '[' ']' '{' '}' '.' '+' '-'
   if ! [[ "${layout}" =~ ^[][}{0-9.+-]+$ ]]; then
     echo "can only contain these characters: 0-9 [ ] { } . + -"
   fi
-  # don't allow non-numeric non-comma chars within { } brackets
   if [[ "${layout}" =~ {[^}{]*[^0-9.][^}{]*} ]]; then
-    echo "cannot include non-numeric characters within { } brackets"
+    echo "cannot contain non-numeric characters within { } brackets"
   fi
-  # don't allow empty { } brackets
   if [[ "${layout}" == *'{}'* ]]; then
-    echo "cannot include empty { } brackets"
+    echo "cannot contain empty { } brackets"
   fi
-  # don't allow  multiple groups of '+' or '-' chars
-  if [[ "${layout}" =~ [+-]+[^+-]+[+-]+ ]]; then
-    echo "cannot multiple groups of '+' and '-' characters"
+  if [[ "${layout}" =~ ^[+] ]]; then
+    echo "cannot start with + character"
+  elif [[ "${layout}" =~ ^[-] ]]; then
+    echo "cannot start with - character"
   fi
-  # don't allow plus immediately preceeded by non-numeric non-minus chars
+  if [[ "${layout}" =~ [+]+[^+]+[+]+ ]]; then
+    echo "cannot contain multiple groups of + characters"
+  elif [[ "${layout}" =~ [-]+[^-]+[-]+ ]]; then
+    echo "cannot contain multiple groups of - characters"
+  elif [[ "${layout}" =~ [+-]+[^+-]+[+-]+ ]]; then
+    echo "cannot contain multiple groups of + and - characters"
+  fi
+  if [[ "${layout}" =~ [+] && "${layout}" =~ [-] ]]; then
+    echo "cannot contain both + and - characters"
+  fi
   if [[ "${layout}" =~ [^0-9+]\+ ]]; then
-    echo "cannot include '+' immediately preceeded by a non-numeric character"
+    echo "cannot contain + character immediately preceeded by a non-numeric character"
   fi
-  # don't allow minus immediately preceeded by non-numeric non-minus chars
   if [[ "${layout}" =~ [^0-9-]\- ]]; then
-    echo "cannot include '+' immediately preceeded by a non-numeric character"
+    echo "cannot contain - character immediately preceeded by a non-numeric character"
   fi
-  # don't allow multiple dots in a row
   if [[ "${layout}" == *'..'* ]]; then
-    echo "should not include multiple '.' characters in a row"
+    echo "cannot contain multiple . characters in a row"
   fi
 
   if [[ -n "${minsize:-}" ]]; then

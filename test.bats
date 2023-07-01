@@ -252,7 +252,7 @@ layout_1234="
 @test "${BATS_TEST_NUMBER} tmex testsessionname -l 1..2..3..4" {
 	run_tmex
 	assert_output -p "Invalid input: --layout=1..2..3..4"
-	assert_output -p "should not include multiple '.' characters in a row"
+	assert_output -p "cannot contain multiple . characters in a row"
 	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	refute_layout "${layout_1234}"
@@ -261,7 +261,7 @@ layout_1234="
 @test "${BATS_TEST_NUMBER} tmex testsessionname -l .1..2..3..4." {
 	run_tmex
 	assert_output -p "Invalid input: --layout=.1..2..3..4."
-	assert_output -p "should not include multiple '.' characters in a row"
+	assert_output -p "cannot contain multiple . characters in a row"
 	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	refute_layout "${layout_1234}"
@@ -283,7 +283,7 @@ layout_1234="
 @test "${BATS_TEST_NUMBER} tmex testsessionname --layout=1..2..3..4" {
 	run_tmex
 	assert_output -p "Invalid input: --layout=1..2..3..4"
-	assert_output -p "should not include multiple '.' characters in a row"
+	assert_output -p "cannot contain multiple . characters in a row"
 	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	refute_layout "${layout_1234}"
@@ -292,7 +292,7 @@ layout_1234="
 @test "${BATS_TEST_NUMBER} tmex testsessionname --layout=.1..2..3..4." {
 	run_tmex
 	assert_output -p "Invalid input: --layout=.1..2..3..4."
-	assert_output -p "should not include multiple '.' characters in a row"
+	assert_output -p "cannot contain multiple . characters in a row"
 	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	refute_layout "${layout_1234}"
@@ -314,7 +314,7 @@ layout_1234="
 @test "${BATS_TEST_NUMBER} tmex testsessionname --layout 1..2..3..4" {
 	run_tmex
 	assert_output -p "Invalid input: --layout=1..2..3..4"
-	assert_output -p "should not include multiple '.' characters in a row"
+	assert_output -p "cannot contain multiple . characters in a row"
 	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	refute_layout "${layout_1234}"
@@ -323,7 +323,7 @@ layout_1234="
 @test "${BATS_TEST_NUMBER} tmex testsessionname --layout .1..2..3..4." {
 	run_tmex
 	assert_output -p "Invalid input: --layout=.1..2..3..4."
-	assert_output -p "should not include multiple '.' characters in a row"
+	assert_output -p "cannot contain multiple . characters in a row"
 	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	refute_layout "${layout_1234}"
@@ -336,10 +336,60 @@ layout_1234="
 	assert_layout "${layout_1234} select-pane -t5"
 	assert_success
 }
+@test "${BATS_TEST_NUMBER} tmex testsessionname 123+++4" {
+	run_tmex
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234} select-pane -t5"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname -f5 123+++4" {
+	run_tmex
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234} select-pane -t5"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname 123+++4 -f5" {
+	run_tmex
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234} select-pane -t5"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname -f6 123+++4" {
+  # --focus arg value should take precedence over layout focus characters
+	run_tmex
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234} select-pane -t6"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname 123+++4 -f6" {
+  # --focus arg value should take precedence over layout focus characters
+	run_tmex
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234} select-pane -t6"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname 123-4" {
+	run_tmex
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234} select-pane -t5"
+	assert_success
+}
 @test "${BATS_TEST_NUMBER} tmex testsessionname -l1234 -f-5" {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_1234} select-pane -t-5"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname -f 15 1234" {
+	run_tmex
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234} select-pane -t15"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname 1234 -f-15" {
+	run_tmex
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234} select-pane -t-15"
 	assert_success
 }
 @test "${BATS_TEST_NUMBER} tmex testsessionname -l 1234 --focus=0" {
@@ -348,11 +398,154 @@ layout_1234="
 	assert_layout "${layout_1234} select-pane -t0"
 	assert_success
 }
-@test "${BATS_TEST_NUMBER} tmex testsessionname -f 15 1234" {
+@test "${BATS_TEST_NUMBER} tmex testsessionname -l 1+234" {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
-	assert_layout "${layout_1234} select-pane -t15"
+	assert_layout "${layout_1234} select-pane -t0"
 	assert_success
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname -l 1-234" {
+	run_tmex
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234} select-pane -t0"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname -l 1+234 --focus=0" {
+	run_tmex
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234} select-pane -t0"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname -l 1-234 --focus=0" {
+	run_tmex
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234} select-pane -t0"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname --focus=0 -l 1+234" {
+	run_tmex
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234} select-pane -t0"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname --focus=0 -l 1-234" {
+	run_tmex
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234} select-pane -t0"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname --focus=0 -l 1+++234" {
+  # --focus arg value should take precedence over layout focus characters
+	run_tmex
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234} select-pane -t0"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname --focus=0 -l 1---234" {
+  # --focus arg value should take precedence over layout focus characters
+	run_tmex
+	assert_output -p "new-session -s testsessionname"
+	assert_layout "${layout_1234} select-pane -t0"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname --focus=0 -l 1-+-234" {
+	run_tmex
+	assert_output -p "Invalid input: --layout=1-+-234"
+	assert_output -p "cannot contain both + and - characters"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	refute_layout "${layout_1234}"
+	assert_failure
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname --focus=0 -l 1+-234" {
+	run_tmex
+	assert_output -p "Invalid input: --layout=1+-234"
+	assert_output -p "cannot contain both + and - characters"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	refute_layout "${layout_1234}"
+	assert_failure
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname --focus=0 -l 1---23-4" {
+	run_tmex
+	assert_output -p "Invalid input: --layout=1---23-4"
+	assert_output -p "cannot contain multiple groups of - characters"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	refute_layout "${layout_1234}"
+	assert_failure
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname --focus=0 -l 1+++23+4" {
+	run_tmex
+	assert_output -p "Invalid input: --layout=1+++23+4"
+	assert_output -p "cannot contain multiple groups of + characters"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	refute_layout "${layout_1234}"
+	assert_failure
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname --focus=0 -l 1---23+4" {
+	run_tmex
+	assert_output -p "Invalid input: --layout=1---23+4"
+	assert_output -p "cannot contain multiple groups of + and - characters"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	refute_layout "${layout_1234}"
+	assert_failure
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname --focus=0 -l 1---234-" {
+	run_tmex
+	assert_output -p "Invalid input: --layout=1---234-"
+	assert_output -p "cannot contain multiple groups of - characters"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	refute_layout "${layout_1234}"
+	assert_failure
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname --focus=0 -l 1+++234+" {
+	run_tmex
+	assert_output -p "Invalid input: --layout=1+++234+"
+	assert_output -p "cannot contain multiple groups of + characters"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	refute_layout "${layout_1234}"
+	assert_failure
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname --focus=0 -l 1---234+" {
+	run_tmex
+	assert_output -p "Invalid input: --layout=1---234+"
+	assert_output -p "cannot contain multiple groups of + and - characters"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	refute_layout "${layout_1234}"
+	assert_failure
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname --focus=0 -l ---1234-" {
+	run_tmex
+	assert_output -p "Invalid input: --layout=---1234-"
+	assert_output -p "cannot start with - character"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	refute_layout "${layout_1234}"
+	assert_failure
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname --focus=0 -l +++1234+" {
+	run_tmex
+  assert_output -p "Invalid input: --layout=+++1234+"
+	assert_output -p "cannot start with + character"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	refute_layout "${layout_1234}"
+	assert_failure
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname --focus=0 -l ---1234+" {
+	run_tmex
+	assert_output -p "Invalid input: --layout=---1234+"
+	assert_output -p "cannot start with - character"
+	assert_output -p "Usage:"
+	refute_output -p "new-session -s testsessionname"
+	refute_layout "${layout_1234}"
+	assert_failure
 }
 @test "${BATS_TEST_NUMBER} tmex testsessionname --layout 1234 -f=abcdefg" {
 	run_tmex
@@ -614,7 +807,7 @@ shorthand_layout_1_23_45_67_8_9="
 @test "${BATS_TEST_NUMBER} tmex testsessionname --layout 3{}34" {
 	run_tmex
 	assert_output -p "Invalid input: --layout=3{}34"
-	assert_output -p "cannot include empty { } brackets"
+	assert_output -p "cannot contain empty { } brackets"
 	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	assert_failure
@@ -665,7 +858,7 @@ layout_grid5="
 @test "${BATS_TEST_NUMBER} tmex testsessionname --layout 3[5{}]4" {
 	run_tmex
 	assert_output -p "Invalid input: --layout=3[5{}]4"
-	assert_output -p "cannot include empty { } brackets"
+	assert_output -p "cannot contain empty { } brackets"
 	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	assert_failure
