@@ -1,4 +1,4 @@
-A minimalist tmux layout manager - one shell script + tmux + zero other dependencies
+A lightweight tmux command & layout composer - one shell script + tmux + zero other dependencies
 
 ```
  ______   __    __    ______    __  __
