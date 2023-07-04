@@ -349,20 +349,22 @@ session : special-project
 
 Install
 -------
-Install as a build tool in a package:
+Homebrew:
 ```sh
-npm install --save-dev tmex
+brew tap evnp/tmex
+brew install tmex
 ```
-Install globally for use with any set of `package.json` scripts or arbitrary commands:
+NPM:
 ```sh
 npm install -g tmex
 ```
-or sans-npm:
+Curl:
 ```sh
-curl -o ~/bin/tmex https://raw.githubusercontent.com/evnp/tmex/master/tmex && chmod +x ~/bin/tmex
-# or /usr/local/bin or other bin of your choice (as long it's in your $PATH)
+read -rp "Enter a directory on your \$PATH: " \
+  && curl -L -o "${REPLY/\~/$HOME}/tmex" https://github.com/evnp/tmex/raw/main/tmex \
+  && chmod +x "${REPLY/\~/$HOME}/tmex"
 ```
-[tmex](https://raw.githubusercontent.com/evnp/tmex/master/tmex) has no external dependencies other than tmux, but always read code before downloading to ensure it contains nothing unexpected.
+tmex has no external dependencies (other than tmux), but it's good practice to audit code before downloading onto your system to ensure it contains nothing unexpected. Please view the full source code for tmex here: https://github.com/evnp/tmex/blob/master/tmex
 
 tmex doesn't install tmux itself, so you'll also want to do that if you don't have tmux yet:
 ```sh
@@ -373,6 +375,18 @@ brew install tmux      # OSX
 sudo apt install tmux  # Ubuntu, Debian
 ```
 or refer to [https://github.com/tmux/tmux/wiki/Installing](https://github.com/tmux/tmux/wiki/Installing) for install instructions applicable to your platform.
+```
+brew install tmux
+```
+Verify installation:
+```sh
+tmex -v
+==> tmex 2.0.0-rc.3
+
+brew test tmex
+==> Testing tmex
+==> /opt/homebrew/Cellar/tmex/2.0.0-rc.3/bin/tmex test --print 1234 hello world
+```
 
 Tests
 -------------
