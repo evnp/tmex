@@ -852,17 +852,33 @@ function main() {
   # Params:
   #   $@ args [array<any>] arguments passed to script
 
+  if [[ -z "${TMEX_SUPPRESS_WARNING_TMUX:-}" ]]; then
+    if ! command -v tmux &>/dev/null; then
+      echo "!!! WARNING: tmux is not yet installed, tmex will not work without tmux !!!"
+      echo
+      echo "Here are basic install instructions for tmux:"
+      echo "  brew install tmux      # OSX (via Homebrew)"
+      echo "  sudo apt install tmux  # Ubuntu, Debian, etc."
+      echo
+      echo "or refer to https://github.com/tmux/tmux/wiki/Installing"
+      echo "for install instructions applicable to your platform."
+      echo "'export TMEX_SUPPRESS_WARNING_TMUX=1' in shell rc file will hide warning."
+      echo
+      echo
+    fi
+  fi
+
   tmuxversion="$( tmux -V )"
   if [[ "${tmuxversion}" =~ ([0-9]+(\.[0-9]+)?) ]]; then
     tmuxversion="${BASH_REMATCH[0]}"
   elif [[ -z "${TMEX_SUPPRESS_WARNING_PCT_FLAGS:-}" ]]; then
-    echo "Warning: current tmux version could not be determined from"
+    echo "!!! WARNING: current tmux version could not be determined from !!!"
     echo "  tmux -V  >>>  \"${tmuxversion}\""
     echo "This can result in incorrect pane-splitting behavior since tmux has made"
     echo "backwards-incompatible changes to flags of the split-window command."
     echo "Please ensure your installation of tmux produces a semver string within"
-    echo "the output of 'tmux -V', or add 'export TMEX_SUPPRESS_WARNING_PCT_FLAGS=1'"
-    echo "to your shell rc file to hide this warning."
+    echo "the output of 'tmux -V'."
+    echo "'export TMEX_SUPPRESS_WARNING_PCT_FLAGS=1' in shell rc file will hide warning."
     echo "See https://github.com/tmux/tmux/blob/master/CHANGES#L663-L665 for details."
     echo
   fi
@@ -917,7 +933,7 @@ tmex <session-name> ··············  session name required unless -
     $ tmex your-session-name -w- 123 -w- 44  # create two windows without names, with layouts 123 and 44
     $ tmex your-session-name --window - 123 --window - 44  # equivalent
 
-For more complete documentation, please see https://github.com/evnp/tmex#readme
+For complete documentation, please see https://github.com/evnp/tmex#readme
 '
 
   argdetached=FALSE  # optional - if TRUE, invoke tmux with -d flag (detached session)

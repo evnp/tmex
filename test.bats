@@ -2216,7 +2216,7 @@ function layout_with_new_pct_flags() {
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_1234}"
 	refute_layout "$( layout_with_new_pct_flags "${layout_1234}" )"
-	refute_output -p "Warning: current tmux version could not be determined"
+	refute_output -p "!!! WARNING: current tmux version could not be determined"
 	assert_success
 }
 @test "${BATS_TEST_NUMBER} TMUX_VERSION=2.3.4 tmex testsessionname 1234" {
@@ -2224,7 +2224,7 @@ function layout_with_new_pct_flags() {
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_1234}"
 	refute_layout "$( layout_with_new_pct_flags "${layout_1234}" )"
-	refute_output -p "Warning: current tmux version could not be determined"
+	refute_output -p "!!! WARNING: current tmux version could not be determined"
 	assert_success
 }
 @test "${BATS_TEST_NUMBER} TMUX_VERSION=1 tmex testsessionname 1234" {
@@ -2232,7 +2232,7 @@ function layout_with_new_pct_flags() {
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_1234}"
 	refute_layout "$( layout_with_new_pct_flags "${layout_1234}" )"
-	refute_output -p "Warning: current tmux version could not be determined"
+	refute_output -p "!!! WARNING: current tmux version could not be determined"
 	assert_success
 }
 @test "${BATS_TEST_NUMBER} TMUX_VERSION=3.1 tmex testsessionname 1234" {
@@ -2240,7 +2240,7 @@ function layout_with_new_pct_flags() {
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "$( layout_with_new_pct_flags "${layout_1234}" )"
 	refute_layout "${layout_1234}"
-	refute_output -p "Warning: current tmux version could not be determined"
+	refute_output -p "!!! WARNING: current tmux version could not be determined"
 	assert_success
 }
 @test "${BATS_TEST_NUMBER} TMUX_VERSION=3.3a tmex testsessionname 1234" {
@@ -2248,7 +2248,7 @@ function layout_with_new_pct_flags() {
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "$( layout_with_new_pct_flags "${layout_1234}" )"
 	refute_layout "${layout_1234}"
-	refute_output -p "Warning: current tmux version could not be determined"
+	refute_output -p "!!! WARNING: current tmux version could not be determined"
 	assert_success
 }
 @test "${BATS_TEST_NUMBER} TMUX_VERSION=3.4 tmex testsessionname 1234" {
@@ -2256,7 +2256,7 @@ function layout_with_new_pct_flags() {
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "$( layout_with_new_pct_flags "${layout_1234}" )"
 	refute_layout "${layout_1234}"
-	refute_output -p "Warning: current tmux version could not be determined"
+	refute_output -p "!!! WARNING: current tmux version could not be determined"
 	assert_success
 }
 @test "${BATS_TEST_NUMBER} TMUX_VERSION=123.456.789.xyz tmex testsessionname 1234" {
@@ -2264,7 +2264,7 @@ function layout_with_new_pct_flags() {
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "$( layout_with_new_pct_flags "${layout_1234}" )"
 	refute_layout "${layout_1234}"
-	refute_output -p "Warning: current tmux version could not be determined"
+	refute_output -p "!!! WARNING: current tmux version could not be determined"
 	assert_success
 }
 
@@ -2273,7 +2273,7 @@ function layout_with_new_pct_flags() {
 	unset TMUX_VERSION
 	run_tmex
 	assert_output -p "new-session -s notmuxversionset"
-	assert_output -p "Warning: current tmux version could not be determined"
+	assert_output -p "!!! WARNING: current tmux version could not be determined"
 	# when version is unavailable an older tmux version should be assumed:
 	assert_layout "${layout_1234}"
 	refute_layout "$( layout_with_new_pct_flags "${layout_1234}" )"
@@ -2285,7 +2285,7 @@ function layout_with_new_pct_flags() {
 	unset TMUX_VERSION
 	run_tmex
 	assert_output -p "new-session -s notmuxversionset"
-	refute_output -p "Warning: current tmux version could not be determined"
+	refute_output -p "!!! WARNING: current tmux version could not be determined"
 	# an older tmux version should still be assumed regardless of warning suppression:
 	assert_layout "${layout_1234}"
 	refute_layout "$( layout_with_new_pct_flags "${layout_1234}" )"

@@ -366,18 +366,6 @@ read -rp "Enter a directory on your \$PATH: " \
 ```
 tmex has no external dependencies (other than tmux), but it's good practice to audit code before downloading onto your system to ensure it contains nothing unexpected. Please view the full source code for tmex here: https://github.com/evnp/tmex/blob/master/tmex
 
-tmex doesn't install tmux itself, so you'll also want to do that if you don't have tmux yet:
-```sh
-tmex -n test lint "npm install"
->>> /Users/evan/bin/tmex: line 694: tmux: command not found
-
-brew install tmux      # OSX
-sudo apt install tmux  # Ubuntu, Debian
-```
-or refer to [https://github.com/tmux/tmux/wiki/Installing](https://github.com/tmux/tmux/wiki/Installing) for install instructions applicable to your platform.
-```
-brew install tmux
-```
 Verify installation:
 ```sh
 tmex -v
@@ -387,6 +375,13 @@ brew test tmex
 ==> Testing tmex
 ==> /opt/homebrew/Cellar/tmex/2.0.0-rc.3/bin/tmex test --print 1234 hello world
 ```
+
+If you see the output `Warning: tmux is not yet installed, tmex will not work without tmux.` you'll need to install tmux as well.
+```sh
+brew install tmux      # OSX (via Homebrew)
+sudo apt install tmux  # Ubuntu, Debian, etc.
+```
+or refer to [https://github.com/tmux/tmux/wiki/Installing](https://github.com/tmux/tmux/wiki/Installing) for install instructions applicable to your platform.
 
 Tests
 -------------
