@@ -358,14 +358,19 @@ NPM:
 ```sh
 npm install -g tmex
 ```
-Curl:
+curl:
 ```sh
-read -rp "Enter a directory on your \$PATH: " \
-  && curl -L -o "${REPLY/\~/$HOME}/tmex" https://github.com/evnp/tmex/raw/main/tmex \
+read -rp $'\n'"Current \$PATH:"$'\n'"${PATH//:/ : }"$'\n\n'"Enter a directory from the list above: " \
+  && curl -o "${REPLY/\~/$HOME}/tmex" https://github.com/evnp/tmex/raw/main/tmex \
   && chmod +x "${REPLY/\~/$HOME}/tmex"
 ```
 tmex has no external dependencies (other than tmux), but it's good practice to audit code before downloading onto your system to ensure it contains nothing unexpected. Please view the full source code for tmex here: https://github.com/evnp/tmex/blob/master/tmex
 
+If you also want to install tmex's man page:
+```sh
+read -rp $'\n'"Current \$MANPATH:"$'\n'"${MANPATH//:/ : }"$'\n\n'"Enter a directory from the list above: " \
+  && curl -o "${REPLY/\~/$HOME}/man1/tmex.1" https://github.com/evnp/tmex/raw/main/man/tmex.1
+```
 Verify installation:
 ```sh
 tmex -v
