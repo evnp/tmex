@@ -33,7 +33,7 @@ Create a dashboard for your project with one command. No messing with configurat
 tmex -n test lint "npm install"
 ```
 
-![tmex demo](https://github.com/evnp/tmex/blob/master/tmex.gif?raw=true)
+[![asciicast](https://asciinema.org/a/wVlyKFMzbvXYULA34GLskttfc.svg)](https://asciinema.org/a/wVlyKFMzbvXYULA34GLskttfc)
 
 Tailor-made for simplifying unwieldy `package.json` scripts (though tmex works just as well with any arbitrary commands):
 ```diff
