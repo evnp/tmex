@@ -353,41 +353,56 @@ session : special\-project
 .RE
 .SH Install
 .P
-Install as a build tool in a package:
+Homebrew:
 .RS 2
 .nf
-npm install \-\-save\-dev tmex
+brew tap evnp/tmex && brew install tmex
 .fi
 .RE
 .P
-Install globally for use with any set of \fBpackage\.json\fP scripts or arbitrary commands:
+NPM:
 .RS 2
 .nf
 npm install \-g tmex
 .fi
 .RE
 .P
-or sans\-npm:
+curl:
 .RS 2
 .nf
-curl \-o ~/bin/tmex https://raw\.githubusercontent\.com/evnp/tmex/master/tmex && chmod +x ~/bin/tmex
-# or /usr/local/bin or other bin of your choice 
+read \-rp $'\\n'"Current \\$PATH:"$'\\n'"${PATH//:/ : }"$'\\n\\n'"Enter a directory from the list above: " \\
+  && curl \-L \-o "${REPLY/\\~/$HOME}/tmex" https://github\.com/evnp/tmex/raw/main/tmex \\
+  && chmod +x "${REPLY/\\~/$HOME}/tmex"
 .fi
 .RE
 .P
-.UR https://raw.githubusercontent.com/evnp/tmex/master/tmex
-.I tmex
-.UE
-has no external dependencies other than tmux, but always read code before downloading to ensure it contains nothing unexpected\.
+tmex has no external dependencies , but it's good practice to audit code before downloading onto your system to ensure it contains nothing unexpected\. Please view the full source code for tmex here: https://github.com/evnp/tmex/blob/master/tmex
 .P
-tmex doesn't install tmux itself, so you'll also want to do that if you don't have tmux yet:
+If you also want to install tmex's man page:
 .RS 2
 .nf
-tmex \-n test lint "npm install"
->>> /Users/evan/bin/tmex: line 694: tmux: command not found
+read \-rp $'\\n'"Current \\$MANPATH:"$'\\n'"${MANPATH//:/ : }"$'\\n\\n'"Enter a directory from the list above: " \\
+  && curl \-L \-o "${REPLY/\\~/$HOME}/man1/tmex\.1" https://github\.com/evnp/tmex/raw/main/man/tmex\.1
+.fi
+.RE
+.P
+Verify installation:
+.RS 2
+.nf
+tmex \-v
+==> tmex 2\.0\.0\-rc\.4
 
-brew install tmux      # OSX
-sudo apt install tmux  # Ubuntu, Debian
+brew test tmex
+==> Testing tmex
+==> /opt/homebrew/Cellar/tmex/2\.0\.0\-rc\.4/bin/tmex test \-\-print 1234 hello world
+.fi
+.RE
+.P
+If you see the output \fBWarning: tmux is not yet installed, tmex will not work without tmux\.\fP you'll need to install tmux as well\.
+.RS 2
+.nf
+brew install tmux      # OSX 
+sudo apt install tmux  # Ubuntu, Debian, etc\.
 .fi
 .RE
 .P
