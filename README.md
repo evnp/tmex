@@ -18,7 +18,16 @@ A lightweight tmux command & layout composer - one shell script + tmux + zero ot
 
 **New in [v2.0.0-rc.3](https://github.com/evnp/tmex/releases/tag/v2.0.0-rc.3)** 🐣 <br> [Multi-window management](https://github.com/evnp/tmex#multi-window-management-new-in-v200-rc3-) | [Focused-pane control](https://github.com/evnp/tmex#focused-pane-control-new-in-v200-rc3-) | [Multi-digit pane counts](https://github.com/evnp/tmex#multi-digit-pane-counts-new-in-v200-rc3-) | [Top-level sizing](https://github.com/evnp/tmex#top-level-layout-sizing-new-in-v200-rc3-) | [Grid sub-layouts](https://github.com/evnp/tmex#grid-sub-layouts-new-in-v200-rc3-)
 
--------------
+If you'd like to jump straight to installing tmex, please go to the [Install](https://github.com/evnp/tmex#install) section or try one of these:
+```sh
+brew tap evnp/tmex && brew install tmex
+# OR
+npm install -g tmex
+# OR to curl directly, see https://github.com/evnp/tmex#install
+```
+
+-----------------
+
 Create a dashboard for your project with one command. No messing with configuration files. Just the full power of [`tmux`](https://github.com/tmux/tmux/wiki), plus an easy-yet-flexible layout system:
 ```sh
 tmex -n test lint "npm install"
@@ -351,8 +360,7 @@ Install
 -------
 Homebrew:
 ```sh
-brew tap evnp/tmex
-brew install tmex
+brew tap evnp/tmex && brew install tmex
 ```
 NPM:
 ```sh
@@ -361,7 +369,7 @@ npm install -g tmex
 curl:
 ```sh
 read -rp $'\n'"Current \$PATH:"$'\n'"${PATH//:/ : }"$'\n\n'"Enter a directory from the list above: " \
-  && curl -o "${REPLY/\~/$HOME}/tmex" https://github.com/evnp/tmex/raw/main/tmex \
+  && curl -L -o "${REPLY/\~/$HOME}/tmex" https://github.com/evnp/tmex/raw/main/tmex \
   && chmod +x "${REPLY/\~/$HOME}/tmex"
 ```
 tmex has no external dependencies (other than tmux), but it's good practice to audit code before downloading onto your system to ensure it contains nothing unexpected. Please view the full source code for tmex here: https://github.com/evnp/tmex/blob/master/tmex
@@ -369,7 +377,7 @@ tmex has no external dependencies (other than tmux), but it's good practice to a
 If you also want to install tmex's man page:
 ```sh
 read -rp $'\n'"Current \$MANPATH:"$'\n'"${MANPATH//:/ : }"$'\n\n'"Enter a directory from the list above: " \
-  && curl -o "${REPLY/\~/$HOME}/man1/tmex.1" https://github.com/evnp/tmex/raw/main/man/tmex.1
+  && curl -L -o "${REPLY/\~/$HOME}/man1/tmex.1" https://github.com/evnp/tmex/raw/main/man/tmex.1
 ```
 Verify installation:
 ```sh
