@@ -129,12 +129,11 @@ function processargs() {
 
   # allow omission of session name if --npm is set
   if [[ -z "${argsession}" && "${argnpm}" == TRUE ]]; then
-    argsession="${npm_package_name:-}"  # default to avoid 'unbound local variable' issues
-
+    argsession="${npm_package_name:-}"
     # if env var is undefined we're probably running manually instead of from an npm script;
     # try and pull package name from npm env manually
     if [[ -z "${argsession}" ]]; then
-      argsession="$( cut -d "=" -f 2 <<< "$( npm run env 2> /dev/null | grep 'npm_package_name' )" )"
+      argsession="$( cut -d "=" -f 2 <<< "$( npm run env 2>/dev/null | grep 'npm_package_name' )" )"
     fi
   fi
 
@@ -624,7 +623,7 @@ function split2d() {
 function buildtmuxargs() {
   local pattern flag idx char nextchar
   local layoutsize partiallayout parentlayout invalidlayoutmsgs
-  local toplevelsizing sizebracketsopen multidigitvalue
+  local toplevelsizing sizebracketsopen multidigitvalue npmcmds
 
   # Construct a tmux command that runs a set of commands inside a layout.
   # During normal operation, this will only be called once by the `main` function.
@@ -664,11 +663,17 @@ function buildtmuxargs() {
     exit 0
   fi
 
-  # if npm option is set, prefix commands "npm run ..."
+  # if npm option is set, prefix commands `npm run ...`
   if [[ "${argnpm}" == TRUE ]]; then
+    npmcmds="$( npm -h 2>/dev/null | awk '/access/,/whoami/' | sed -E 's/ (help|start|test),//g' | xargs | sed 's/, /|/g' )" || true
     for (( idx = 0; idx < ${#argcmds[@]}; idx++ )); do
       if ! [[ "${argcmds[idx]}" == 'npm '* ]]; then
-        argcmds[idx]="npm run ${argcmds[idx]}"
+        # if command is an npm builtin, use `npm <cmd>` instead of `npm run <cmd>`:
+        if [[ "|${npmcmds}|" == *"|${argcmds[idx]}|"* ]]; then
+          argcmds[idx]="npm ${argcmds[idx]}"
+        else
+          argcmds[idx]="npm run ${argcmds[idx]}"
+        fi
       fi
     done
   fi
@@ -863,7 +868,7 @@ function main() {
       echo
       echo "or refer to https://github.com/tmux/tmux/wiki/Installing"
       echo "for install instructions applicable to your platform."
-      echo "'export TMEX_SUPPRESS_WARNING_TMUX=1' in shell rc file will hide warning."
+      echo "'export TMEX_SUPPRESS_WARNING_TMUX=1' in shell rc file will hide this warning."
       echo
       echo
     fi
@@ -993,6 +998,17 @@ For complete documentation, please see https://github.com/evnp/tmex#readme
   if (( ${#tmuxargs[@]} == 0 )); then
     # not using multiple windows - build tmux args normally
     buildtmuxargs "$@"
+  fi
+
+  if [[ -z "${TMEX_SUPPRESS_WARNING_NPM:-}" ]]; then
+    if ! command -v npm &>/dev/null; then
+      echo "!!! WARNING: You're using tmex with an --npm/-n flag but npm is not installed !!!"
+      echo
+      echo "You may want to install npm first, or remove --npm/-n from your tmex command."
+      echo "'export TMEX_SUPPRESS_WARNING_NPM=1' in shell rc file will hide this warning."
+      echo
+      echo
+    fi
   fi
 
   if [[ "${argprint}" == TRUE ]]; then
