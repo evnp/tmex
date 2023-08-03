@@ -18,7 +18,7 @@ function processargs() {
     argsession=""
   elif [[ "${argsession}" =~ ^--(focus|layout) ]]; then
     argsession=""
-  elif [[ "${argsession}" =~ ^-[dfhklnprstv]+ ]]; then
+  elif [[ "${argsession}" =~ ^-[dfhklnprstvV]+ ]]; then
     argsession=""
   else
     (( argidx++ )) || true
@@ -26,7 +26,7 @@ function processargs() {
 
   while true; do
     arg="${args[argidx]:-}"
-    if [[ "${arg}" =~ ^(-([dhknprstv]*)l|--layout) ]]; then
+    if [[ "${arg}" =~ ^(-([dhknprstvV]*)l|--layout) ]]; then
       (( argidx++ )) || true
       if [[ "${arg}" != '--layout' ]]; then
         arg="${arg/-${BASH_REMATCH[2]}/-}"
@@ -41,7 +41,7 @@ function processargs() {
       arglayout="${arglayout#=}"
       flags="${BASH_REMATCH[2]}"
 
-    elif [[ "${arg}" =~ ^(-([dhknprstv]*)f|--focus) ]]; then
+    elif [[ "${arg}" =~ ^(-([dhknprstvV]*)f|--focus) ]]; then
       (( argidx++ )) || true
       if [[ "${arg}" != '--focus' ]]; then
         arg="${arg/-${BASH_REMATCH[2]}/-}"
@@ -79,7 +79,7 @@ function processargs() {
         'version')   argversion=TRUE;;
         'simulator') argsimulator=TRUE;;
       esac
-    elif [[ "${arg}" =~ ^-[dhknprstv]+$ ]]; then
+    elif [[ "${arg}" =~ ^-[dhknprstvV]+$ ]]; then
       (( argidx++ )) || true
       arg="${arg#-}"  # remove "-" prefix
       flags="${arg}"
@@ -100,6 +100,7 @@ function processargs() {
           't') argtranspose=TRUE;;
           'k') argkill=TRUE;;
           'v') argversion=TRUE;;
+          'V') argversion=TRUE;; # accept either casing of v/V for parity with tmux
         esac
       done
       flags=""
