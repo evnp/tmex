@@ -678,16 +678,34 @@ function buildtmuxargs() {
     done
   fi
 
-  # if we're already in a tmux pane, further split the pane rather than nesting tmux sessions
+  # if we're already in a tmux pane, ensure we're not in "shell-less" mode;
+  # this would fail to run the 1st command in the 1st pane since the pane
+  # would die after executing the nested tmex command
   if [[ -n "${TMUX_PANE:-}" ]]; then
-    # ensure we're not in "shell-less" mode; this would fail to run the 1st command in the 1st
-    # pane since the pane would die after executing the nested tmex command
     if [[ "${argshellless}" == TRUE ]]; then
       echo "Error: --shellless mode cannot be used when nesting tmex commands"
       exit 1
     fi
-    tmuxargs+=( 'select-window' '-t' "${TMUX_PANE}" ';' 'select-pane' '-t' "${TMUX_PANE}" )
+  fi
 
+  # if we're already in a tmux pane, further split the pane rather than nesting tmux sessions
+  if [[ -n "${TMUX_PANE:-}"  ]]; then
+    if [[ -z "${argwindow}" ]]; then
+      tmuxargs+=( ';' 'select-window' '-t' "$TMUX_PANE" )
+      tmuxargs+=( ';' 'select-pane' '-t' "$TMUX_PANE" )
+    else
+      if (( ${#tmuxargs[@]} == 0 )); then
+        tmuxargs+=( ';' 'select-window' '-t' "$TMUX_PANE" )
+        tmuxargs+=( ';' 'select-pane' '-t' "$TMUX_PANE" )
+        if [[ "${argwindow}" != '-' ]]; then
+          tmuxargs+=( ';' 'rename-window' "${argwindow}" )
+        fi
+      elif [[ "${argwindow}" != '-' ]]; then
+        tmuxargs+=( ';' 'new-window' '-n' "${argwindow}" )
+      else
+        tmuxargs+=( ';' 'new-window' )
+      fi
+    fi
   # otherwise start a new session OR window
   else
     if (( ${#tmuxargs[@]} > 0 )); then
@@ -966,7 +984,9 @@ For complete documentation, please see https://github.com/evnp/tmex#readme
   for (( idx = 0; idx <= ${#args[@]}; idx++ )); do
     if (( idx == ${#args[@]} )) || [[ "${args[idx]}" =~ ^(-w|--window) ]]; then
       if [[ -n "${argwindow}" ]]; then
-        if (( ${#tmuxargs[@]} == 0 )); then
+        if [[ -n "${TMUX_PANE:-}" ]]; then
+          buildtmuxargs "${TMUX_PANE}" "${tmexargs[@]:-}"
+        elif (( ${#tmuxargs[@]} == 0 )); then
           buildtmuxargs "${tmexargs[@]:-}"
         else
           buildtmuxargs "${argsession}" "${tmexargs[@]:-}"
