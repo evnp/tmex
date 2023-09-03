@@ -71,8 +71,7 @@ function run_tmex() {
 
 @test "${BATS_TEST_NUMBER} tmex" {
 	run_tmex
-	assert_output -p "Invalid input: session name required"
-	assert_output -p "Usage:"
+	assert_output -p "Invalid input: Session name required."
 	assert_failure
 }
 
@@ -253,7 +252,6 @@ layout_1234="
 	run_tmex
 	assert_output -p "Invalid input: --layout=1..2..3..4"
 	assert_output -p "cannot contain multiple . characters in a row"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	refute_layout "${layout_1234}"
 	assert_failure
@@ -262,7 +260,6 @@ layout_1234="
 	run_tmex
 	assert_output -p "Invalid input: --layout=.1..2..3..4."
 	assert_output -p "cannot contain multiple . characters in a row"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	refute_layout "${layout_1234}"
 	assert_failure
@@ -284,7 +281,6 @@ layout_1234="
 	run_tmex
 	assert_output -p "Invalid input: --layout=1..2..3..4"
 	assert_output -p "cannot contain multiple . characters in a row"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	refute_layout "${layout_1234}"
 	assert_failure
@@ -293,7 +289,6 @@ layout_1234="
 	run_tmex
 	assert_output -p "Invalid input: --layout=.1..2..3..4."
 	assert_output -p "cannot contain multiple . characters in a row"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	refute_layout "${layout_1234}"
 	assert_failure
@@ -315,7 +310,6 @@ layout_1234="
 	run_tmex
 	assert_output -p "Invalid input: --layout=1..2..3..4"
 	assert_output -p "cannot contain multiple . characters in a row"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	refute_layout "${layout_1234}"
 	assert_failure
@@ -324,7 +318,6 @@ layout_1234="
 	run_tmex
 	assert_output -p "Invalid input: --layout=.1..2..3..4."
 	assert_output -p "cannot contain multiple . characters in a row"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	refute_layout "${layout_1234}"
 	assert_failure
@@ -452,7 +445,6 @@ layout_1234="
 	run_tmex
 	assert_output -p "Invalid input: --layout=1-+-234"
 	assert_output -p "cannot contain both + and - characters"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	refute_layout "${layout_1234}"
 	assert_failure
@@ -461,7 +453,6 @@ layout_1234="
 	run_tmex
 	assert_output -p "Invalid input: --layout=1+-234"
 	assert_output -p "cannot contain both + and - characters"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	refute_layout "${layout_1234}"
 	assert_failure
@@ -470,7 +461,6 @@ layout_1234="
 	run_tmex
 	assert_output -p "Invalid input: --layout=1---23-4"
 	assert_output -p "cannot contain multiple groups of - characters"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	refute_layout "${layout_1234}"
 	assert_failure
@@ -479,7 +469,6 @@ layout_1234="
 	run_tmex
 	assert_output -p "Invalid input: --layout=1+++23+4"
 	assert_output -p "cannot contain multiple groups of + characters"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	refute_layout "${layout_1234}"
 	assert_failure
@@ -488,7 +477,6 @@ layout_1234="
 	run_tmex
 	assert_output -p "Invalid input: --layout=1---23+4"
 	assert_output -p "cannot contain multiple groups of + and - characters"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	refute_layout "${layout_1234}"
 	assert_failure
@@ -497,7 +485,6 @@ layout_1234="
 	run_tmex
 	assert_output -p "Invalid input: --layout=1---234-"
 	assert_output -p "cannot contain multiple groups of - characters"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	refute_layout "${layout_1234}"
 	assert_failure
@@ -506,7 +493,6 @@ layout_1234="
 	run_tmex
 	assert_output -p "Invalid input: --layout=1+++234+"
 	assert_output -p "cannot contain multiple groups of + characters"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	refute_layout "${layout_1234}"
 	assert_failure
@@ -515,7 +501,6 @@ layout_1234="
 	run_tmex
 	assert_output -p "Invalid input: --layout=1---234+"
 	assert_output -p "cannot contain multiple groups of + and - characters"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	refute_layout "${layout_1234}"
 	assert_failure
@@ -524,7 +509,6 @@ layout_1234="
 	run_tmex
 	assert_output -p "Invalid input: --layout=---1234-"
 	assert_output -p "cannot start with - character"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	refute_layout "${layout_1234}"
 	assert_failure
@@ -533,7 +517,6 @@ layout_1234="
 	run_tmex
   assert_output -p "Invalid input: --layout=+++1234+"
 	assert_output -p "cannot start with + character"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	refute_layout "${layout_1234}"
 	assert_failure
@@ -542,7 +525,6 @@ layout_1234="
 	run_tmex
 	assert_output -p "Invalid input: --layout=---1234+"
 	assert_output -p "cannot start with - character"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	refute_layout "${layout_1234}"
 	assert_failure
@@ -550,7 +532,6 @@ layout_1234="
 @test "${BATS_TEST_NUMBER} tmex testsessionname --layout 1234 -f=abcdefg" {
 	run_tmex
 	assert_output -p "Invalid input: --focus (-f) arg value must be an integer"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	refute_layout "${layout_1234}"
 	assert_failure
@@ -558,7 +539,6 @@ layout_1234="
 @test "${BATS_TEST_NUMBER} tmex testsessionname -fl1234" {
 	run_tmex
 	assert_output -p "Invalid input: --focus (-f) arg value must be an integer"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	refute_layout "${layout_1234}"
 	assert_failure
@@ -591,7 +571,6 @@ layout_1234="
 @test "${BATS_TEST_NUMBER} tmex testsessionname -f=abcdefg --layout 1234 " {
 	run_tmex
 	assert_output -p "Invalid input: --focus (-f) arg value must be an integer"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	refute_layout "${layout_1234}"
 	assert_failure
@@ -808,7 +787,6 @@ shorthand_layout_1_23_45_67_8_9="
 	run_tmex
 	assert_output -p "Invalid input: --layout=3{}34"
 	assert_output -p "cannot contain empty { } brackets"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	assert_failure
 }
@@ -859,7 +837,6 @@ layout_grid5="
 	run_tmex
 	assert_output -p "Invalid input: --layout=3[5{}]4"
 	assert_output -p "cannot contain empty { } brackets"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	assert_failure
 }
@@ -898,7 +875,6 @@ layout_grid5="
 	run_tmex
 	assert_output -p "Invalid input: --layout={+}3[5]4"
 	assert_output -p "cannot start with {+} clause"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	assert_failure
 }
@@ -1872,7 +1848,6 @@ layout_a_j="
 	run_tmex
 	assert_output -p "Invalid input: --layout=1234"
 	assert_output -p "is too small for number of commands provided"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	refute_layout "${layout_1234}"
 	assert_failure
@@ -1881,7 +1856,6 @@ layout_a_j="
 	run_tmex
 	assert_output -p "Invalid input: --layout=1.2.3.4"
 	assert_output -p "is too small for number of commands provided"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	refute_layout "${layout_1234}"
 	assert_failure
@@ -1890,7 +1864,6 @@ layout_a_j="
 	run_tmex
 	assert_output -p "Invalid input: --layout=.1.2.3.4."
 	assert_output -p "is too small for number of commands provided"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	refute_layout "${layout_1234}"
 	assert_failure
@@ -1899,7 +1872,6 @@ layout_a_j="
 	run_tmex
 	assert_output -p "Invalid input: --layout=1234"
 	assert_output -p "is too small for number of commands provided"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	refute_layout "${layout_1234}"
 	assert_failure
@@ -1908,7 +1880,6 @@ layout_a_j="
 	run_tmex
 	assert_output -p "Invalid input: --layout=1.2.3.4"
 	assert_output -p "is too small for number of commands provided"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	refute_layout "${layout_1234}"
 	assert_failure
@@ -1917,7 +1888,6 @@ layout_a_j="
 	run_tmex
 	assert_output -p "Invalid input: --layout=.1.2.3.4."
 	assert_output -p "is too small for number of commands provided"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	refute_layout "${layout_1234}"
 	assert_failure
@@ -1927,7 +1897,6 @@ layout_a_j="
 	run_tmex
 	assert_output -p "Invalid input: --layout=1[2{34}5]6"
 	assert_output -p "is too small for number of commands provided"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	assert_failure
 }
@@ -1935,7 +1904,6 @@ layout_a_j="
 	run_tmex
 	assert_output -p "Invalid input: --layout=1.[2{3.4}.5].6"
 	assert_output -p "is too small for number of commands provided"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	assert_failure
 }
@@ -1943,7 +1911,6 @@ layout_a_j="
 	run_tmex
 	assert_output -p "Invalid input: --layout=.1[.2{.3.4}5.]6."
 	assert_output -p "is too small for number of commands provided"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	assert_failure
 }
@@ -1951,7 +1918,6 @@ layout_a_j="
 	run_tmex
 	assert_output -p "Invalid input: --layout=1[2{34}5]6"
 	assert_output -p "is too small for number of commands provided"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	assert_failure
 }
@@ -1959,7 +1925,6 @@ layout_a_j="
 	run_tmex
 	assert_output -p "Invalid input: --layout=1.[2{3.4}.5].6"
 	assert_output -p "is too small for number of commands provided"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	assert_failure
 }
@@ -1967,7 +1932,6 @@ layout_a_j="
 	run_tmex
 	assert_output -p "Invalid input: --layout=.1[.2{.3.4}5.]6."
 	assert_output -p "is too small for number of commands provided"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	assert_failure
 }
@@ -1976,7 +1940,6 @@ layout_a_j="
 	run_tmex
 	assert_output -p "Invalid input: --layout=1234"
 	assert_output -p "is too small for number of commands provided"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	refute_layout "${layout_1234}"
 	assert_failure
@@ -1985,7 +1948,6 @@ layout_a_j="
 	run_tmex
 	assert_output -p "Invalid input: --layout=1.2.3.4"
 	assert_output -p "is too small for number of commands provided"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	refute_layout "${layout_1234}"
 	assert_failure
@@ -1994,7 +1956,6 @@ layout_a_j="
 	run_tmex
 	assert_output -p "Invalid input: --layout=.1.2.3.4."
 	assert_output -p "is too small for number of commands provided"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	refute_layout "${layout_1234}"
 	assert_failure
@@ -2004,7 +1965,6 @@ layout_a_j="
 	run_tmex
 	assert_output -p "Invalid input: --layout=1[2{34}5]6"
 	assert_output -p "is too small for number of commands provided"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	assert_failure
 }
@@ -2012,7 +1972,6 @@ layout_a_j="
 	run_tmex
 	assert_output -p "Invalid input: --layout=1.[2{3.4}.5].6"
 	assert_output -p "is too small for number of commands provided"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	assert_failure
 }
@@ -2020,7 +1979,6 @@ layout_a_j="
 	run_tmex
 	assert_output -p "Invalid input: --layout=.1[.2{.3.4}5.]6."
 	assert_output -p "is too small for number of commands provided"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	assert_failure
 }
@@ -2029,7 +1987,6 @@ layout_a_j="
 	run_tmex
 	assert_output -p "Invalid input: --layout=1234"
 	assert_output -p "is too small for number of commands provided"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	assert_failure
 }
@@ -2037,7 +1994,6 @@ layout_a_j="
 	run_tmex
 	assert_output -p "Invalid input: --layout=1.2.3.4"
 	assert_output -p "is too small for number of commands provided"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	assert_failure
 }
@@ -2045,7 +2001,6 @@ layout_a_j="
 	run_tmex
 	assert_output -p "Invalid input: --layout=.1.2.3.4."
 	assert_output -p "is too small for number of commands provided"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	assert_failure
 }
@@ -2054,7 +2009,6 @@ layout_a_j="
 	run_tmex
 	assert_output -p "Invalid input: --layout=1[2{34}5]6"
 	assert_output -p "is too small for number of commands provided"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	assert_failure
 }
@@ -2062,7 +2016,6 @@ layout_a_j="
 	run_tmex
 	assert_output -p "Invalid input: --layout=1.[2{3.4}.5].6"
 	assert_output -p "is too small for number of commands provided"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	assert_failure
 }
@@ -2070,7 +2023,6 @@ layout_a_j="
 	run_tmex
 	assert_output -p "Invalid input: --layout=.1[.2{.3.4}5.]6."
 	assert_output -p "is too small for number of commands provided"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	assert_failure
 }
@@ -2079,7 +2031,6 @@ layout_a_j="
 	run_tmex
 	assert_output -p "Invalid input: --layout=1234"
 	assert_output -p "is too small for number of commands provided"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	refute_layout "${layout_1234}"
 	assert_failure
@@ -2088,7 +2039,6 @@ layout_a_j="
 	run_tmex
 	assert_output -p "Invalid input: --layout=1.2.3.4"
 	assert_output -p "is too small for number of commands provided"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	refute_layout "${layout_1234}"
 	assert_failure
@@ -2097,7 +2047,6 @@ layout_a_j="
 	run_tmex
 	assert_output -p "Invalid input: --layout=.1.2.3.4."
 	assert_output -p "is too small for number of commands provided"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	refute_layout "${layout_1234}"
 	assert_failure
@@ -2107,7 +2056,6 @@ layout_a_j="
 	run_tmex
 	assert_output -p "Invalid input: --layout=1[2{34}5]6"
 	assert_output -p "is too small for number of commands provided"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	assert_failure
 }
@@ -2115,7 +2063,6 @@ layout_a_j="
 	run_tmex
 	assert_output -p "Invalid input: --layout=1.[2{3.4}.5].6"
 	assert_output -p "is too small for number of commands provided"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	assert_failure
 }
@@ -2123,7 +2070,6 @@ layout_a_j="
 	run_tmex
 	assert_output -p "Invalid input: --layout=.1[.2{.3.4}5.]6."
 	assert_output -p "is too small for number of commands provided"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	assert_failure
 }
@@ -2131,21 +2077,18 @@ layout_a_j="
 @test "${BATS_TEST_NUMBER} tmex -nf=abc -l=.1[.2{.3.4}5.]6 a b c d e f g h i j k l m n o" {
 	run_tmex
 	assert_output -p "Invalid input: --focus (-f) arg value must be an integer"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	assert_failure
 }
 @test "${BATS_TEST_NUMBER} tmex -nf= -l=.1[.2{.3.4}5.]6 a b c d e f g h i j k l m n o" {
 	run_tmex
 	assert_output -p "Invalid input: --focus (-f) arg value must be an integer"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	assert_failure
 }
 @test "${BATS_TEST_NUMBER} tmex -nf -l=.1[.2{.3.4}5.]6 a b c d e f g h i j k l m n o" {
 	run_tmex
 	assert_output -p "Invalid input: --focus (-f) arg value must be an integer"
-	assert_output -p "Usage:"
 	refute_output -p "new-session -s testsessionname"
 	assert_failure
 }

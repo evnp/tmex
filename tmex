@@ -58,9 +58,8 @@ function processargs() {
 
       if ! [[ "${argfocus}" =~ ^-?[0-9]+$ ]]; then
         echo ""
-        echo "Invalid input: --focus (-f) arg value must be an integer"
+        echo "Invalid input: --focus (-f) arg value must be an integer."
         echo ""
-        echo "${usage}"
         exit 1
       fi
 
@@ -161,9 +160,9 @@ function processargs() {
 
   if [[ -z "${argsession}" && "${arghelp}" == FALSE && "${argversion}" == FALSE ]]; then
     echo ""
-    echo "Invalid input: session name required (call 'tmex <session-name> <options> <commands>')"
+    echo "Invalid input: Session name required. Try:"
+    echo "             $ tmex <SESSION-NAME> $*"
     echo ""
-    echo "${usage}"
     exit 1
   fi
 
@@ -758,9 +757,8 @@ function buildtmuxargs() {
     # if layout _starts_ with {+} exit with error
     if [[ "${arglayout}" == '{+}'* ]]; then
       echo ""
-      echo "Invalid input: --layout=${arglayoutoriginal} cannot start with {+} clause"
+      echo "Invalid input: --layout=${arglayoutoriginal} cannot start with {+} clause."
       echo ""
-      echo "${usage}"
       exit 1
     fi
 
@@ -838,14 +836,13 @@ function buildtmuxargs() {
     fi
   fi
 
-  # ensure layout is large enough to contain commands provided
+  # ensure layout is valid and large enough to contain commands provided
   invalidlayoutmsgs="$( validatelayout "${arglayout}" "${#argcmds[@]}" )"
   if [[ -n "${invalidlayoutmsgs}" ]]; then
     echo ""
     echo "Invalid input: --layout=${arglayoutoriginal}"
-    echo "  - ${invalidlayoutmsgs//$'\n'/$'\n'  - }"  # prefix message with hyphen
-    echo ""
-    echo "${usage}"
+    echo "               - ${invalidlayoutmsgs//$'\n'/$'\n'               - }"
+    echo ""                             # prefix each message with hyphen ^
     exit 1
   fi
 
@@ -868,7 +865,7 @@ function buildtmuxargs() {
 function main() {
   local argdetached argfocus arghelp argkill arglayout arglayoutoriginal argcmds
   local argnpm argprint argreattach argsession argshellless argtranspose argversion
-  local argwindow
+  local argwindow firstwindowarg
 
   local args tmexargs tmuxargs idx output version tmuxversion usage help
 
@@ -983,6 +980,12 @@ For complete documentation, please see https://github.com/evnp/tmex#readme
   tmexargs=()
   for (( idx = 0; idx <= ${#args[@]}; idx++ )); do
     if (( idx == ${#args[@]} )) || [[ "${args[idx]}" =~ ^(-w|--window) ]]; then
+      if [[ -z "${argwindow}" ]]; then
+        firstwindowarg="${args[idx]:-}"
+        if [[ "${args[idx]:-}" =~ ^(-w|--window)$ ]]; then
+          firstwindowarg+=" ${args[$(( idx + 1 ))]:--}"
+        fi
+      fi
       if [[ -n "${argwindow}" ]]; then
         if [[ -n "${TMUX_PANE:-}" ]]; then
           buildtmuxargs "${TMUX_PANE}" "${tmexargs[@]:-}"
@@ -1015,9 +1018,32 @@ For complete documentation, please see https://github.com/evnp/tmex#readme
       tmexargs+=( "${args[idx]}" )
     fi
   done
+
   if (( ${#tmuxargs[@]} == 0 )); then
     # not using multiple windows - build tmux args normally
     buildtmuxargs "$@"
+  else
+    # validate that first arg was session name in multi-window mode
+    # OR that session name was omitted if using multi-windows within a tmux session
+    if [[ -n "${TMUX_PANE:-}" ]]; then
+      if ! [[ "$1" =~ ^(-w|--window) ]]; then
+        echo ""
+        echo "Invalid input: You must omit session name when using multi-window mode"
+        echo "               from within another tmux session. Try:"
+        echo "             $ tmex ${*:2}"
+        echo ""
+        exit 1
+      fi
+    else
+      if ! [[ "$1" == "${argsession}" ]]; then
+        echo ""
+        echo "Invalid input: You must define session name prior to 1st --window (-w)"
+        echo "               arg when using multi-window mode. Try:"
+        echo "             $ tmex ${argsession:-<SESSION-NAME>} $*"
+        echo ""
+        exit 1
+      fi
+    fi
   fi
 
   if [[ -z "${TMEX_SUPPRESS_WARNING_NPM:-}" ]]; then
