@@ -92,21 +92,20 @@ tmex -nt 1224 "cmd a" "cmd b" "cmd c" ... etc.
 ```
 Full options list (also accessible via `tmex -h`):
 ```
-tmex <session-name>                - session name required unless --npm set; all other args optional
-  [-h|--help]
-  [-v|--version]
-  [[-l|--layout] <1-9,[,],{,}>]    -l, --layout      layout string, each digit represents number of panes in column
-  [-t|--transpose]                 -t, --transpose   build layout in left-to-right orientation instead of top-to-bottom
-  [-n|--npm]                       -n, --npm         if set, prefix each command with "npm run" for package.json scripts
-  [-p|--print]                     -p, --print       emit command as string of tmux args instead of invoking tmux directly
-  [-d|--detached]                  -d, --detached    invoke tmux with -d (detached session); useful for piping data to tmex
-  [-r|--reattach]                  -r, --reattach    if tmux session already exists, re-attach to it instead of replacing it
-  [-k|--kill]                      -k, --kill        kill the current or specified tmux session (all other arguments ignored)
-  [-s|--shellless]                 -s, --shellless   if set, invoke commands directly with tmux instead of running inside shell
-  ["shell command 1"]
-  ["shell command 2"]              - shell commands that will be executed in each pane
-  ...                                number of shell commands N must not exceed sum of layout
-  ["shell command N"]
+tmex <session-name> ··············  session name required unless --npm or --kill set; all other args optional
+  [-h|--help]       [-v|--version]
+  [-l|--layout]  0-9 [ ] { } . - +  layout string, each digit represents number of panes in column
+  [-f|--focus]   0-9 ·············  tmux pane to select by index, must be an integer, positive or negative
+  [-w|--window] "name" ···········  separate sets of tmex args to start session with multiple tmux windows
+  [-W|--window-focus] "name" ·····  same as above, but focus this window when session begins
+  [-t|--transpose] ···············  build layout in left-to-right orientation instead of top-to-bottom
+  [-n|--npm] ·····················  if set, prefix each command with "npm run" for package.json scripts
+  [-p|--print] ···················  emit command as string of tmux args instead of invoking tmux directly
+  [-d|--detached] ················  invoke tmux with -d (detached session); useful for piping data to tmex
+  [-r|--reattach] ················  if tmux session already exists, re-attach to it instead of replacing it
+  [-s|--shellless] ···············  if set, invoke commands directly with tmux instead of running inside shell
+  [-k|--kill] ····················  kill the current or specified tmux session (all other arguments ignored)
+  ["command 1" "command 2" ...] ··  shell commands to be executed in each pane (num commands cannot exceed total pane count)
 ```
 
 Layout
