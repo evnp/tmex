@@ -323,6 +323,20 @@ function selectpane() {
   done
 }
 
+function selectwindow() {
+  local idx
+
+  # Construct tmux select-pane args according to params.
+  # Params:
+  #   $1 idx [integer] index of window to select
+  # Modifies external:
+  #   ${tmuxargs}
+
+  idx="$1"
+
+  tmuxargs+=( ';' 'select-window' '-t' "${idx}" )
+}
+
 function executecmd() {
   local cmd
 
@@ -865,7 +879,7 @@ function buildtmuxargs() {
 function main() {
   local argdetached argfocus arghelp argkill arglayout arglayoutoriginal argcmds
   local argnpm argprint argreattach argsession argshellless argtranspose argversion
-  local argwindow firstwindowarg
+  local argwindow firstwindowarg nextwindowidx focuswindowidx
 
   local args tmexargs tmuxargs idx output version tmuxversion usage help
 
@@ -916,7 +930,8 @@ tmex <session-name> ··············  session name required unless -
   [-h|--help]       [-v|--version]
   [-l|--layout]  0-9 [ ] { } . - +  layout string, each digit represents number of panes in column
   [-f|--focus]   0-9 ·············  tmux pane to select by index, must be an integer, positive or negative
-  [-w|--window] "window-name" ····  separate sets of tmex args to start session with multiple tmux windows
+  [-w|--window] "name" ···········  separate sets of tmex args to start session with multiple tmux windows
+  [-W|--window-focus] "name" ·····  same as above, but focus this window when session begins
   [-t|--transpose] ···············  build layout in left-to-right orientation instead of top-to-bottom
   [-n|--npm] ·····················  if set, prefix each command with "npm run" for package.json scripts
   [-p|--print] ···················  emit command as string of tmux args instead of invoking tmux directly
@@ -978,11 +993,13 @@ For complete documentation, please see https://github.com/evnp/tmex#readme
   # --- Multi-Window Management --- #
   args=( "${@:-}" )
   tmexargs=()
+  nextwindowidx=0
+  focuswindowidx=0
   for (( idx = 0; idx <= ${#args[@]}; idx++ )); do
-    if (( idx == ${#args[@]} )) || [[ "${args[idx]}" =~ ^(-w|--window) ]]; then
+    if (( idx == ${#args[@]} )) || [[ "${args[idx]}" =~ ^(-w|-W|--window|--window-focus) ]]; then
       if [[ -z "${argwindow}" ]]; then
         firstwindowarg="${args[idx]:-}"
-        if [[ "${args[idx]:-}" =~ ^(-w|--window)$ ]]; then
+        if [[ "${args[idx]:-}" =~ ^(-w|-W|--window|--window-focus)$ ]]; then
           firstwindowarg+=" ${args[$(( idx + 1 ))]:--}"
         fi
       fi
@@ -1002,14 +1019,22 @@ For complete documentation, please see https://github.com/evnp/tmex#readme
         argtranspose=FALSE
         argcmds=''
       fi
-      if [[ "${args[idx]:-}" =~ ^(-w|--window)$ ]]; then
+      if [[ "${args[idx]:-}" =~ ^(-w|-W|--window|--window-focus)$ ]]; then
+        if [[ "${args[idx]:-}" =~ ^(-W|--window-focus)$ ]]; then
+          focuswindowidx="${nextwindowidx}"
+        fi
+        (( nextwindowidx++ )) || true
         (( idx++ )) || true
         argwindow="${args[idx]}"
         if [[ -z "${argwindow}" ]]; then
           argwindow='-'
         fi
-      elif [[ "${args[idx]:-}" =~ ^(-w|--window)\=?(.*)$ ]]; then
+      elif [[ "${args[idx]:-}" =~ ^(-w|-W|--window|--window-focus)\=?(.*)$ ]]; then
         argwindow="${BASH_REMATCH[2]}"
+        if [[ "${args[idx]:-}" =~ ^(-W|--window-focus)\=?(.*)$ ]]; then
+          focuswindowidx="${nextwindowidx}"
+        fi
+        (( nextwindowidx++ )) || true
         if [[ -z "${argwindow}" ]]; then
           argwindow='-'
         fi
@@ -1020,13 +1045,16 @@ For complete documentation, please see https://github.com/evnp/tmex#readme
   done
 
   if (( ${#tmuxargs[@]} == 0 )); then
-    # not using multiple windows - build tmux args normally
+    # not using windows - build tmux args normally:
     buildtmuxargs "$@"
   else
+    # using windows - add select-window command to focus correct window:
+    selectwindow "${focuswindowidx}"
+
     # validate that first arg was session name in multi-window mode
     # OR that session name was omitted if using multi-windows within a tmux session
     if [[ -n "${TMUX_PANE:-}" ]]; then
-      if ! [[ "$1" =~ ^(-w|--window) ]]; then
+      if ! [[ "$1" =~ ^(-w|-W|--window|--window-focus) ]]; then
         echo ""
         echo "Invalid input: You must omit session name when using multi-window mode"
         echo "               from within another tmux session. Try:"
@@ -1060,7 +1088,6 @@ For complete documentation, please see https://github.com/evnp/tmex#readme
   if [[ "${argprint}" == TRUE ]]; then
     output=""
     for (( idx = 0; idx < ${#tmuxargs[@]}; idx++ )); do
-      arg=
       if [[ "${tmuxargs[idx]}" == *' '* ]]; then
         output+="\"${tmuxargs[idx]}\" "
       else

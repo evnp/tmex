@@ -305,6 +305,11 @@ Every series of arguments after an instance of `--window` or `-w` is treated as 
 ```sh
 tmex your-session-name -w abc -f4 123 "cmd a" "cmd b" -w efg -f-2 44 "cmd c"
 ```
+By default, the session will begin with the _first_ window in focus. If you'd like to begin with a different window in focus, simply replace the corresponding `--window` or `-w` arg with `--window-active` or `-W`, respectively:
+```sh
+tmex your-session-name --window-focus abc 123 -w efg 44  # focus 1st window
+tmex your-session-name --window abc 123 -W efg 44         # focus 2nd window
+```
 You may be wondering what will happen if you put any args _before_ the first `-w` arg. This will work fine; the command will still produce two windows and the preceeding args will simply be used against the first window:
 ```sh
 tmex your-session-name -l 123 -f4 -w abc "cmd a" "cmd b" -w efg -f-2 44 "cmd c"
