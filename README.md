@@ -332,7 +332,7 @@ If you're _inside_ a tmux session at the moment, you can simply write
 ```
 tmex -k
 ```
-The session name will be inferred from the current ENV variables, and the session will be killed.
+The session name will be inferred from current environment variables, and the session will be killed.
 
 npm
 ------------
