@@ -323,6 +323,8 @@ tmex your-session-name --window '' 123 --window '' 44     # equivalent
 ```
 **NOTE** that `-w''` (no space between arg and value) does _not_ work, since shell string concatenation causes this to be treated as simply `-w` and the _next_ arg will be inadvertently used as the window name.
 
+**NOTE** that you must _always_ specify a top-level session name when using multiple windows, even if `--npm` / `-n` is specified. This is because npm-mode will be applied on a per-window basis, not to the session as a whole -- necessary if you want to run commands in _some_ windows as NPM scripts, but not commands in _all_ windows.
+
 Kill command (new in [v2.0.0-rc.5](https://github.com/evnp/tmex/releases/tag/v2.0.0-rc.5) 🐣)
 ---------------------------------------------------------------------------------------------
 

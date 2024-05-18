@@ -160,8 +160,8 @@ function processargs() {
 
   if [[ -z "${argsession}" && "${arghelp}" == FALSE && "${argversion}" == FALSE ]]; then
     echo ""
-    echo "Invalid input: Session name required. Try:"
-    echo "             $ tmex SESSION-NAME $*"
+    echo "Invalid input: Session name required."
+    echo "          Try: $ tmex SESSION-NAME $*"
     echo ""
     exit 1
   fi
@@ -1057,8 +1057,8 @@ For complete documentation, please see https://github.com/evnp/tmex#readme
       if ! [[ "$1" =~ ^(-w|-W|--window|--window-focus) ]]; then
         echo ""
         echo "Invalid input: You must omit session name when using multi-window mode"
-        echo "               from within another tmux session. Try:"
-        echo "             $ tmex ${*:2}"
+        echo "               from within another tmux session."
+        echo "          Try: $ tmex ${*:2}"
         echo ""
         exit 1
       fi
@@ -1066,8 +1066,8 @@ For complete documentation, please see https://github.com/evnp/tmex#readme
       if ! [[ "$1" == "${argsession}" ]]; then
         echo ""
         echo "Invalid input: You must define session name prior to 1st --window (-w)"
-        echo "               arg when using multi-window mode. Try:"
-        echo "             $ tmex SESSION-NAME $*"
+        echo "               arg when using multi-window mode (even with --npm/-n set)."
+        echo "          Try: $ tmex SESSION-NAME $*"
         echo ""
         exit 1
       fi
