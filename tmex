@@ -161,7 +161,7 @@ function processargs() {
   if [[ -z "${argsession}" && "${arghelp}" == FALSE && "${argversion}" == FALSE ]]; then
     echo ""
     echo "Invalid input: Session name required. Try:"
-    echo "             $ tmex <SESSION-NAME> $*"
+    echo "             $ tmex SESSION-NAME $*"
     echo ""
     exit 1
   fi
@@ -1067,7 +1067,7 @@ For complete documentation, please see https://github.com/evnp/tmex#readme
         echo ""
         echo "Invalid input: You must define session name prior to 1st --window (-w)"
         echo "               arg when using multi-window mode. Try:"
-        echo "             $ tmex ${argsession:-<SESSION-NAME>} $*"
+        echo "             $ tmex SESSION-NAME $*"
         echo ""
         exit 1
       fi
