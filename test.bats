@@ -2093,6 +2093,145 @@ layout_a_j="
 	assert_failure
 }
 
+@test "${BATS_TEST_NUMBER} tmex -w- 123" {
+	run_tmex
+	assert_output -p "Invalid input: You must define session name prior to 1st --window (-w)"
+	refute_output -p "new-session -s testsessionname"
+	assert_failure
+}
+@test "${BATS_TEST_NUMBER} tmex --window '' 123" {
+	run_tmex
+	assert_output -p "Invalid input: You must define session name prior to 1st --window (-w)"
+	refute_output -p "new-session -s testsessionname"
+	assert_failure
+}
+@test "${BATS_TEST_NUMBER} tmex -w abc 123" {
+	run_tmex
+	assert_output -p "Invalid input: You must define session name prior to 1st --window (-w)"
+	refute_output -p "new-session -s testsessionname"
+	assert_failure
+}
+@test "${BATS_TEST_NUMBER} tmex --window abc 123" {
+	run_tmex
+	assert_output -p "Invalid input: You must define session name prior to 1st --window (-w)"
+	refute_output -p "new-session -s testsessionname"
+	assert_failure
+}
+@test "${BATS_TEST_NUMBER} tmex -w- 123 -w- 456" {
+	run_tmex
+	assert_output -p "Invalid input: You must define session name prior to 1st --window (-w)"
+	refute_output -p "new-session -s testsessionname"
+	assert_failure
+}
+@test "${BATS_TEST_NUMBER} tmex -w- 123 -w- 456 -w- 789" {
+	run_tmex
+	assert_output -p "Invalid input: You must define session name prior to 1st --window (-w)"
+	refute_output -p "new-session -s testsessionname"
+	assert_failure
+}
+@test "${BATS_TEST_NUMBER} tmex -w abc 123 -w- 456 --window '' 789" {
+	run_tmex
+	assert_output -p "Invalid input: You must define session name prior to 1st --window (-w)"
+	refute_output -p "new-session -s testsessionname"
+	assert_failure
+}
+@test "${BATS_TEST_NUMBER} tmex -n -w- 123 -w- 456" {
+	run_tmex
+	assert_output -p "Invalid input: You must define session name prior to 1st --window (-w)"
+	refute_output -p "new-session -s testsessionname"
+	assert_failure
+}
+@test "${BATS_TEST_NUMBER} tmex --npm -w- 123 -w- 456 -w- 789" {
+	run_tmex
+	assert_output -p "Invalid input: You must define session name prior to 1st --window (-w)"
+	refute_output -p "new-session -s testsessionname"
+	assert_failure
+}
+@test "${BATS_TEST_NUMBER} tmex --npm -w abc 123 -w- 456 --window '' 789" {
+	run_tmex
+	assert_output -p "Invalid input: You must define session name prior to 1st --window (-w)"
+	refute_output -p "new-session -s testsessionname"
+	assert_failure
+}
+@test "${BATS_TEST_NUMBER} tmex -w- 123 -n -w- 456" {
+	run_tmex
+	assert_output -p "Invalid input: You must define session name prior to 1st --window (-w)"
+	refute_output -p "new-session -s testsessionname"
+	assert_failure
+}
+@test "${BATS_TEST_NUMBER} tmex --npm -w- 123 -w- 456 -w- 789 --npm" {
+	run_tmex
+	assert_output -p "Invalid input: You must define session name prior to 1st --window (-w)"
+	refute_output -p "new-session -s testsessionname"
+	assert_failure
+}
+@test "${BATS_TEST_NUMBER} tmex --npm -w abc 123 -w- 456 --window '' 789 --npm" {
+	run_tmex
+	assert_output -p "Invalid input: You must define session name prior to 1st --window (-w)"
+	refute_output -p "new-session -s testsessionname"
+	assert_failure
+}
+
+tmux_args_multi_window="
+new-session -s testsessionname ; split-window -h -p50 ; select-pane -L ; select-pane -R ; new-window ; split-window -v -p50 ; new-window ; split-window -v -p67 ; split-window -v -p50"
+
+# test multi-window focus functionality:
+@test "${BATS_TEST_NUMBER} tmex testsessionname -w- 11 -w- 2 -w- 3" {
+	run_tmex
+	assert_output -p "${tmux_args_multi_window} ; select-window -t 0"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname -W- 11 -w- 2 -w- 3" {
+	run_tmex
+	assert_output -p "${tmux_args_multi_window} ; select-window -t 0"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname -w- 11 -W- 2 -w- 3" {
+	run_tmex
+	assert_output -p "${tmux_args_multi_window} ; select-window -t 1"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname -w- 11 -w- 2 -W- 3" {
+	run_tmex
+	assert_output -p "${tmux_args_multi_window} ; select-window -t 2"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname --window '' 11 --window '' 2 --window '' 3" {
+	run_tmex
+	assert_output -p "${tmux_args_multi_window} ; select-window -t 0"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname --window-focus '' 11 --window '' 2 --window '' 3" {
+	run_tmex
+	assert_output -p "${tmux_args_multi_window} ; select-window -t 0"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname --window '' 11 --window-focus \"\" 2 --window '' 3" {
+	run_tmex
+	assert_output -p "${tmux_args_multi_window} ; select-window -t 1"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname --window '' 11 --window \"\" 2 --window-focus '' 3" {
+	run_tmex
+	assert_output -p "${tmux_args_multi_window} ; select-window -t 2"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname --window-focus \"\" 11 -w- 2 -w- 3" {
+	run_tmex
+	assert_output -p "${tmux_args_multi_window} ; select-window -t 0"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname -w- 11 --window-focus '' 2 -w- 3" {
+	run_tmex
+	assert_output -p "${tmux_args_multi_window} ; select-window -t 1"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname -w- 11 -w- 2 --window-focus \"\" 3" {
+	run_tmex
+	assert_output -p "${tmux_args_multi_window} ; select-window -t 2"
+	assert_success
+}
+
 # ensure nested tmex commands will select and split their current pane
 # instead of spawning a nested tmux session
 @test "${BATS_TEST_NUMBER} TMUX_PANE=%5 tmex testsessionname a b c" {
