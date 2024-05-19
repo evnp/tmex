@@ -317,6 +317,8 @@ tmex your\-session\-name \-\-window '' 123 \-\-window '' 44     # equivalent
 .RE
 .P
 \fBNOTE\fR that \fB\-w&#39;&#39;\fP  does \fInot\fR work, since shell string concatenation causes this to be treated as simply \fB\-w\fP and the \fInext\fR arg will be inadvertently used as the window name\.
+.P
+\fBNOTE\fR that you must \fIalways\fR specify a top\-level session name when using multiple windows, even if \fB\-\-npm\fP / \fB\-n\fP is specified\. This is because npm\-mode will be applied on a per\-window basis, not to the session as a whole \-\- necessary if you want to run commands in \fIsome\fR windows as NPM scripts, but not commands in \fIall\fR windows\.
 .SH Kill command 
 .P
 You can kill a tmux session from anywhere using
