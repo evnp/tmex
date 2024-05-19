@@ -710,10 +710,10 @@ function buildtmuxargs() {
       if (( ${#tmuxargs[@]} == 0 )); then
         tmuxargs+=( ';' 'select-window' '-t' "$TMUX_PANE" )
         tmuxargs+=( ';' 'select-pane' '-t' "$TMUX_PANE" )
-        if [[ "${argwindow}" != '-' ]]; then
+        if [[ -n "${argwindow}" && "${argwindow}" != "''" && "${argwindow}" != '""' && "${argwindow}" != '-' ]]; then
           tmuxargs+=( ';' 'rename-window' "${argwindow}" )
         fi
-      elif [[ "${argwindow}" != '-' ]]; then
+      elif [[ -n "${argwindow}" && "${argwindow}" != "''" && "${argwindow}" != '""' && "${argwindow}" != '-' ]]; then
         tmuxargs+=( ';' 'new-window' '-n' "${argwindow}" )
       else
         tmuxargs+=( ';' 'new-window' )
@@ -722,14 +722,14 @@ function buildtmuxargs() {
   # otherwise start a new session OR window
   else
     if (( ${#tmuxargs[@]} > 0 )); then
-      if [[ -n "${argwindow}" && "${argwindow}" != '-' ]]; then
+      if [[ -n "${argwindow}" && "${argwindow}" != "''" && "${argwindow}" != '""' && "${argwindow}" != '-' ]]; then
         tmuxargs+=( ';' 'new-window' '-n' "${argwindow}" )
       else
         tmuxargs+=( ';' 'new-window' )
       fi
     else
       tmuxargs+=( 'new-session' '-s' "${argsession}" )
-      if [[ -n "${argwindow}" && "${argwindow}" != '-' ]]; then
+      if [[ -n "${argwindow}" && "${argwindow}" != "''" && "${argwindow}" != '""' && "${argwindow}" != '-' ]]; then
         tmuxargs+=( ';' 'rename-window' "${argwindow}" )
       fi
     fi
