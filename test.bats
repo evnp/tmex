@@ -1344,6 +1344,21 @@ split-window -v -p50
 	assert_success
 }
 
+# ensure commands will have trailing semicolons stripped since these cause tmux error:
+@test "${BATS_TEST_NUMBER} tmex testsessionname -l=44 a; b;; c;;; d;;;; e; f;; g;;; h;;;;" {
+	run_tmex
+	assert_layout "${layout_44}"
+	refute_output -p "a;"
+	refute_output -p "b;"
+	refute_output -p "c;"
+	refute_output -p "d;"
+	refute_output -p "e;"
+	refute_output -p "f;"
+	refute_output -p "g;"
+	refute_output -p "h;"
+	assert_success
+}
+
 layout_444="
 	 send-keys a Enter
 split-window -h -p67

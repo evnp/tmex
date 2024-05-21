@@ -350,6 +350,9 @@ function executecmd() {
 
   cmd="$1"
 
+  # use sed to remove trailing semicolons from command since these cause tmux error:
+  cmd="$( sed -E 's/;+$//' <<< "${cmd}" )"
+
   if [[ -n "${cmd}" ]]; then
     # if running in "shell-less" mode, execute command directly;
     # otherwise use send-keys to execute command within default shell
