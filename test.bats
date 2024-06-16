@@ -2319,6 +2319,61 @@ new-session -s testsessionname ; split-window -h -p50 ; select-pane -L ; select-
 	assert_success
 }
 
+function assert_alt_tmux_command() {
+	local tmuxcmd
+	tmuxcmd="$1"
+	run_tmex
+	refute_output -p "new-session"
+	refute_output -p "%5"  # tmux pane should not be used
+	refute_output -p "12"
+	assert_output -p "${tmuxcmd} ; split-window"
+	assert_layout "
+		split-window -h -p50
+		 select-pane -L
+		 select-pane -R
+		split-window -v -p50
+	"
+	assert_success
+}
+
+# test setting an alternate tmux command:
+@test "${BATS_TEST_NUMBER} TMUX_PANE=%5 tmex -c new-window 12" {
+	assert_alt_tmux_command new-window
+}
+# verify this works independenly of TMUX_PANE:
+@test "${BATS_TEST_NUMBER} tmex testsessionname -c new-window 12" {
+	assert_alt_tmux_command new-window
+}
+# also test all --command / -c arg variations:
+@test "${BATS_TEST_NUMBER} TMUX_PANE=%5 tmex -cnew-window 12" {
+	assert_alt_tmux_command new-window
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname -cnew-window 12" {
+	assert_alt_tmux_command new-window
+}
+@test "${BATS_TEST_NUMBER} TMUX_PANE=%5 tmex --command new-window 12" {
+	assert_alt_tmux_command new-window
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname --command new-window 12" {
+	assert_alt_tmux_command new-window
+}
+@test "${BATS_TEST_NUMBER} TMUX_PANE=%5 tmex --command=new-window 12" {
+	assert_alt_tmux_command new-window
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname --command=new-window 12" {
+	assert_alt_tmux_command new-window
+}
+# test that it works with any valid command string:
+@test "${BATS_TEST_NUMBER} tmex testsessionname --command=a-test-command 12" {
+	assert_alt_tmux_command a-test-command
+}
+# test that error is raised with invalid command string:
+@test "${BATS_TEST_NUMBER} tmex testsessionname --command='a test command' 12" {
+	run_tmex
+	assert_output -p "Invalid input: --command (-c) arg value must be a valid tmux command, eg. new-window."
+	assert_failure
+}
+
 @test "${BATS_TEST_NUMBER} TMUX_PANE=%5 tmex --kill" {
 	run_tmex
 	assert_output -p "kill-session -t ${TMUX_PANE}"

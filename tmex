@@ -16,9 +16,9 @@ function processargs() {
   # check if we're skipping session name, if it matches another arg type
   if [[ "${argsession}" =~ ^--(detached|help|kill|npm|print|reattach|shellless|transpose|version)$ ]]; then
     argsession=""
-  elif [[ "${argsession}" =~ ^--(focus|layout) ]]; then
+  elif [[ "${argsession}" =~ ^--(command|focus|layout) ]]; then
     argsession=""
-  elif [[ "${argsession}" =~ ^-[dfhklnprstvV]+ ]]; then
+  elif [[ "${argsession}" =~ ^-[cdfhklnprstvV]+ ]]; then
     argsession=""
   elif [[ -n "${TMUX_PANE:-}" && -z "$( validatelayout "${argsession}" )" ]]; then
     # also allow skipping session name if we're already inside another tmux session,
@@ -66,6 +66,28 @@ function processargs() {
       if ! [[ "${argfocus}" =~ ^-?[0-9]+$ ]]; then
         echo ""
         echo "Invalid input: --focus (-f) arg value must be an integer."
+        echo ""
+        exit 1
+      fi
+
+    elif [[ "${arg}" =~ ^(-([dhknprstvV]*)c|--command) ]]; then
+      (( argidx++ )) || true
+      if [[ "${arg}" != '--command' ]]; then
+        arg="${arg/-${BASH_REMATCH[2]}/-}"
+      fi
+      if [[ "${arg}" == "-c" || "${arg}" == "--command" ]]; then
+        arg="${args[argidx]:-}"
+        (( argidx++ )) || true
+      fi
+      argtmuxcmd="${arg}"
+      argtmuxcmd="${argtmuxcmd#--command}"  # remove possible prefixes (if necessary)
+      argtmuxcmd="${argtmuxcmd#-c}"
+      argtmuxcmd="${argtmuxcmd#=}"
+      flags="${BASH_REMATCH[2]}"
+
+      if ! [[ "${argtmuxcmd}" =~ ^[a-z0-9-]+$ ]]; then
+        echo ""
+        echo "Invalid input: --command (-c) arg value must be a valid tmux command, eg. new-window."
         echo ""
         exit 1
       fi
@@ -668,6 +690,7 @@ function buildtmuxargs() {
   # Params:
   #   $@ args [array<any>] subset of script args relevant to the current tmux command
   # Modifies external:
+  #   ${tmuxcmd}
   #   ${tmuxargs}
   #   ${argcmds}
   #   ${arglayout}
@@ -675,6 +698,12 @@ function buildtmuxargs() {
   #   ${argfocus}
 
   processargs "$@"
+
+  tmuxcmd='new-session'
+
+  if [[ -n "${argtmuxcmd}" ]]; then
+    tmuxcmd="${argtmuxcmd}"
+  fi
 
   if [[ "${arghelp}" == TRUE ]]; then
     echo "${version}"
@@ -726,7 +755,7 @@ function buildtmuxargs() {
   fi
 
   # if we're already in a tmux pane, further split the pane rather than nesting tmux sessions
-  if [[ -n "${TMUX_PANE:-}"  ]]; then
+  if [[ -n "${TMUX_PANE:-}" && "${tmuxcmd}" == 'new-session' ]]; then
     if [[ -z "${argwindow}" ]]; then
       tmuxargs+=( ';' 'select-window' '-t' "$TMUX_PANE" )
       tmuxargs+=( ';' 'select-pane' '-t' "$TMUX_PANE" )
@@ -752,7 +781,11 @@ function buildtmuxargs() {
         tmuxargs+=( ';' 'new-window' )
       fi
     else
-      tmuxargs+=( 'new-session' '-s' "${argsession}" )
+      if [[ "${tmuxcmd}" == 'new-session' ]]; then
+        tmuxargs+=( 'new-session' '-s' "${argsession}" )
+      else
+        tmuxargs+=( "${tmuxcmd}" )
+      fi
       if [[ -n "${argwindow}" && "${argwindow}" != "''" && "${argwindow}" != '""' && "${argwindow}" != '-' ]]; then
         tmuxargs+=( ';' 'rename-window' "${argwindow}" )
       fi
@@ -901,11 +934,12 @@ function buildtmuxargs() {
 }
 
 function main() {
-  local argdetached argfocus arghelp argkill arglayout arglayoutoriginal argcmds
-  local argnpm argprint argreattach argsession argshellless argtranspose argversion
-  local argwindow firstwindowarg nextwindowidx focuswindowidx
+  local argtmuxcmd argcmds argdetached argfocus arghelp argkill
+  local argnpm argprint argreattach argsession argshellless argtranspose
+  local argversion argwindow firstwindowarg nextwindowidx focuswindowidx
+  local arglayout arglayoutoriginal
 
-  local args tmexargs tmuxargs idx output version tmuxversion usage help
+  local args tmuxcmd tmexargs tmuxargs idx output version tmuxversion usage help
 
   # Construct and execute a tmux command that runs a set of commands inside a layout.
   # Params:
@@ -963,6 +997,7 @@ tmex <session-name> ··············  session name required unless -
   [-r|--reattach] ················  if tmux session already exists, re-attach to it instead of replacing it
   [-s|--shellless] ···············  if set, invoke commands directly with tmux instead of running inside shell
   [-k|--kill] ····················  kill the current or specified tmux session (all other arguments ignored)
+  [-c|--command] "new-session" ···  tmux command that will be called with constructed arguments; default is "new-session"
   ["command 1" "command 2" ...] ··  shell commands to be executed in each pane (num commands cannot exceed total pane count)
 '
   # shellcheck disable=SC2016
@@ -1010,8 +1045,10 @@ For complete documentation, please see https://github.com/evnp/tmex#readme
   argversion=FALSE   # optional - if TRUE, display version and exit
   argsimulator=FALSE # optional - if TRUE, use simulator-generated commands
   argcmds=''         # optional - list of commands to be executed in resulting panes
+  argtmuxcmd=''      # optional - tmux command to call; default is "new-session"
 
   # begin to construct tmux arguments
+  tmuxcmd=''
   tmuxargs=()
 
   # --- Multi-Window Management --- #
@@ -1036,6 +1073,7 @@ For complete documentation, please see https://github.com/evnp/tmex#readme
           buildtmuxargs "${argsession}" "${tmexargs[@]:-}"
         fi
         tmexargs=()
+        argtmuxcmd=''
         argwindow=''
         argfocus=''
         arglayout=''
@@ -1121,7 +1159,7 @@ For complete documentation, please see https://github.com/evnp/tmex#readme
     echo "${output}"
   else
     # either attach to an existing session or kill it based on specified behavior
-    if [[ -z "${TMUX_PANE:-}" ]]; then # avoid doing this if we're already in tmux session
+    if [[ -z "${TMUX_PANE:-}" && "${tmuxcmd}" == 'new-session' ]]; then # avoid doing this if we're already in tmux session
       if tmux has-session -t "${argsession}" 2>/dev/null; then
         if [[ "${argreattach}" == TRUE ]]; then
           tmux attach-session -t "${argsession}"

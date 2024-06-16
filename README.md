@@ -105,6 +105,7 @@ tmex <session-name> ··············  session name required unless -
   [-r|--reattach] ················  if tmux session already exists, re-attach to it instead of replacing it
   [-s|--shellless] ···············  if set, invoke commands directly with tmux instead of running inside shell
   [-k|--kill] ····················  kill the current or specified tmux session (all other arguments ignored)
+  [-c|--command] "new-session" ···  tmux command that will be called with constructed arguments; default is "new-session"
   ["command 1" "command 2" ...] ··  shell commands to be executed in each pane (num commands cannot exceed total pane count)
 ```
 
