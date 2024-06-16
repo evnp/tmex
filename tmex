@@ -20,6 +20,10 @@ function processargs() {
     argsession=""
   elif [[ "${argsession}" =~ ^-[dfhklnprstvV]+ ]]; then
     argsession=""
+  elif [[ -n "${TMUX_PANE:-}" && -z "$( validatelayout "${argsession}" )" ]]; then
+    # also allow skipping session name if we're already inside another tmux session,
+    # and first arg is a valid layout
+    argsession=""
   else
     (( argidx++ )) || true
   fi
@@ -126,6 +130,11 @@ function processargs() {
     argsession=''
   fi
 
+  # allow omission of session name if we're already inside a tmux session
+  if [[ -z "${argsession}" && -n "${TMUX_PANE:-}" ]]; then
+    argsession=""
+  fi
+
   # allow omission of session name if --npm is set
   if [[ -z "${argsession}" && "${argnpm}" == TRUE ]]; then
     argsession="${npm_package_name:-}"
@@ -158,7 +167,7 @@ function processargs() {
     fi
   fi
 
-  if [[ -z "${argsession}" && "${arghelp}" == FALSE && "${argversion}" == FALSE ]]; then
+  if [[ -z "${argsession}" && -z "${TMUX_PANE:-}" && "${arghelp}" == FALSE && "${argversion}" == FALSE ]]; then
     echo ""
     echo "Invalid input: Session name required."
     echo "          Try: $ tmex SESSION-NAME $*"

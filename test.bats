@@ -2265,6 +2265,39 @@ new-session -s testsessionname ; split-window -h -p50 ; select-pane -L ; select-
 	assert_success
 }
 
+# ensure nested tmex commands will select and split their current pane
+# instead of spawning a nested tmux session (allow omission of session name)
+@test "${BATS_TEST_NUMBER} TMUX_PANE=%5 tmex 12 a b c" {
+	run_tmex
+	refute_output -p "new-session"
+	assert_output -p "select-window -t %5 ; select-pane -t %5"
+	assert_layout "
+			 send-keys a Enter
+		split-window -h -p50
+			 send-keys b Enter
+		 select-pane -L
+		 select-pane -R
+		split-window -v -p50
+			 send-keys c Enter
+	"
+	assert_success
+}
+
+# ensure nested tmex commands will select and split their current pane
+# instead of spawning a nested tmux session (allow omission of session name)
+@test "${BATS_TEST_NUMBER} TMUX_PANE=%5 tmex 12" {
+	run_tmex
+	refute_output -p "new-session"
+	assert_output -p "select-window -t %5 ; select-pane -t %5"
+	assert_layout "
+		split-window -h -p50
+		 select-pane -L
+		 select-pane -R
+		split-window -v -p50
+	"
+	assert_success
+}
+
 @test "${BATS_TEST_NUMBER} TMUX_PANE=%5 tmex --kill" {
 	run_tmex
 	assert_output -p "kill-session -t ${TMUX_PANE}"
