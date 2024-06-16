@@ -326,6 +326,22 @@ tmex your-session-name --window '' 123 --window '' 44     # equivalent
 
 **NOTE** that you must _always_ specify a top-level session name when using multiple windows, even if `--npm` / `-n` is specified. This is because npm-mode will be applied on a per-window basis, not to the session as a whole -- necessary if you want to run commands in _some_ windows as NPM scripts, but not commands in _all_ windows.
 
+Usage within tmux sessions (new in [v2.0.0-rc.7](https://github.com/evnp/tmex/releases/tag/v2.0.0-rc.7) 🐣)
+---------------------------------------------------------------------------------------------
+You can use tmex within an existing tmux session to split panes or create additional windows, using the full suite of layout features. Usage within a tmux session will be automatically detected by tmex, and it will avoid spawning a nested tmux session. You may omit session name from the tmex command in these cases (otherwise it will be ignored):
+```sh
+# within a tmux session
+tmex 123             # split current pane into a 123 layout
+tmex -w- 123         # same as above, split current pane within current window
+tmex -w- 123 -w- 44  # same as above, and also add a new window with 44 layout
+```
+There's some possible ambiguity when invoking shell commands with nested tmex calls, since the first command may be treated as a session name and ignored. To avoid this, use `--` to explicitly stop argument parsing and treat all following arguments as shell commands:
+```sh
+# within a tmux session
+tmex "cmd a" "cmd b" "cmd c"   # INCORRECT - "cmd a" treated as session name and ignored
+tmex -- "cmd a" "cmd b" "cmd c"  # CORRECT - "cmd a" treated as shell command
+```
+
 Kill command (new in [v2.0.0-rc.7](https://github.com/evnp/tmex/releases/tag/v2.0.0-rc.7) 🐣)
 ---------------------------------------------------------------------------------------------
 

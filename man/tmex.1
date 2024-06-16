@@ -320,6 +320,26 @@ tmex your\-session\-name \-\-window '' 123 \-\-window '' 44     # equivalent
 \fBNOTE\fR that \fB\-w&#39;&#39;\fP  does \fInot\fR work, since shell string concatenation causes this to be treated as simply \fB\-w\fP and the \fInext\fR arg will be inadvertently used as the window name\.
 .P
 \fBNOTE\fR that you must \fIalways\fR specify a top\-level session name when using multiple windows, even if \fB\-\-npm\fP / \fB\-n\fP is specified\. This is because npm\-mode will be applied on a per\-window basis, not to the session as a whole \-\- necessary if you want to run commands in \fIsome\fR windows as NPM scripts, but not commands in \fIall\fR windows\.
+.SH Usage within tmux sessions 
+.P
+You can use tmex within an existing tmux session to split panes or create additional windows, using the full suite of layout features\. Usage within a tmux session will be automatically detected by tmex, and it will avoid spawning a nested tmux session\. You may omit session name from the tmex command in these cases :
+.RS 2
+.nf
+# within a tmux session
+tmex 123             # split current pane into a 123 layout
+tmex \-w\- 123         # same as above, split current pane within current window
+tmex \-w\- 123 \-w\- 44  # same as above, and also add a new window with 44 layout
+.fi
+.RE
+.P
+There's some possible ambiguity when invoking shell commands with nested tmex calls, since the first command may be treated as a session name and ignored\. To avoid this, use \fB\-\-\fP to explicitly stop argument parsing and treat all following arguments as shell commands:
+.RS 2
+.nf
+# within a tmux session
+tmex "cmd a" "cmd b" "cmd c"   # INCORRECT \- "cmd a" treated as session name and ignored
+tmex \-\- "cmd a" "cmd b" "cmd c"  # CORRECT \- "cmd a" treated as shell command
+.fi
+.RE
 .SH Kill command 
 .P
 You can kill a tmux session from anywhere using
