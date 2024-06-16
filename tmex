@@ -1001,8 +1001,7 @@ tmex <session-name> ··············  session name required unless -
   ["command 1" "command 2" ...] ··  shell commands to be executed in each pane (num commands cannot exceed total pane count)
 '
   # shellcheck disable=SC2016
-  help='-l, --layout
-  If no layout is provided, a default will be generated to match the number of commands provided.
+  help='-l, --layout : If no layout is provided, a default will be generated to match the number of commands provided.
   Otherwise, layout must be a string of 0-9 [ ] { } . - + chars. Each digit divides a column into a number of panes, e.g.
     $ tmex -n --layout=1224
   This layout produces 1 pane in the first column, 2 panes in the 2nd and 3rd columns, and 4 panes in the 4th column.
@@ -1011,25 +1010,18 @@ tmex <session-name> ··············  session name required unless -
   The layout contains the sub-layout 2{34}5 which will be constructed within the second column.
   The sub-layout specifies 3/4 sizing ratio for the 2 panes in its first row.
 
--f, --focus
-  To start your tmux session with a specific pane selected/focused, pass --focus <index> or -f<index> to your tmex command.
+-f, --focus : To start your tmux session with a specific pane selected/focused, pass --focus <index> or -f<index> to your tmex command.
   Negative indices are supported (following same behavior as tmux'\''s select-pane command).
   Alternately, you may use + and - characters within a layout to select the first or last pane within a row/column of panes.
     $ tmex -n --layout=12+34    # select first pane in second column
     $ tmex -n --layout=1234+++  # select third pane in fourth column
     $ tmex -n --layout=123-4    # select last pane in third column
-    $ tmex -n --layout=123--4   # select second-to-last pane in third column
 
--w, --window
-  To start your tmux session with multiple windows, separate multiple complete sets of tmex arguments with -w or --window:
+-w, --window : To start your tmux session with multiple windows, separate multiple complete sets of tmex arguments with -w or --window:
     $ tmex your-session-name --window abc 123 -w efg 44  # create two windows named "abc" and "efg" with layouts 123 and 44
-    $ tmex your-session-name -w abc -f4 123 "cmd1" "cmd2" -w efg -f-2 44 "cmd3"  # same as above, with commands added
-  You can create "unnamed" windows using the following shorthand:
-    $ tmex your-session-name -w- 123 -w- 44  # create two windows without names, with layouts 123 and 44
-    $ tmex your-session-name --window - 123 --window - 44  # equivalent
+    $ tmex your-session-name -w abc 123 "cmd1" "cmd2" -w efg 44 "cmd3"  # same as above, with commands added
 
-For complete documentation, please see https://github.com/evnp/tmex#readme
-'
+For complete documentation, please see https://github.com/evnp/tmex#readme'
 
   argdetached=FALSE  # optional - if TRUE, invoke tmux with -d flag (detached session)
   argfocus=''        # optional - tmux pane to select by index
