@@ -24,6 +24,9 @@ function processargs() {
     # also allow skipping session name if we're already inside another tmux session,
     # and first arg is a valid layout
     argsession=""
+  elif [[ "${argsession}" == '--' ]]; then
+    # finally, allow skipping session name via explicit stop of argument parsing
+    argsession=""
   else
     (( argidx++ )) || true
   fi
@@ -86,7 +89,11 @@ function processargs() {
       (( argidx++ )) || true
       arg="${arg#-}"  # remove "-" prefix
       flags="${arg}"
+    elif [[ "${arg}" == '--' ]]; then
+      # explicit stop of arg parsing
+      break
     else
+      # implicit stop of arg parsing
       break
     fi
 
@@ -110,15 +117,20 @@ function processargs() {
     fi
   done
 
-  # if next arg is a valid layout, use it as layout instead of shell command
-  arg="${args[argidx]:-}"
-  if [[ -z "${arglayout}" && -z "$( validatelayout "${arg}" )" ]]; then
+  if [[ "${arg}" == '--' ]]; then
+    # explicit stop of arg parsing; go straight to processing shell commands below
     (( argidx++ )) || true
-    arglayout="${arg}"
+  else
+    # if next arg is a valid layout, use it as layout instead of shell command
+    arg="${args[argidx]:-}"
+    if [[ -z "${arglayout}" && -z "$( validatelayout "${arg}" )" ]]; then
+      (( argidx++ )) || true
+      arglayout="${arg}"
 
-    # continue to parse args:
-    processargs "${argsession}" "${args[@]:argidx}"
-    return
+      # continue to parse args:
+      processargs "${argsession}" "${args[@]:argidx}"
+      return
+    fi
   fi
 
   # use rest of args as shell commands
