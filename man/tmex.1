@@ -147,7 +147,7 @@ make the third column \fB4\fP fill the remainder  of the screen
 
 .RE
 .P
-This special case is accomplished by placing the sizing clause at the \fIstart\fR of the layout :
+This special case is handled by placing the sizing clause at the \fIstart\fR of the layout :
 .RS 2
 .nf
 tmex your\-session\-name \-\-layout={321}234
@@ -168,7 +168,7 @@ tmex your\-session\-name \-\-layout={321}234
 .fi
 .RE
 .P
-\fBNOTE:\fR This can be accomplished \fIwithout\fR special casing, using sub\-layouts and the transposition feature:
+\fBNOTE:\fR The same can be accomplished \fIwithout\fR special casing, using sub\-layouts and the transposition feature:
 .RS 2
 .nf
 tmex your\-session\-name \-\-transpose \-\-layout=[234]{321}    # equivalent to \-\-layout={321}234 above
@@ -420,11 +420,11 @@ Verify installation:
 .RS 2
 .nf
 tmex \-v
-==> tmex 2\.0\.0\-rc\.8
+==> tmex 2\.0\.0
 
 brew test tmex
 ==> Testing tmex
-==> /opt/homebrew/Cellar/tmex/2\.0\.0\-rc\.8/bin/tmex test \-\-print 1234 hello world
+==> /opt/homebrew/Cellar/tmex/2\.0\.0/bin/tmex test \-\-print 1234 hello world
 .fi
 .RE
 .P
