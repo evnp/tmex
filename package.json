@@ -22,7 +22,7 @@
     "simulate": "./simulator",
     "man": "sed '1,/^Usage$/d' README.md | sed '1s/^/DESCRIPTION\\nBasic usage:\\n/' | marked-man --name=tmex | sed -E 's/^(..Btmex)/\\1 – “tmux-execute” – a lightweight tmux command \\& layout composer/' | tr '\\n' '\\r' | sed -E 's/\\([^\\)]*\\)//g' | tr '\\r' '\\n' > ./man/tmex.1",
     "release": "npm pack && tar -xvzf *.tgz && rm -rf package *.tgz && echo $'\n'\"Press ENTER to publish the files above · CTRL+C to cancel · node $( node -v ) · npm $( npm -v )\"$'\n\n' && head -n 1 >/dev/null && npm publish",
-    "prerelease": "npm pack && tar -xvzf *.tgz && rm -rf package *.tgz && echo $'\n'\"Press ENTER to publish the files above (tag=next) · CTRL+C to cancel · node $( node -v ) · npm $( npm -v )\"$'\n\n' && head -n 1 >/dev/null && npm publish --tag next",
+    "releasenext": "npm pack && tar -xvzf *.tgz && rm -rf package *.tgz && echo $'\n'\"Press ENTER to publish the files above (tag=next) · CTRL+C to cancel · node $( node -v ) · npm $( npm -v )\"$'\n\n' && head -n 1 >/dev/null && npm publish --tag next",
     "tf": "npm run -s testf",
     "ti": "npm run -s testi",
     "tn": "npm run -s testn",
