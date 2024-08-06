@@ -14,11 +14,11 @@ function processargs() {
   argsession="${args[argidx]:-}"
 
   # check if we're skipping session name, if it matches another arg type
-  if [[ "${argsession}" =~ ^--(detached|help|kill|npm|print|reattach|shellless|transpose|version)$ ]]; then
+  if [[ "${argsession}" =~ ^--(detached|help|kill|npm|print|reattach|shellless|transpose|quiet|version)$ ]]; then
     argsession=""
   elif [[ "${argsession}" =~ ^--(command|focus|layout) ]]; then
     argsession=""
-  elif [[ "${argsession}" =~ ^-[cdfhklnprstvV]+ ]]; then
+  elif [[ "${argsession}" =~ ^-[cdfhklnprstqvV]+ ]]; then
     argsession=""
   elif [[ -n "${TMUX_PANE:-}" && -z "$( validatelayout "${argsession}" )" ]]; then
     # also allow skipping session name if we're already inside another tmux session,
@@ -92,7 +92,7 @@ function processargs() {
         exit 1
       fi
 
-    elif [[ "${arg}" =~ ^--(detached|help|kill|npm|print|reattach|shellless|transpose|version|simulator)$ ]]; then
+    elif [[ "${arg}" =~ ^--(detached|help|kill|npm|print|reattach|shellless|transpose|quiet|version|simulator)$ ]]; then
       (( argidx++ )) || true
       arg="${arg#--}"  # remove "--" prefix
       case "${arg}" in
@@ -104,10 +104,11 @@ function processargs() {
         'shellless') argshellless=TRUE;;
         'transpose') argtranspose=TRUE;;
         'kill')      argkill=TRUE;;
+        'quiet')     argquiet=TRUE;;
         'version')   argversion=TRUE;;
         'simulator') argsimulator=TRUE;;
       esac
-    elif [[ "${arg}" =~ ^-[dhknprstvV]+$ ]]; then
+    elif [[ "${arg}" =~ ^-[dhknprstqvV]+$ ]]; then
       (( argidx++ )) || true
       arg="${arg#-}"  # remove "-" prefix
       flags="${arg}"
@@ -131,6 +132,7 @@ function processargs() {
           's') argshellless=TRUE;;
           't') argtranspose=TRUE;;
           'k') argkill=TRUE;;
+          'q') argquiet=TRUE;;
           'v') argversion=TRUE;;
           'V') argversion=TRUE;; # accept either casing of v/V for parity with tmux
         esac
@@ -193,7 +195,7 @@ function processargs() {
   fi
 
   # warn and exit of --kill was specified but other arguments were provided
-  if [[ "${argkill:-}" == TRUE ]]; then
+  if [[ "${argkill:-}" == TRUE && "${argquiet:-}" != TRUE ]]; then
     if (( ${#argcmds[@]} > 0 )) || [[ "${argdetached}" == TRUE || "${argnpm}" == TRUE || "${argreattach}" == TRUE || "${argshellless}" == TRUE || "${argtranspose}" == TRUE ]]; then
       echo "You specified --kill (-k) but there are extra args."
       echo "Run command again without extra args if you want to kill the session."
@@ -202,10 +204,12 @@ function processargs() {
   fi
 
   if [[ -z "${argsession}" && -z "${TMUX_PANE:-}" && "${arghelp}" == FALSE && "${argversion}" == FALSE ]]; then
-    echo ""
-    echo "Invalid input: Session name required."
-    echo "          Try: $ tmex SESSION-NAME $*"
-    echo ""
+    if [[ "${argquiet:-}" != TRUE ]]; then
+      echo ""
+      echo "Invalid input: Session name required."
+      echo "          Try: $ tmex SESSION-NAME $*"
+      echo ""
+    fi
     exit 1
   fi
 
@@ -718,13 +722,17 @@ function buildtmuxargs() {
     exit 0
   fi
 
-  # if -k/--kill specified tmux session and exit:
+  # if -k/--kill specified, kill tmux session then exit:
   if [[ "${argkill:-}" == TRUE ]]; then
     tmuxargs=("kill-session" "-t" "${argsession}")
     if [[ "${argprint}" == TRUE ]]; then
       echo "${tmuxargs[@]}"
     else
-      tmux "${tmuxargs[@]}"
+      if [[ "${argquiet:-}" == TRUE ]]; then
+        tmux "${tmuxargs[@]}" &>/dev/null
+      else
+        tmux "${tmuxargs[@]}"
+      fi
     fi
     exit 0
   fi
@@ -936,7 +944,7 @@ function buildtmuxargs() {
 function main() {
   local argtmuxcmd argcmds argdetached argfocus arghelp argkill
   local argnpm argprint argreattach argsession argshellless argtranspose
-  local argversion argwindow firstwindowarg nextwindowidx focuswindowidx
+  local argquiet argversion argwindow firstwindowarg nextwindowidx focuswindowidx
   local arglayout arglayoutoriginal
 
   local args tmuxcmd tmexargs tmuxargs idx output version tmuxversion usage help
@@ -997,6 +1005,7 @@ tmex <session-name> ··············  session name required unless -
   [-r|--reattach] ················  if tmux session already exists, re-attach to it instead of replacing it
   [-s|--shellless] ···············  if set, invoke commands directly with tmux instead of running inside shell
   [-k|--kill] ····················  kill the current or specified tmux session (all other arguments ignored)
+  [-q|--quiet] ···················  suppress any stdout and stderr output from tmex (tmex argument errors will still be logged)
   [-c|--command] "new-session" ···  tmux command that will be called with constructed arguments; default is "new-session"
   ["command 1" "command 2" ...] ··  shell commands to be executed in each pane (num commands cannot exceed total pane count)
 '
@@ -1152,21 +1161,34 @@ For complete documentation, please see https://github.com/evnp/tmex#readme'
   else
     # either attach to an existing session or kill it based on specified behavior
     if [[ -z "${TMUX_PANE:-}" && "${tmuxcmd}" == 'new-session' ]]; then # avoid doing this if we're already in tmux session
-      if tmux has-session -t "${argsession}" 2>/dev/null; then
+      if tmux has-session -t "${argsession}" &>/dev/null; then
         if [[ "${argreattach}" == TRUE ]]; then
-          tmux attach-session -t "${argsession}"
+          if [[ "${argquiet:-}" == TRUE ]]; then
+            tmux attach-session -t "${argsession}" &>/dev/null
+          else
+            tmux attach-session -t "${argsession}"
+          fi
           exit 0
         else
-          tmux kill-session -t "${argsession}"
+          if [[ "${argquiet:-}" == TRUE ]]; then
+            tmux kill-session -t "${argsession}" &>/dev/null
+          else
+            tmux kill-session -t "${argsession}"
+          fi
         fi
       fi
     fi
 
-    # execute constructed tmux command
-    tmux "${tmuxargs[@]}"
+    if [[ "${argquiet:-}" == TRUE ]]; then
+      # execute constructed tmux command
+      tmux "${tmuxargs[@]}" &>/dev/null
+    else
+      # execute constructed tmux command
+      tmux "${tmuxargs[@]}"
 
-    # ouput session name for later attachment, setting options, etc.
-    echo "${argsession}"
+      # ouput session name for later attachment, setting options, etc.
+      echo "${argsession}"
+    fi
   fi
 }
 

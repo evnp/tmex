@@ -20,6 +20,7 @@ function teardown_file() {
 }
 
 function mock_tmux() {
+	rm -rf testbin
 	mkdir testbin
 	export PATH="./testbin:$PATH"
 	cat <<-EOF > ./testbin/tmux
@@ -78,6 +79,18 @@ function run_tmex() {
 @test "${BATS_TEST_NUMBER} tmex testsessionname" {
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname -q" {
+	run_tmex
+	refute_output -p "new-session"
+	refute_output -p "testsessionname"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname --quiet" {
+	run_tmex
+	refute_output -p "new-session"
+	refute_output -p "testsessionname"
 	assert_success
 }
 
@@ -214,6 +227,22 @@ layout_1234="
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_1234}"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname -q 1234" {
+	run_tmex
+	refute_output -p "new-session"
+	refute_output -p "testsessionname"
+	refute_output -p "split-window"
+	refute_output -p "select-pane"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} tmex testsessionname --quiet 1234" {
+	run_tmex
+	refute_output -p "new-session"
+	refute_output -p "testsessionname"
+	refute_output -p "split-window"
+	refute_output -p "select-pane"
 	assert_success
 }
 @test "${BATS_TEST_NUMBER} tmex testsessionname 1.2.3.4" {
