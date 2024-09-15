@@ -16,7 +16,7 @@ function processargs() {
   # check if we're skipping session name, if it matches another arg type
   if [[ "${argsession}" =~ ^--(detached|help|kill|npm|print|reattach|shellless|transpose|quiet|version)$ ]]; then
     argsession=""
-  elif [[ "${argsession}" =~ ^--(command|focus|layout) ]]; then
+  elif [[ "${argsession}" =~ ^--(command|focus|layout|set-) ]]; then
     argsession=""
   elif [[ "${argsession}" =~ ^-[cdfhklnprstqvV]+ ]]; then
     argsession=""
@@ -88,6 +88,23 @@ function processargs() {
       if ! [[ "${argtmuxcmd}" =~ ^[a-z0-9-]+$ ]]; then
         echo ""
         echo "Invalid input: --command (-c) arg value must be a valid tmux command, eg. new-window."
+        echo ""
+        exit 1
+      fi
+
+    elif [[ "${arg}" =~ ^(--set-) ]]; then
+      (( argidx++ )) || true
+      if [[ "${arg}" =~ ^--set-([a-zA-Z0-9-]+)$ ]]; then
+        arg="${args[argidx]:-}"
+        (( argidx++ )) || true
+        argsetting+=( "${BASH_REMATCH[1]}" )
+        argsettingvalues+=( "${arg}" )
+      elif [[ "${arg}" =~ ^--set-([a-zA-Z0-9-]+)\=(.*)$ ]]; then
+        argsettings+=( "${BASH_REMATCH[1]}" )
+        argsettingvalues+=( "${BASH_REMATCH[2]}" )
+      else
+        echo ""
+        echo "Invalid input: ${arg} arg must be a valid tmux setting, eg. --set-status=off"
         echo ""
         exit 1
       fi
@@ -942,8 +959,8 @@ function buildtmuxargs() {
 }
 
 function main() {
-  local argtmuxcmd argcmds argdetached argfocus arghelp argkill
-  local argnpm argprint argreattach argsession argshellless argtranspose
+  local argtmuxcmd argcmds argsettings argsettingvalues argdetached argfocus arghelp
+  local argnpm argprint argreattach argsession argshellless argtranspose argkill
   local argquiet argversion argwindow firstwindowarg nextwindowidx focuswindowidx
   local arglayout arglayoutoriginal
 
@@ -1032,21 +1049,23 @@ tmex <session-name> ··············  session name required unless -
 
 For complete documentation, please see https://github.com/evnp/tmex#readme'
 
-  argdetached=FALSE  # optional - if TRUE, invoke tmux with -d flag (detached session)
-  argfocus=''        # optional - tmux pane to select by index
-  arghelp=FALSE      # optional - if TRUE, display usage message and exit
-  arglayout=''       # optional - string of digits defining a custom layout
-  argnpm=FALSE       # optional - if TRUE, prefix each command with "npm run" for package.json scripts
-  argprint=FALSE     # optional - if TRUE, print final tmux command to console instead of executing it
-  argreattach=FALSE  # optional - if TRUE, re-attach to existing tmux session isntead of replacing it
-  argsession=''      # required - session name
-  argwindow=''       # optional - window name
-  argshellless=FALSE # optional - if TRUE, execute commands standalone instead of in a shell
-  argtranspose=FALSE # optional - if TRUE, layout in left-to-right instead of top-to-bottom orientation
-  argversion=FALSE   # optional - if TRUE, display version and exit
-  argsimulator=FALSE # optional - if TRUE, use simulator-generated commands
-  argcmds=''         # optional - list of commands to be executed in resulting panes
-  argtmuxcmd=''      # optional - tmux command to call; default is "new-session"
+  argdetached=FALSE   # optional - if TRUE, invoke tmux with -d flag (detached session)
+  argfocus=''         # optional - tmux pane to select by index
+  arghelp=FALSE       # optional - if TRUE, display usage message and exit
+  arglayout=''        # optional - string of digits defining a custom layout
+  argnpm=FALSE        # optional - if TRUE, prefix each command with "npm run" for package.json scripts
+  argprint=FALSE      # optional - if TRUE, print final tmux command to console instead of executing it
+  argreattach=FALSE   # optional - if TRUE, re-attach to existing tmux session isntead of replacing it
+  argsession=''       # required - session name
+  argwindow=''        # optional - window name
+  argshellless=FALSE  # optional - if TRUE, execute commands standalone instead of in a shell
+  argtranspose=FALSE  # optional - if TRUE, layout in left-to-right instead of top-to-bottom orientation
+  argversion=FALSE    # optional - if TRUE, display version and exit
+  argsimulator=FALSE  # optional - if TRUE, use simulator-generated commands
+  argcmds=()          # optional - list of commands to be executed in resulting panes
+  argsettings=()      # optional - list of tmux settings that will be applied on init
+  argsettingvalues=() # optional - list of tmux setting values that will be applied on init
+  argtmuxcmd=''       # optional - tmux command to call; default is "new-session"
 
   # begin to construct tmux arguments
   tmuxcmd=''
@@ -1080,7 +1099,9 @@ For complete documentation, please see https://github.com/evnp/tmex#readme'
         arglayout=''
         argnpm=FALSE
         argtranspose=FALSE
-        argcmds=''
+        argcmds=()
+        argsettings=()
+        argsettingvalues=()
       fi
       if [[ "${args[idx]:-}" =~ ^(-w|-W|--window|--window-focus)$ ]]; then
         if [[ "${args[idx]:-}" =~ ^(-W|--window-focus)$ ]]; then
@@ -1146,6 +1167,13 @@ For complete documentation, please see https://github.com/evnp/tmex#readme'
       echo
       echo
     fi
+  fi
+
+  # Apply any additional settings specified for tmux session:
+  if (( ${#argsettings[@]} )); then
+    for (( idx = 0; idx < ${#argsettings[@]}; idx++ )); do
+      tmuxargs+=( ';' 'set' "${argsettings[idx]}" "${argsettingvalues[idx]}" )
+    done
   fi
 
   if [[ "${argprint}" == TRUE ]]; then
