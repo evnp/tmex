@@ -1,4 +1,4 @@
-A lightweight tmux command & layout composer - one shell script + tmux + zero other dependencies
+Lightweight tmux command/layout composer · 1 shell script · 0 dependencies exc. tmux
 
 ```
  ______   __    __    ______    __  __
