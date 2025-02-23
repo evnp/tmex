@@ -211,7 +211,7 @@ function processargs() {
     fi
   fi
 
-  # warn and exit of --kill was specified but other arguments were provided
+  # warn and exit if --kill was specified but other arguments were provided
   if [[ "${argkill:-}" == TRUE && "${argquiet:-}" != TRUE ]]; then
     if (( ${#argcmds[@]} > 0 )) || [[ "${argdetached}" == TRUE || "${argnpm}" == TRUE || "${argreattach}" == TRUE || "${argshellless}" == TRUE || "${argtranspose}" == TRUE ]]; then
       echo "You specified --kill (-k) but there are extra args."
@@ -746,7 +746,7 @@ function buildtmuxargs() {
       echo "${tmuxargs[@]}"
     else
       if [[ "${argquiet:-}" == TRUE ]]; then
-        tmux "${tmuxargs[@]}" &>/dev/null
+        tmux "${tmuxargs[@]}" &>/dev/null || true  # ignore errors; always exit 0
       else
         tmux "${tmuxargs[@]}"
       fi
