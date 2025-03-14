@@ -16,7 +16,7 @@ Lightweight tmux command/layout composer · 1 shell script · 0 dependencies exc
 
 **Contents** - [Usage](https://github.com/evnp/tmex#usage) | [Layout](https://github.com/evnp/tmex#layout) | [npm](https://github.com/evnp/tmex#npm) | [Install](https://github.com/evnp/tmex#install) | [Tests](https://github.com/evnp/tmex#tests) | [License](https://github.com/evnp/tmex#license)
 
-**New in [v2](https://github.com/evnp/tmex/releases/tag/v2.0.2)** 🐣 <br> [Multi-window management](https://github.com/evnp/tmex#multi-window-management-new-in-v2-) | [Focused-pane control](https://github.com/evnp/tmex#focused-pane-control-new-in-v2-) | [Multi-digit pane counts](https://github.com/evnp/tmex#multi-digit-pane-counts-new-in-v2-) | [Top-level sizing](https://github.com/evnp/tmex#top-level-layout-sizing-new-in-v2-) | [Grid sub-layouts](https://github.com/evnp/tmex#grid-sub-layouts-new-in-v2-)
+**New in [v2](https://github.com/evnp/tmex/releases/tag/v2.0.3)** 🐣 <br> [Multi-window management](https://github.com/evnp/tmex#multi-window-management-new-in-v2-) | [Focused-pane control](https://github.com/evnp/tmex#focused-pane-control-new-in-v2-) | [Multi-digit pane counts](https://github.com/evnp/tmex#multi-digit-pane-counts-new-in-v2-) | [Top-level sizing](https://github.com/evnp/tmex#top-level-layout-sizing-new-in-v2-) | [Grid sub-layouts](https://github.com/evnp/tmex#grid-sub-layouts-new-in-v2-)
 
 If you'd like to jump straight to installing tmex, please go to the [Install](https://github.com/evnp/tmex#install) section or try one of these:
 ```sh
@@ -181,14 +181,14 @@ tmex your-session-name --layout={152}1[2{13}1]4{4112}
 ```
 Note that the sublayout `[2{13}1]` is treated as a single column when sizing is applied, so that set of panes as a whole receives `5` as its width relative to the other columns.
 
-Top-level layout sizing (new in [v2](https://github.com/evnp/tmex/releases/tag/v2.0.2) 🐣)
+Top-level layout sizing (new in [v2](https://github.com/evnp/tmex/releases/tag/v2.0.3) 🐣)
 ----------------------------------------------------------------------------------------------------
 Since a sizing clause like `{123}` always _follows_ a pane count number within a layout, you may be wondering how sizing could be applied to the "top level" columns (or rows) of a layout. For example, given the layout `234`, how could you:
 - make the first column `2` fill half the screen
 - make the second column `3` fill a third of the screen
 - make the third column `4` fill the remainder (one sixth) of the screen
 
-This special case is handled by placing the sizing clause at the _start_ of the layout (prior to [v2](https://github.com/evnp/tmex/releases/tag/v2.0.2), this would result in an invalid layout error):
+This special case is handled by placing the sizing clause at the _start_ of the layout (prior to [v2](https://github.com/evnp/tmex/releases/tag/v2.0.3), this would result in an invalid layout error):
 ```sh
 tmex your-session-name --layout={321}234
 >>>
@@ -213,7 +213,7 @@ tmex your-session-name --layout=[[234]{321}]              # also equivalent
 ```
 These may be functionally equivalent, but they're a far cry from intuitive! Feel free to use whichever of the three forms makes the most logical sense to you though.
 
-Grid sub-layouts (new in [v2](https://github.com/evnp/tmex/releases/tag/v2.0.2) 🐣)
+Grid sub-layouts (new in [v2](https://github.com/evnp/tmex/releases/tag/v2.0.3) 🐣)
 ---------------------------------------------------------------------------------------------
 
 Sometimes you might want a row/column of your layout to contain a grid of N panes, laid out using the default algorithm. This is done by placing `{+}` _after_ a number of panes in the layout. This can be thought of as "requesting a grid layout" for the preceeding number of panes – `+` is a visual mnemonic in that it separates the space within `{ }` in a grid-like formation.
@@ -240,7 +240,7 @@ tmex your-session-name --layout=31224
 ```
 because `5{+}` is expanded to `122`, which is the default grid layout when 5 panes are required. You can experiment with commands such as `tmex your-session-name --layout=7{+}` to see what default grid layout is produced for each number of panes. In general, each default grid layout attempts to equalize pane sizes, widths, and heights as much as possible, keeping the largest pane on the left with odd numbers of panes.
 
-Multi-digit pane counts (new in [v2](https://github.com/evnp/tmex/releases/tag/v2.0.2) 🐣)
+Multi-digit pane counts (new in [v2](https://github.com/evnp/tmex/releases/tag/v2.0.3) 🐣)
 ----------------------------------------------------------------------------------------------------
 For any of the layouts above, pane counts 10 and greater can be achieved by separating digits with `.` characters. For example:
 ```sh
@@ -264,7 +264,7 @@ tmex your-session-name --layout=11.[23]45[6.7]8.
 ```
 `11.` is treated as multi-digit, and produces a column 11 panes. `23` are treated as a sublayout of single-digit pane counts, producing 5 panes total. `45` have no adjacent `.` characters so they produce columns of 4 and 5 panes. `6.7` are treated as multi-digit, but still produce separate rows (in their sublayout) of 6 and 7 panes respectively – the `.` has no effect. Finally, `8.` is treated as multi-digit due to the adjacent `.` but still produces a column of 8 panes – the `.` has no effect).
 
-Focused Pane Control (new in [v2](https://github.com/evnp/tmex/releases/tag/v2.0.2) 🐣)
+Focused Pane Control (new in [v2](https://github.com/evnp/tmex/releases/tag/v2.0.3) 🐣)
 -------------------------------------------------------------------------------------------------
 
 There are a few different ways to select a specific pane to be "focused" – with cursor active inside it – when your layout is initialized.
@@ -294,7 +294,7 @@ tmex your-session-name -f=-10 1357             # shorthand argument + shorthand 
 # this happens to be equivalent to --layout=135---7 from above
 ```
 
-Multi-window management (new in [v2](https://github.com/evnp/tmex/releases/tag/v2.0.2) 🐣)
+Multi-window management (new in [v2](https://github.com/evnp/tmex/releases/tag/v2.0.3) 🐣)
 ----------------------------------------------------------------------------------------------------
 
 You may want to create multiple tmux windows within your tmux session, and navigate between them using **CTRL+B→N** (next), **CTRL+B→P** (previous), **CTRL+B→[0-9]** (select by index).
@@ -328,7 +328,7 @@ tmex your-session-name --window '' 123 --window '' 44     # equivalent
 
 **NOTE** that you must _always_ specify a top-level session name when using multiple windows, even if `--npm` / `-n` is specified. This is because npm-mode will be applied on a per-window basis, not to the session as a whole -- necessary if you want to run commands in _some_ windows as NPM scripts, but not commands in _all_ windows.
 
-Usage within tmux sessions (new in [v2](https://github.com/evnp/tmex/releases/tag/v2.0.2) 🐣)
+Usage within tmux sessions (new in [v2](https://github.com/evnp/tmex/releases/tag/v2.0.3) 🐣)
 ---------------------------------------------------------------------------------------------
 You can use tmex within an existing tmux session to split panes or create additional windows, using the full suite of layout features. Usage within a tmux session will be automatically detected by tmex, and it will avoid spawning a nested tmux session. You may omit session name from the tmex command in these cases (otherwise it will be ignored):
 ```sh
@@ -344,7 +344,7 @@ tmex "cmd a" "cmd b" "cmd c"   # INCORRECT - "cmd a" treated as session name and
 tmex -- "cmd a" "cmd b" "cmd c"  # CORRECT - "cmd a" treated as shell command
 ```
 
-Kill command (new in [v2](https://github.com/evnp/tmex/releases/tag/v2.0.2) 🐣)
+Kill command (new in [v2](https://github.com/evnp/tmex/releases/tag/v2.0.3) 🐣)
 ---------------------------------------------------------------------------------------------
 
 You can kill a tmux session from anywhere using
@@ -407,11 +407,11 @@ read -rp $'\n'"Current \$MANPATH:"$'\n'"${MANPATH//:/ : }"$'\n\n'"Enter a direct
 Verify installation:
 ```sh
 tmex -v
-==> tmex 2.0.2
+==> tmex 2.0.3
 
 brew test tmex
 ==> Testing tmex
-==> /opt/homebrew/Cellar/tmex/2.0.2/bin/tmex test --print 1234 hello world
+==> /opt/homebrew/Cellar/tmex/2.0.3/bin/tmex test --print 1234 hello world
 ```
 
 If you see the output `Warning: tmux is not yet installed, tmex will not work without tmux.` you'll need to install tmux as well.
