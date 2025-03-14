@@ -1159,7 +1159,7 @@ For complete documentation, please see https://github.com/evnp/tmex#readme'
     fi
   fi
 
-  if [[ -z "${TMEX_SUPPRESS_WARNING_NPM:-}" ]]; then
+  if [[ "${argnpm}" == TRUE && -z "${TMEX_SUPPRESS_WARNING_NPM:-}" ]]; then
     if ! command -v npm &>/dev/null; then
       echo "!!! WARNING: You're using tmex with an --npm/-n flag but npm is not installed !!!"
       echo
