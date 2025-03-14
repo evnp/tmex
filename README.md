@@ -107,6 +107,7 @@ tmex <session-name> ··············  session name required unless -
   [-k|--kill] ····················  kill the current or specified tmux session (all other arguments ignored)
   [-q|--quiet] ···················  suppress any stdout and stderr output from tmex (tmex argument errors will still be logged)
   [-c|--command] "new-session" ···  tmux command that will be called with constructed arguments; default is "new-session"
+  [--set-XYZ "value" ] ···········  set tmux option XYZ, eg. "tmex test --set-status=off" -> "tmux -s test ; set status off"
   ["command 1" "command 2" ...] ··  shell commands to be executed in each pane (num commands cannot exceed total pane count)
 ```
 
