@@ -194,7 +194,9 @@ function processargs() {
     # if env var is undefined we're probably running manually instead of from an npm script;
     # try and pull package name from npm env manually
     if [[ -z "${argsession}" ]]; then
-      argsession="$( cut -d "=" -f 2 <<< "$( npm run env 2>/dev/null | grep 'npm_package_name' )" )"
+      argsession="$( cut -d "=" -f 2 <<< "$(
+        "${TMEX_NPM_COMMAND:-npm}" run env 2>/dev/null | grep 'npm_package_name' )"
+      )"
     fi
   fi
 
@@ -761,9 +763,9 @@ function buildtmuxargs() {
       if ! [[ "${argcmds[idx]}" == 'npm '* ]]; then
         # if command is an npm builtin, use `npm <cmd>` instead of `npm run <cmd>`:
         if [[ "|${npmcmds}|" == *"|${argcmds[idx]}|"* ]]; then
-          argcmds[idx]="npm ${argcmds[idx]}"
+          argcmds[idx]="${TMEX_NPM_COMMAND:-npm} ${argcmds[idx]}"
         else
-          argcmds[idx]="npm run ${argcmds[idx]}"
+          argcmds[idx]="${TMEX_NPM_COMMAND:-npm} run ${argcmds[idx]}"
         fi
       fi
     done
@@ -1160,10 +1162,14 @@ For complete documentation, please see https://github.com/evnp/tmex#readme'
   fi
 
   if [[ "${argnpm}" == TRUE && -z "${TMEX_SUPPRESS_WARNING_NPM:-}" ]]; then
-    if ! command -v npm &>/dev/null; then
-      echo "!!! WARNING: You're using tmex with an --npm/-n flag but npm is not installed !!!"
+    if ! command -v "${TMEX_NPM_COMMAND:-npm}" &>/dev/null; then
+      echo "!!! WARNING: You're using tmex with an --npm/-n flag but ${TMEX_NPM_COMMAND:-npm} is not installed !!!"
       echo
-      echo "You may want to install npm first, or remove --npm/-n from your tmex command."
+      if [[ "${TMEX_NPM_COMMAND:-npm}" != 'npm' ]]; then
+        echo "(you've specified TMEX_NPM_COMMAND=${TMEX_NPM_COMMAND} instead of 'npm')"
+        echo
+      fi
+      echo "You may want to install ${TMEX_NPM_COMMAND:-npm} first, or remove --npm/-n from your tmex command."
       echo "'export TMEX_SUPPRESS_WARNING_NPM=1' in shell rc file will hide this warning."
       echo
       echo

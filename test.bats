@@ -61,13 +61,14 @@ function run_tmex() {
 	cmd="${cmd/${BATS_TEST_NUMBER} /}"
 	cmd="${cmd/README /}"
 	cmd="${cmd/tmex/${BATS_TEST_DIRNAME}/tmex}"
-	if [[ "${cmd}" =~ ^([A-Z_]+=[^ ]*) ]]; then
+
+	while [[ "${cmd}" =~ ^([A-Z_]+=[^ ]*) ]]; do
 		# handle env var declarations placed before test command
 		export "${BASH_REMATCH[1]}"
-		run ${cmd/${BASH_REMATCH[1]} /}
-	else
-		run ${cmd}
-	fi
+		cmd=${cmd/${BASH_REMATCH[1]} /}
+	done
+
+	run ${cmd}
 }
 
 @test "${BATS_TEST_NUMBER} tmex" {
@@ -2524,6 +2525,75 @@ function layout_with_new_pct_flags() {
 	# an older tmux version should still be assumed regardless of warning suppression:
 	assert_layout "${layout_1234}"
 	refute_layout "$( layout_with_new_pct_flags "${layout_1234}" )"
+	assert_success
+}
+
+# ensure NPM warning is shown ONLY if -n flag used AND npm command is not available
+@test "${BATS_TEST_NUMBER} TMEX_NPM_COMMAND=alt_npm tmex testingnpmwarning 1234 command" {
+	run_tmex
+	assert_output -p "new-session -s testingnpmwarning"
+	assert_output -p "send-keys command Enter"
+	refute_output -p "!!! WARNING: You're using tmex with an --npm/-n flag but"
+	refute_output -p "(you've specified TMEX_NPM_COMMAND"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} TMEX_NPM_COMMAND=alt_npm tmex testingnpmwarning -n 1234 command" {
+	run_tmex
+	assert_output -p "new-session -s testingnpmwarning"
+	assert_output -p "send-keys \"alt_npm run command\" Enter"
+	assert_output -p "!!! WARNING: You're using tmex with an --npm/-n flag but alt_npm is not installed !!!"
+	assert_output -p "(you've specified TMEX_NPM_COMMAND=alt_npm instead of 'npm')"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} TMEX_NPM_COMMAND=alt_npm tmex testingnpmwarning --npm 1234 command" {
+	run_tmex
+	assert_output -p "new-session -s testingnpmwarning"
+	assert_output -p "send-keys \"alt_npm run command\" Enter"
+	assert_output -p "!!! WARNING: You're using tmex with an --npm/-n flag but alt_npm is not installed !!!"
+	assert_output -p "(you've specified TMEX_NPM_COMMAND=alt_npm instead of 'npm')"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} TMEX_SUPPRESS_WARNING_NPM=1 TMEX_NPM_COMMAND=alt_npm tmex testingnpmwarning -n 1234 command" {
+	run_tmex
+	assert_output -p "new-session -s testingnpmwarning"
+	assert_output -p "send-keys \"alt_npm run command\" Enter"
+	refute_output -p "!!! WARNING: You're using tmex with an --npm/-n flag but"
+	refute_output -p "(you've specified TMEX_NPM_COMMAND"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} TMEX_SUPPRESS_WARNING_NPM=1 TMEX_NPM_COMMAND=alt_npm tmex testingnpmwarning --npm 1234 command" {
+	run_tmex
+	assert_output -p "new-session -s testingnpmwarning"
+	assert_output -p "send-keys \"alt_npm run command\" Enter"
+	refute_output -p "!!! WARNING: You're using tmex with an --npm/-n flag but"
+	refute_output -p "(you've specified TMEX_NPM_COMMAND"
+	assert_success
+}
+# Also test with a command we're pretty sure will be installed (echo).
+# Testing with 'npm' itself is problematic since it may or may not be installed
+# on the system currently running tests.
+@test "${BATS_TEST_NUMBER} TMEX_NPM_COMMAND=echo tmex testingnpmwarning 1234 command" {
+	run_tmex
+	assert_output -p "new-session -s testingnpmwarning"
+	assert_output -p "send-keys command Enter"
+	refute_output -p "!!! WARNING: You're using tmex with an --npm/-n flag but"
+	refute_output -p "(you've specified TMEX_NPM_COMMAND"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} TMEX_NPM_COMMAND=echo tmex testingnpmwarning -n 1234 command" {
+	run_tmex
+	assert_output -p "new-session -s testingnpmwarning"
+	assert_output -p "send-keys \"echo run command\" Enter"
+	refute_output -p "!!! WARNING: You're using tmex with an --npm/-n flag but"
+	refute_output -p "(you've specified TMEX_NPM_COMMAND"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} TMEX_NPM_COMMAND=echo tmex testingnpmwarning --npm 1234 command" {
+	run_tmex
+	assert_output -p "new-session -s testingnpmwarning"
+	assert_output -p "send-keys \"echo run command\" Enter"
+	refute_output -p "!!! WARNING: You're using tmex with an --npm/-n flag but"
+	refute_output -p "(you've specified TMEX_NPM_COMMAND"
 	assert_success
 }
 
