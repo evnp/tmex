@@ -1,4 +1,12 @@
-Lightweight tmux command/layout composer · 1 shell script · 0 dependencies exc. tmux
+<p align="center">Lightweight tmux command/layout composer · 1 shell script · 0 dependencies (exc. tmux)</p>
+
+<p align="center">
+  <a href="https://github.com/evnp/tmex/issues/12#issuecomment-2725764195">
+    <i>Still the best tmux layout manager out there.</i>
+  </a> ~ <b>@vaygr</b>
+</p>
+
+<br>
 
 ```
  ______   __    __    ______    __  __
