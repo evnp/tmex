@@ -3,7 +3,7 @@
 <p align="center">
   <a href="https://github.com/evnp/tmex/issues/12#issuecomment-2725764195">
     <i>Still the best tmux layout manager out there.</i>
-  </a> ~ <b>@vaygr</b>
+  </a> ~&nbsp;<b>@vaygr</b>
 </p>
 
 <br>
