@@ -5,1007 +5,1007 @@
 set -euo pipefail
 
 function processargs() {
-  local args argidx arg flags idx char
+	local args argidx arg flags idx char
 
-  args=( "${@:-}" )
-  argidx=0
+	args=( "${@:-}" )
+	argidx=0
 
-  # session name
-  argsession="${args[argidx]:-}"
+	# session name
+	argsession="${args[argidx]:-}"
 
-  # check if we're skipping session name, if it matches another arg type
-  if [[ "${argsession}" =~ ^--(detached|help|kill|npm|print|reattach|shellless|transpose|quiet|version)$ ]]; then
-    argsession=""
-  elif [[ "${argsession}" =~ ^--(command|focus|layout|set-) ]]; then
-    argsession=""
-  elif [[ "${argsession}" =~ ^-[cdfhklnprstqvV]+ ]]; then
-    argsession=""
-  elif [[ -n "${TMUX_PANE:-}" && -z "$( validatelayout "${argsession}" )" ]]; then
-    # also allow skipping session name if we're already inside another tmux session,
-    # and first arg is a valid layout
-    argsession=""
-  elif [[ "${argsession}" == '--' ]]; then
-    # finally, allow skipping session name via explicit stop of argument parsing
-    argsession=""
-  else
-    (( argidx++ )) || true
-  fi
+	# check if we're skipping session name, if it matches another arg type
+	if [[ "${argsession}" =~ ^--(detached|help|kill|npm|print|reattach|shellless|transpose|quiet|version)$ ]]; then
+		argsession=""
+	elif [[ "${argsession}" =~ ^--(command|focus|layout|set-) ]]; then
+		argsession=""
+	elif [[ "${argsession}" =~ ^-[cdfhklnprstqvV]+ ]]; then
+		argsession=""
+	elif [[ -n "${TMUX_PANE:-}" && -z "$( validatelayout "${argsession}" )" ]]; then
+		# also allow skipping session name if we're already inside another tmux session,
+		# and first arg is a valid layout
+		argsession=""
+	elif [[ "${argsession}" == '--' ]]; then
+		# finally, allow skipping session name via explicit stop of argument parsing
+		argsession=""
+	else
+		(( argidx++ )) || true
+	fi
 
-  while true; do
-    arg="${args[argidx]:-}"
-    if [[ "${arg}" =~ ^(-([dhknprstvV]*)l|--layout) ]]; then
-      (( argidx++ )) || true
-      if [[ "${arg}" != '--layout' ]]; then
-        arg="${arg/-${BASH_REMATCH[2]}/-}"
-      fi
-      if [[ "${arg}" == "-l" || "${arg}" == '--layout' ]]; then
-        arg="${args[argidx]:-}"
-        (( argidx++ )) || true
-      fi
-      arglayout="${arg}"
-      arglayout="${arglayout#--layout}"  # remove possible prefixes (if necessary)
-      arglayout="${arglayout#-l}"
-      arglayout="${arglayout#=}"
-      flags="${BASH_REMATCH[2]}"
+	while true; do
+		arg="${args[argidx]:-}"
+		if [[ "${arg}" =~ ^(-([dhknprstvV]*)l|--layout) ]]; then
+			(( argidx++ )) || true
+			if [[ "${arg}" != '--layout' ]]; then
+				arg="${arg/-${BASH_REMATCH[2]}/-}"
+			fi
+			if [[ "${arg}" == "-l" || "${arg}" == '--layout' ]]; then
+				arg="${args[argidx]:-}"
+				(( argidx++ )) || true
+			fi
+			arglayout="${arg}"
+			arglayout="${arglayout#--layout}"  # remove possible prefixes (if necessary)
+			arglayout="${arglayout#-l}"
+			arglayout="${arglayout#=}"
+			flags="${BASH_REMATCH[2]}"
 
-    elif [[ "${arg}" =~ ^(-([dhknprstvV]*)f|--focus) ]]; then
-      (( argidx++ )) || true
-      if [[ "${arg}" != '--focus' ]]; then
-        arg="${arg/-${BASH_REMATCH[2]}/-}"
-      fi
-      if [[ "${arg}" == "-f" || "${arg}" == "--focus" ]]; then
-        arg="${args[argidx]:-}"
-        (( argidx++ )) || true
-      fi
-      argfocus="${arg}"
-      argfocus="${argfocus#--focus}"  # remove possible prefixes (if necessary)
-      argfocus="${argfocus#-f}"
-      argfocus="${argfocus#=}"
-      flags="${BASH_REMATCH[2]}"
+		elif [[ "${arg}" =~ ^(-([dhknprstvV]*)f|--focus) ]]; then
+			(( argidx++ )) || true
+			if [[ "${arg}" != '--focus' ]]; then
+				arg="${arg/-${BASH_REMATCH[2]}/-}"
+			fi
+			if [[ "${arg}" == "-f" || "${arg}" == "--focus" ]]; then
+				arg="${args[argidx]:-}"
+				(( argidx++ )) || true
+			fi
+			argfocus="${arg}"
+			argfocus="${argfocus#--focus}"	# remove possible prefixes (if necessary)
+			argfocus="${argfocus#-f}"
+			argfocus="${argfocus#=}"
+			flags="${BASH_REMATCH[2]}"
 
-      if ! [[ "${argfocus}" =~ ^-?[0-9]+$ ]]; then
-        echo ""
-        echo "Invalid input: --focus (-f) arg value must be an integer."
-        echo ""
-        exit 1
-      fi
+			if ! [[ "${argfocus}" =~ ^-?[0-9]+$ ]]; then
+				echo ""
+				echo "Invalid input: --focus (-f) arg value must be an integer."
+				echo ""
+				exit 1
+			fi
 
-    elif [[ "${arg}" =~ ^(-([dhknprstvV]*)c|--command) ]]; then
-      (( argidx++ )) || true
-      if [[ "${arg}" != '--command' ]]; then
-        arg="${arg/-${BASH_REMATCH[2]}/-}"
-      fi
-      if [[ "${arg}" == "-c" || "${arg}" == "--command" ]]; then
-        arg="${args[argidx]:-}"
-        (( argidx++ )) || true
-      fi
-      argtmuxcmd="${arg}"
-      argtmuxcmd="${argtmuxcmd#--command}"  # remove possible prefixes (if necessary)
-      argtmuxcmd="${argtmuxcmd#-c}"
-      argtmuxcmd="${argtmuxcmd#=}"
-      flags="${BASH_REMATCH[2]}"
+		elif [[ "${arg}" =~ ^(-([dhknprstvV]*)c|--command) ]]; then
+			(( argidx++ )) || true
+			if [[ "${arg}" != '--command' ]]; then
+				arg="${arg/-${BASH_REMATCH[2]}/-}"
+			fi
+			if [[ "${arg}" == "-c" || "${arg}" == "--command" ]]; then
+				arg="${args[argidx]:-}"
+				(( argidx++ )) || true
+			fi
+			argtmuxcmd="${arg}"
+			argtmuxcmd="${argtmuxcmd#--command}"	# remove possible prefixes (if necessary)
+			argtmuxcmd="${argtmuxcmd#-c}"
+			argtmuxcmd="${argtmuxcmd#=}"
+			flags="${BASH_REMATCH[2]}"
 
-      if ! [[ "${argtmuxcmd}" =~ ^[a-z0-9-]+$ ]]; then
-        echo ""
-        echo "Invalid input: --command (-c) arg value must be a valid tmux command, eg. new-window."
-        echo ""
-        exit 1
-      fi
+			if ! [[ "${argtmuxcmd}" =~ ^[a-z0-9-]+$ ]]; then
+				echo ""
+				echo "Invalid input: --command (-c) arg value must be a valid tmux command, eg. new-window."
+				echo ""
+				exit 1
+			fi
 
-    elif [[ "${arg}" =~ ^(--set-) ]]; then
-      (( argidx++ )) || true
-      if [[ "${arg}" =~ ^--set-([a-zA-Z0-9-]+)$ ]]; then
-        arg="${args[argidx]:-}"
-        (( argidx++ )) || true
-        argsetting+=( "${BASH_REMATCH[1]}" )
-        argsettingvalues+=( "${arg}" )
-      elif [[ "${arg}" =~ ^--set-([a-zA-Z0-9-]+)\=(.*)$ ]]; then
-        argsettings+=( "${BASH_REMATCH[1]}" )
-        argsettingvalues+=( "${BASH_REMATCH[2]}" )
-      else
-        echo ""
-        echo "Invalid input: ${arg} arg must be a valid tmux setting, eg. --set-status=off"
-        echo ""
-        exit 1
-      fi
+		elif [[ "${arg}" =~ ^(--set-) ]]; then
+			(( argidx++ )) || true
+			if [[ "${arg}" =~ ^--set-([a-zA-Z0-9-]+)$ ]]; then
+				arg="${args[argidx]:-}"
+				(( argidx++ )) || true
+				argsetting+=( "${BASH_REMATCH[1]}" )
+				argsettingvalues+=( "${arg}" )
+			elif [[ "${arg}" =~ ^--set-([a-zA-Z0-9-]+)\=(.*)$ ]]; then
+				argsettings+=( "${BASH_REMATCH[1]}" )
+				argsettingvalues+=( "${BASH_REMATCH[2]}" )
+			else
+				echo ""
+				echo "Invalid input: ${arg} arg must be a valid tmux setting, eg. --set-status=off"
+				echo ""
+				exit 1
+			fi
 
-    elif [[ "${arg}" =~ ^--(detached|help|kill|npm|print|reattach|shellless|transpose|quiet|version|simulator)$ ]]; then
-      (( argidx++ )) || true
-      arg="${arg#--}"  # remove "--" prefix
-      case "${arg}" in
-        'detached')  argdetached=TRUE;;
-        'help')      arghelp=TRUE;;
-        'npm')       argnpm=TRUE;;
-        'print')     argprint=TRUE;;
-        'reattach')  argreattach=TRUE;;
-        'shellless') argshellless=TRUE;;
-        'transpose') argtranspose=TRUE;;
-        'kill')      argkill=TRUE;;
-        'quiet')     argquiet=TRUE;;
-        'version')   argversion=TRUE;;
-        'simulator') argsimulator=TRUE;;
-      esac
-    elif [[ "${arg}" =~ ^-[dhknprstqvV]+$ ]]; then
-      (( argidx++ )) || true
-      arg="${arg#-}"  # remove "-" prefix
-      flags="${arg}"
-    elif [[ "${arg}" == '--' ]]; then
-      # explicit stop of arg parsing
-      break
-    else
-      # implicit stop of arg parsing
-      break
-    fi
+		elif [[ "${arg}" =~ ^--(detached|help|kill|npm|print|reattach|shellless|transpose|quiet|version|simulator)$ ]]; then
+			(( argidx++ )) || true
+			arg="${arg#--}"  # remove "--" prefix
+			case "${arg}" in
+				'detached')  argdetached=TRUE;;
+				'help')			 arghelp=TRUE;;
+				'npm')			 argnpm=TRUE;;
+				'print')		 argprint=TRUE;;
+				'reattach')  argreattach=TRUE;;
+				'shellless') argshellless=TRUE;;
+				'transpose') argtranspose=TRUE;;
+				'kill')			 argkill=TRUE;;
+				'quiet')		 argquiet=TRUE;;
+				'version')	 argversion=TRUE;;
+				'simulator') argsimulator=TRUE;;
+			esac
+		elif [[ "${arg}" =~ ^-[dhknprstqvV]+$ ]]; then
+			(( argidx++ )) || true
+			arg="${arg#-}"	# remove "-" prefix
+			flags="${arg}"
+		elif [[ "${arg}" == '--' ]]; then
+			# explicit stop of arg parsing
+			break
+		else
+			# implicit stop of arg parsing
+			break
+		fi
 
-    if [[ -n "${flags:-}" ]]; then
-      for (( idx = 0; idx < ${#flags}; idx++ )); do
-        char="${flags:idx:1}"
-        case "${char}" in
-          'd') argdetached=TRUE;;
-          'h') arghelp=TRUE;;
-          'n') argnpm=TRUE;;
-          'p') argprint=TRUE;;
-          'r') argreattach=TRUE;;
-          's') argshellless=TRUE;;
-          't') argtranspose=TRUE;;
-          'k') argkill=TRUE;;
-          'q') argquiet=TRUE;;
-          'v') argversion=TRUE;;
-          'V') argversion=TRUE;; # accept either casing of v/V for parity with tmux
-        esac
-      done
-      flags=""
-    fi
-  done
+		if [[ -n "${flags:-}" ]]; then
+			for (( idx = 0; idx < ${#flags}; idx++ )); do
+				char="${flags:idx:1}"
+				case "${char}" in
+					'd') argdetached=TRUE;;
+					'h') arghelp=TRUE;;
+					'n') argnpm=TRUE;;
+					'p') argprint=TRUE;;
+					'r') argreattach=TRUE;;
+					's') argshellless=TRUE;;
+					't') argtranspose=TRUE;;
+					'k') argkill=TRUE;;
+					'q') argquiet=TRUE;;
+					'v') argversion=TRUE;;
+					'V') argversion=TRUE;; # accept either casing of v/V for parity with tmux
+				esac
+			done
+			flags=""
+		fi
+	done
 
-  if [[ "${arg}" == '--' ]]; then
-    # explicit stop of arg parsing; go straight to processing shell commands below
-    (( argidx++ )) || true
-  else
-    # if next arg is a valid layout, use it as layout instead of shell command
-    arg="${args[argidx]:-}"
-    if [[ -z "${arglayout}" && -z "$( validatelayout "${arg}" )" ]]; then
-      (( argidx++ )) || true
-      arglayout="${arg}"
+	if [[ "${arg}" == '--' ]]; then
+		# explicit stop of arg parsing; go straight to processing shell commands below
+		(( argidx++ )) || true
+	else
+		# if next arg is a valid layout, use it as layout instead of shell command
+		arg="${args[argidx]:-}"
+		if [[ -z "${arglayout}" && -z "$( validatelayout "${arg}" )" ]]; then
+			(( argidx++ )) || true
+			arglayout="${arg}"
 
-      # continue to parse args:
-      processargs "${argsession}" "${args[@]:argidx}"
-      return
-    fi
-  fi
+			# continue to parse args:
+			processargs "${argsession}" "${args[@]:argidx}"
+			return
+		fi
+	fi
 
-  # use rest of args as shell commands
-  argcmds=( "${args[@]:argidx}" )
+	# use rest of args as shell commands
+	argcmds=( "${args[@]:argidx}" )
 
-  # handle case where provided session name is actually a layout, and --npm was set so we don't need a session name:
-  if [[ "${argnpm}" == TRUE && -z "${arglayout}" && -n "${argsession}" && -z "$( validatelayout "${argsession}" )" ]]; then
-    arglayout="${argsession}"
-    argsession=''
-  fi
+	# handle case where provided session name is actually a layout, and --npm was set so we don't need a session name:
+	if [[ "${argnpm}" == TRUE && -z "${arglayout}" && -n "${argsession}" && -z "$( validatelayout "${argsession}" )" ]]; then
+		arglayout="${argsession}"
+		argsession=''
+	fi
 
-  # allow omission of session name if we're already inside a tmux session
-  if [[ -z "${argsession}" && -n "${TMUX_PANE:-}" ]]; then
-    argsession=""
-  fi
+	# allow omission of session name if we're already inside a tmux session
+	if [[ -z "${argsession}" && -n "${TMUX_PANE:-}" ]]; then
+		argsession=""
+	fi
 
-  # allow omission of session name if --npm is set
-  if [[ -z "${argsession}" && "${argnpm}" == TRUE ]]; then
-    argsession="${npm_package_name:-}"
-    # if env var is undefined we're probably running manually instead of from an npm script;
-    # try and pull package name from npm env manually
-    if [[ -z "${argsession}" ]]; then
-      argsession="$( cut -d "=" -f 2 <<< "$(
-        "${TMEX_NPM_COMMAND:-npm}" run env 2>/dev/null | grep 'npm_package_name' )"
-      )"
-    fi
-  fi
+	# allow omission of session name if --npm is set
+	if [[ -z "${argsession}" && "${argnpm}" == TRUE ]]; then
+		argsession="${npm_package_name:-}"
+		# if env var is undefined we're probably running manually instead of from an npm script;
+		# try and pull package name from npm env manually
+		if [[ -z "${argsession}" ]]; then
+			argsession="$( cut -d "=" -f 2 <<< "$(
+				"${TMEX_NPM_COMMAND:-npm}" run env 2>/dev/null | grep 'npm_package_name' )"
+			)"
+		fi
+	fi
 
-  # allow omission of session name if --kill is set
-  if [[ -z "${argsession}" && "${argkill:-}" == TRUE ]]; then
-    if (( ${#args[@]} == 2 )) && ! [[ "${args[1]}" =~ ^- ]]; then
-      # if there's only one other arg and it doesn't start with "-" or "--",
-      # treat this arg as the session name to kill:
-      argsession="${args[1]}"
-      argcmds=()  # since arg is now session name, remove from argcmds
-    elif [[ -n "${TMUX_PANE:-}" ]]; then
-      # otherwise, if we're currently in a tmux session, kill that session:
-      argsession="${TMUX_PANE:-}"
-    fi
-  fi
+	# allow omission of session name if --kill is set
+	if [[ -z "${argsession}" && "${argkill:-}" == TRUE ]]; then
+		if (( ${#args[@]} == 2 )) && ! [[ "${args[1]}" =~ ^- ]]; then
+			# if there's only one other arg and it doesn't start with "-" or "--",
+			# treat this arg as the session name to kill:
+			argsession="${args[1]}"
+			argcmds=()	# since arg is now session name, remove from argcmds
+		elif [[ -n "${TMUX_PANE:-}" ]]; then
+			# otherwise, if we're currently in a tmux session, kill that session:
+			argsession="${TMUX_PANE:-}"
+		fi
+	fi
 
-  # warn and exit if --kill was specified but other arguments were provided
-  if [[ "${argkill:-}" == TRUE && "${argquiet:-}" != TRUE ]]; then
-    if (( ${#argcmds[@]} > 0 )) || [[ "${argdetached}" == TRUE || "${argnpm}" == TRUE || "${argreattach}" == TRUE || "${argshellless}" == TRUE || "${argtranspose}" == TRUE ]]; then
-      echo "You specified --kill (-k) but there are extra args."
-      echo "Run command again without extra args if you want to kill the session."
-      exit 1
-    fi
-  fi
+	# warn and exit if --kill was specified but other arguments were provided
+	if [[ "${argkill:-}" == TRUE && "${argquiet:-}" != TRUE ]]; then
+		if (( ${#argcmds[@]} > 0 )) || [[ "${argdetached}" == TRUE || "${argnpm}" == TRUE || "${argreattach}" == TRUE || "${argshellless}" == TRUE || "${argtranspose}" == TRUE ]]; then
+			echo "You specified --kill (-k) but there are extra args."
+			echo "Run command again without extra args if you want to kill the session."
+			exit 1
+		fi
+	fi
 
-  if [[ -z "${argsession}" && -z "${TMUX_PANE:-}" && "${arghelp}" == FALSE && "${argversion}" == FALSE ]]; then
-    if [[ "${argquiet:-}" != TRUE ]]; then
-      echo ""
-      echo "Invalid input: Session name required."
-      echo "          Try: $ tmex SESSION-NAME $*"
-      echo ""
-    fi
-    exit 1
-  fi
+	if [[ -z "${argsession}" && -z "${TMUX_PANE:-}" && "${arghelp}" == FALSE && "${argversion}" == FALSE ]]; then
+		if [[ "${argquiet:-}" != TRUE ]]; then
+			echo ""
+			echo "Invalid input: Session name required."
+			echo "          Try: $ tmex SESSION-NAME $*"
+			echo ""
+		fi
+		exit 1
+	fi
 
-  # tmux rewrites "."->"_", ":"->"_", "\"->"\\" when setting session names
-  # by making these replacements, we can allow tmex to reattach/kill sessions
-  # as expected later, even if these chars are present in the given session name:
-  argsession="${argsession//./_}"
-  argsession="${argsession//:/_}"
-  argsession="${argsession//\\/\\\\}"
+	# tmux rewrites "."->"_", ":"->"_", "\"->"\\" when setting session names
+	# by making these replacements, we can allow tmex to reattach/kill sessions
+	# as expected later, even if these chars are present in the given session name:
+	argsession="${argsession//./_}"
+	argsession="${argsession//:/_}"
+	argsession="${argsession//\\/\\\\}"
 }
 
 function generatelayout() {
-  local size root quot rmdr
+	local size root quot rmdr
 
-  # Generate a default layout based on specified size:
-  #   size:1 -> layout:"1"
-  #   size:2 -> layout:"11"
-  #   size:3 -> layout:"12"
-  #   size:4 -> layout:"22"
-  #   size:5 -> layout:"122"
-  #   size:6 -> layout:"222"
-  #   size:7 -> layout:"1222"
-  #   size:8 -> layout:"233"
-  #   ...
-  # Params:
-  #   $1 size [integer] size of layout
-  # Modifies external:
-  #   ${arglayout}
+	# Generate a default layout based on specified size:
+	#   size:1 -> layout:"1"
+	#   size:2 -> layout:"11"
+	#   size:3 -> layout:"12"
+	#   size:4 -> layout:"22"
+	#   size:5 -> layout:"122"
+	#   size:6 -> layout:"222"
+	#   size:7 -> layout:"1222"
+	#   size:8 -> layout:"233"
+	#   ...
+	# Params:
+	#   $1 size [integer] size of layout
+	# Modifies external:
+	#   ${arglayout}
 
-  size="$1"
+	size="$1"
 
-  if (( size == 0 )); then
-    arglayout="1"
-  else
-    root=$( bc <<< "scale=0; sqrt( ${size} + 1 )" )
-    root=${root%.*}  # floor
-    quot=$(( size / root ))
-    quot=${quot%.*}  # floor
-    rmdr=$(( size % root ))
-    arglayout=$( printf "%0.s${root}" $( seq 1 "${quot}" ) )
-    if (( rmdr > 0 )); then
-      arglayout="${rmdr}${arglayout}"
-    fi
-  fi
+	if (( size == 0 )); then
+		arglayout="1"
+	else
+		root=$( bc <<< "scale=0; sqrt( ${size} + 1 )" )
+		root=${root%.*}  # floor
+		quot=$(( size / root ))
+		quot=${quot%.*}  # floor
+		rmdr=$(( size % root ))
+		arglayout=$( printf "%0.s${root}" $( seq 1 "${quot}" ) )
+		if (( rmdr > 0 )); then
+			arglayout="${rmdr}${arglayout}"
+		fi
+	fi
 }
 
 function validatelayout() {
-  local layout minsize idx char nextchar layoutsizesum
-  local sizebracketsopen multidigitvalue
+	local layout minsize idx char nextchar layoutsizesum
+	local sizebracketsopen multidigitvalue
 
-  # Ensure layout is valid and large enough to contain specified size.
-  # Params:
-  #   $1 layout [string] layout string to be validated
-  #   $2 minsize [integer] (optional) minimum size of layout
+	# Ensure layout is valid and large enough to contain specified size.
+	# Params:
+	#   $1 layout [string] layout string to be validated
+	#   $2 minsize [integer] (optional) minimum size of layout
 
-  layout="$1"
-  minsize="${2:-}"
+	layout="$1"
+	minsize="${2:-}"
 
-  if ! [[ "${layout}" =~ ^[][}{0-9.+-]+$ ]]; then
-    echo "can only contain these characters: 0-9 [ ] { } . + -"
-  fi
-  if [[ "${layout}" =~ {[^}{]*[^0-9.][^}{]*} ]]; then
-    echo "cannot contain non-numeric characters within { } brackets"
-  fi
-  if [[ "${layout}" == *'{}'* ]]; then
-    echo "cannot contain empty { } brackets"
-  fi
-  if [[ "${layout}" =~ ^[+] ]]; then
-    echo "cannot start with + character"
-  elif [[ "${layout}" =~ ^[-] ]]; then
-    echo "cannot start with - character"
-  fi
-  if [[ "${layout}" =~ [+]+[^+]+[+]+ ]]; then
-    echo "cannot contain multiple groups of + characters"
-  elif [[ "${layout}" =~ [-]+[^-]+[-]+ ]]; then
-    echo "cannot contain multiple groups of - characters"
-  elif [[ "${layout}" =~ [+-]+[^+-]+[+-]+ ]]; then
-    echo "cannot contain multiple groups of + and - characters"
-  fi
-  if [[ "${layout}" =~ [+] && "${layout}" =~ [-] ]]; then
-    echo "cannot contain both + and - characters"
-  fi
-  if [[ "${layout}" =~ [^0-9+]\+ ]]; then
-    echo "cannot contain + character immediately preceeded by a non-numeric character"
-  fi
-  if [[ "${layout}" =~ [^0-9-]\- ]]; then
-    echo "cannot contain - character immediately preceeded by a non-numeric character"
-  fi
-  if [[ "${layout}" == *'..'* ]]; then
-    echo "cannot contain multiple . characters in a row"
-  fi
+	if ! [[ "${layout}" =~ ^[][}{0-9.+-]+$ ]]; then
+		echo "can only contain these characters: 0-9 [ ] { } . + -"
+	fi
+	if [[ "${layout}" =~ {[^}{]*[^0-9.][^}{]*} ]]; then
+		echo "cannot contain non-numeric characters within { } brackets"
+	fi
+	if [[ "${layout}" == *'{}'* ]]; then
+		echo "cannot contain empty { } brackets"
+	fi
+	if [[ "${layout}" =~ ^[+] ]]; then
+		echo "cannot start with + character"
+	elif [[ "${layout}" =~ ^[-] ]]; then
+		echo "cannot start with - character"
+	fi
+	if [[ "${layout}" =~ [+]+[^+]+[+]+ ]]; then
+		echo "cannot contain multiple groups of + characters"
+	elif [[ "${layout}" =~ [-]+[^-]+[-]+ ]]; then
+		echo "cannot contain multiple groups of - characters"
+	elif [[ "${layout}" =~ [+-]+[^+-]+[+-]+ ]]; then
+		echo "cannot contain multiple groups of + and - characters"
+	fi
+	if [[ "${layout}" =~ [+] && "${layout}" =~ [-] ]]; then
+		echo "cannot contain both + and - characters"
+	fi
+	if [[ "${layout}" =~ [^0-9+]\+ ]]; then
+		echo "cannot contain + character immediately preceeded by a non-numeric character"
+	fi
+	if [[ "${layout}" =~ [^0-9-]\- ]]; then
+		echo "cannot contain - character immediately preceeded by a non-numeric character"
+	fi
+	if [[ "${layout}" == *'..'* ]]; then
+		echo "cannot contain multiple . characters in a row"
+	fi
 
-  if [[ -n "${minsize:-}" ]]; then
-    layoutsizesum=0
-    sizebracketsopen=FALSE
-    multidigitvalue='-1'
-    if [[ "${layout}" =~ ^[0-9]+\. ]]; then
-      multidigitvalue=''
-    fi
-    for (( idx = 0; idx < ${#layout}; idx++ )); do
-      char="${layout:${idx}:1}"
-      nextchar="${layout:$(( idx + 1 )):1}"
+	if [[ -n "${minsize:-}" ]]; then
+		layoutsizesum=0
+		sizebracketsopen=FALSE
+		multidigitvalue='-1'
+		if [[ "${layout}" =~ ^[0-9]+\. ]]; then
+			multidigitvalue=''
+		fi
+		for (( idx = 0; idx < ${#layout}; idx++ )); do
+			char="${layout:${idx}:1}"
+			nextchar="${layout:$(( idx + 1 )):1}"
 
-      if [[ "${char}" == '.' ]]; then
-        if [[ "${nextchar}" =~ ^[0-9]$ ]]; then
-          multidigitvalue=''
-        fi
-        continue
-      elif [[ "${multidigitvalue}" != '-1' && "${char}" =~ ^[0-9]$ ]]; then
-        multidigitvalue+="${char}"
-        if [[ "${nextchar}" =~ ^[0-9]$ ]]; then
-          continue
-        else
-          char="${multidigitvalue}"
-          multidigitvalue='-1'
-        fi
-      else
-        multidigitvalue='-1'
-      fi
+			if [[ "${char}" == '.' ]]; then
+				if [[ "${nextchar}" =~ ^[0-9]$ ]]; then
+					multidigitvalue=''
+				fi
+				continue
+			elif [[ "${multidigitvalue}" != '-1' && "${char}" =~ ^[0-9]$ ]]; then
+				multidigitvalue+="${char}"
+				if [[ "${nextchar}" =~ ^[0-9]$ ]]; then
+					continue
+				else
+					char="${multidigitvalue}"
+					multidigitvalue='-1'
+				fi
+			else
+				multidigitvalue='-1'
+			fi
 
-      if [[ "${char}" == '0' ]]; then
-        continue
-      elif [[ "${char}" == '{' ]]; then
-        sizebracketsopen=TRUE
-      elif [[ "${char}" == '}' ]]; then
-        sizebracketsopen=FALSE
-      elif [[ "${sizebracketsopen:-}" == FALSE && "${char}" =~ ^[0-9]+$ ]]; then
-        (( layoutsizesum += char )) || true
-      fi
-    done
+			if [[ "${char}" == '0' ]]; then
+				continue
+			elif [[ "${char}" == '{' ]]; then
+				sizebracketsopen=TRUE
+			elif [[ "${char}" == '}' ]]; then
+				sizebracketsopen=FALSE
+			elif [[ "${sizebracketsopen:-}" == FALSE && "${char}" =~ ^[0-9]+$ ]]; then
+				(( layoutsizesum += char )) || true
+			fi
+		done
 
-    # if size exceeds sum of layout string digits, exit with error
-    if (( minsize > layoutsizesum )); then
-      echo "is too small for number of commands provided"
-    fi
-  fi
+		# if size exceeds sum of layout string digits, exit with error
+		if (( minsize > layoutsizesum )); then
+			echo "is too small for number of commands provided"
+		fi
+	fi
 }
 
 function selectpane() {
-  local direction flags repeat idx flag
+	local direction flags repeat idx flag
 
-  # Construct tmux select-pane args according to params.
-  # Params:
-  #   $1 direction [string "v"|"h"] direction to select in (vertical or horizontal)
-  #   $2 flags     [string]         flags that will be used based on direction
-  #   $3 repeat    [integer]        repeat select-pane operation N times
-  # Modifies external:
-  #   ${tmuxargs}
+	# Construct tmux select-pane args according to params.
+	# Params:
+	#   $1 direction [string "v"|"h"] direction to select in (vertical or horizontal)
+	#   $2 flags     [string]         flags that will be used based on direction
+	#   $3 repeat    [integer]        repeat select-pane operation N times
+	# Modifies external:
+	#   ${tmuxargs}
 
-  direction="$1"
-  flags="$2"
-  repeat="$3"
+	direction="$1"
+	flags="$2"
+	repeat="$3"
 
-  [[ "${direction}" == 'v' ]] && flag="${flags:0:1}" || flag="${flags:1:1}"
+	[[ "${direction}" == 'v' ]] && flag="${flags:0:1}" || flag="${flags:1:1}"
 
-  for (( idx = 0; idx < repeat; idx++ )); do
-    tmuxargs+=( ';' 'select-pane' "-${flag}" )
-  done
+	for (( idx = 0; idx < repeat; idx++ )); do
+		tmuxargs+=( ';' 'select-pane' "-${flag}" )
+	done
 }
 
 function selectwindow() {
-  local idx
+	local idx
 
-  # Construct tmux select-pane args according to params.
-  # Params:
-  #   $1 idx [integer] index of window to select
-  # Modifies external:
-  #   ${tmuxargs}
+	# Construct tmux select-pane args according to params.
+	# Params:
+	#   $1 idx [integer] index of window to select
+	# Modifies external:
+	#   ${tmuxargs}
 
-  idx="$1"
+	idx="$1"
 
-  tmuxargs+=( ';' 'select-window' '-t' "${idx}" )
+	tmuxargs+=( ';' 'select-window' '-t' "${idx}" )
 }
 
 function executecmd() {
-  local cmd
+	local cmd
 
-  # Construct tmux args to execute a given command.
-  # Params:
-  #   $1 cmd [string] shell command that will be executed
-  # References external:
-  #   ${argshellless}
-  # Modifies external:
-  #   ${tmuxargs}
+	# Construct tmux args to execute a given command.
+	# Params:
+	#   $1 cmd [string] shell command that will be executed
+	# References external:
+	#   ${argshellless}
+	# Modifies external:
+	#   ${tmuxargs}
 
-  cmd="$1"
+	cmd="$1"
 
-  # use sed to remove trailing semicolons from command since these cause tmux error:
-  cmd="$( sed -E 's/;+$//' <<< "${cmd}" )"
+	# use sed to remove trailing semicolons from command since these cause tmux error:
+	cmd="$( sed -E 's/;+$//' <<< "${cmd}" )"
 
-  if [[ -n "${cmd}" ]]; then
-    # if running in "shell-less" mode, execute command directly;
-    # otherwise use send-keys to execute command within default shell
-    if [[ "${argshellless}" == TRUE ]]; then
-      tmuxargs+=( "${cmd}" )
-    else
-      tmuxargs+=( ";" "send-keys" "${cmd}" "Enter" )
-    fi
-  fi
+	if [[ -n "${cmd}" ]]; then
+		# if running in "shell-less" mode, execute command directly;
+		# otherwise use send-keys to execute command within default shell
+		if [[ "${argshellless}" == TRUE ]]; then
+			tmuxargs+=( "${cmd}" )
+		else
+			tmuxargs+=( ";" "send-keys" "${cmd}" "Enter" )
+		fi
+	fi
 }
 
 function split1d() {
-  local direction numpanes sizing cmds cmd idx char flag
-  local half sizesum sizearr percentage pctprefix pctsuffix multidigitvalue
+	local direction numpanes sizing cmds cmd idx char flag
+	local half sizesum sizearr percentage pctprefix pctsuffix multidigitvalue
 
-  # Construct tmux split-window and select-pane args that will split
-  # the current pane into `numpanes` equally-sized separate panes.
-  # Params:
-  #   $1 direction [string "v"|"h"] direction to split pane (vertical or horizontal)
-  #   $2 numpanes  [integer]        number of panes to split current pane into
-  #   $3 sizing    [string]         relative sizing of panes
-  #   $@ cmds      [array<string>]  list of commands to be executed in resulting panes
-  # References external:
-  #   ${argshellless}
-  # Modifies external:
-  #   ${tmuxargs}
+	# Construct tmux split-window and select-pane args that will split
+	# the current pane into `numpanes` equally-sized separate panes.
+	# Params:
+	#   $1 direction [string "v"|"h"] direction to split pane (vertical or horizontal)
+	#   $2 numpanes  [integer]        number of panes to split current pane into
+	#   $3 sizing    [string]         relative sizing of panes
+	#   $@ cmds      [array<string>]  list of commands to be executed in resulting panes
+	# References external:
+	#   ${argshellless}
+	# Modifies external:
+	#   ${tmuxargs}
 
-  direction="$1"
-  numpanes="$2"
-  sizing="$3"
+	direction="$1"
+	numpanes="$2"
+	sizing="$3"
 
-  shift 3; cmds=( "${@:-}" )
+	shift 3; cmds=( "${@:-}" )
 
-  # support for percentage values under `split-pane -l<value>%` was added in tmux 3.1
-  # and `split-pane -p<value>` was deprecated (fully removed in tmux 3.4)
-  # see https://github.com/tmux/tmux/blob/master/CHANGES#L663-L665 for details
-  if [[ -z "${tmuxversion}" ]] || (( $( bc -l <<< "${tmuxversion} < 3.1" ) )); then
-    pctprefix="-p"
-    pctsuffix=""
-  else
-    pctprefix="-l"
-    pctsuffix="%"
-  fi
+	# support for percentage values under `split-pane -l<value>%` was added in tmux 3.1
+	# and `split-pane -p<value>` was deprecated (fully removed in tmux 3.4)
+	# see https://github.com/tmux/tmux/blob/master/CHANGES#L663-L665 for details
+	if [[ -z "${tmuxversion}" ]] || (( $( bc -l <<< "${tmuxversion} < 3.1" ) )); then
+		pctprefix="-p"
+		pctsuffix=""
+	else
+		pctprefix="-l"
+		pctsuffix="%"
+	fi
 
-  # convert sizing string to sizearr:
-  # sizing: "1,2,3"  -> [1, 2, 3]
-  # sizing: ""       -> []
-  # sizing: "2,3"    -> [2, 3]
-  # sizing: "12,13"  -> [12, 13]
-  # NOTE: leading/trailing commas on these strings are acceptable
-  sizesum="${numpanes}"
-  sizearr=()
-  multidigitvalue=''
-  for (( idx = 0; idx <= ${#sizing}; idx++ )); do
-    char="${sizing:idx:1}"
-    if [[ "${char}" =~ ^[0-9]$ ]]; then
-      multidigitvalue+="${char}"
-    elif [[ -n "${multidigitvalue}" ]]; then
-      sizearr+=( "${multidigitvalue}" )
-      (( sizesum += ( multidigitvalue - 1 ) )) || true
-      multidigitvalue=''
-    fi
-  done
+	# convert sizing string to sizearr:
+	# sizing: "1,2,3"  -> [1, 2, 3]
+	# sizing: ""       -> []
+	# sizing: "2,3"    -> [2, 3]
+	# sizing: "12,13"  -> [12, 13]
+	# NOTE: leading/trailing commas on these strings are acceptable
+	sizesum="${numpanes}"
+	sizearr=()
+	multidigitvalue=''
+	for (( idx = 0; idx <= ${#sizing}; idx++ )); do
+		char="${sizing:idx:1}"
+		if [[ "${char}" =~ ^[0-9]$ ]]; then
+			multidigitvalue+="${char}"
+		elif [[ -n "${multidigitvalue}" ]]; then
+			sizearr+=( "${multidigitvalue}" )
+			(( sizesum += ( multidigitvalue - 1 ) )) || true
+			multidigitvalue=''
+		fi
+	done
 
-  # if more than 2 panes and numpanes is even, split down the middle
-  if (( numpanes > 2 && numpanes % 2 == 0 )); then
+	# if more than 2 panes and numpanes is even, split down the middle
+	if (( numpanes > 2 && numpanes % 2 == 0 )); then
 
-    # calculate half of size array
-    half=$(( numpanes / 2 ))
-    halfsizesum=0
+		# calculate half of size array
+		half=$(( numpanes / 2 ))
+		halfsizesum=0
 
-    for (( idx = 0; idx < half; idx++ )); do
-      (( halfsizesum += ${sizearr[idx]:-1} )) || true
-    done
+		for (( idx = 0; idx < half; idx++ )); do
+			(( halfsizesum += ${sizearr[idx]:-1} )) || true
+		done
 
-    # percentage = 100 - round((halfsizesum * 100) / sizesum)
-    percentage=$(( ( halfsizesum * 100 * 1000 ) / sizesum ))
-    percentage=$(( ( percentage + 500 ) / 1000 ))  # round
-    percentage=$(( 100 - percentage ))  # invert
+		# percentage = 100 - round((halfsizesum * 100) / sizesum)
+		percentage=$(( ( halfsizesum * 100 * 1000 ) / sizesum ))
+		percentage=$(( ( percentage + 500 ) / 1000 ))  # round
+		percentage=$(( 100 - percentage ))	# invert
 
-    # split pane down the middle (adjusted according to size array)
-    tmuxargs+=( ';' 'split-window' "-${direction}" "${pctprefix}${percentage}${pctsuffix}" )
-    executecmd "${cmds[${half}]:-}"
-    selectpane "${direction}" 'UL' 1
+		# split pane down the middle (adjusted according to size array)
+		tmuxargs+=( ';' 'split-window' "-${direction}" "${pctprefix}${percentage}${pctsuffix}" )
+		executecmd "${cmds[${half}]:-}"
+		selectpane "${direction}" 'UL' 1
 
-    # keep splitting - 1st half of panes, then select pane at middle, then 2nd half
-    split1d "${direction}" "${half}" "$( IFS=','; echo "${sizearr[@]:0:half}" )" "${cmds[@]:0:half}"
-    selectpane "${direction}" 'DR' 1
-    split1d "${direction}" "${half}" "$( IFS=','; echo "${sizearr[@]:half}" )" "${cmds[@]:half}"
+		# keep splitting - 1st half of panes, then select pane at middle, then 2nd half
+		split1d "${direction}" "${half}" "$( IFS=','; echo "${sizearr[@]:0:half}" )" "${cmds[@]:0:half}"
+		selectpane "${direction}" 'DR' 1
+		split1d "${direction}" "${half}" "$( IFS=','; echo "${sizearr[@]:half}" )" "${cmds[@]:half}"
 
-  # if only 2 panes or numpanes is odd, split off first pane
-  elif (( numpanes >= 2 )); then
+	# if only 2 panes or numpanes is odd, split off first pane
+	elif (( numpanes >= 2 )); then
 
-    # percentage = 100 - round((sizearr[0] * 100) / sizesum)
-    percentage=$(( ( ${sizearr[0]:-1} * 100 * 1000 ) / sizesum ))
-    percentage=$(( ( percentage + 500 ) / 1000 ))  # round
-    percentage=$(( 100 - percentage ))  # invert
-    # below calculation would provide float percentages (2 decimal places) which
-    # would result in more accurate pane proportions, but tmux doesn't support
-    # decimal percentages at this time
-    # percentage="$(
-    #   bc -l <<< "100 - ${sizearr[0]:-1} * 100 / ${sizesum}" | xargs printf %.2f
-    # )"
+		# percentage = 100 - round((sizearr[0] * 100) / sizesum)
+		percentage=$(( ( ${sizearr[0]:-1} * 100 * 1000 ) / sizesum ))
+		percentage=$(( ( percentage + 500 ) / 1000 ))  # round
+		percentage=$(( 100 - percentage ))	# invert
+		# below calculation would provide float percentages (2 decimal places) which
+		# would result in more accurate pane proportions, but tmux doesn't support
+		# decimal percentages at this time
+		# percentage="$(
+		#   bc -l <<< "100 - ${sizearr[0]:-1} * 100 / ${sizesum}" | xargs printf %.2f
+		# )"
 
-    # split off first pane (adjusted according to size array)
-    tmuxargs+=( ';' 'split-window' "-${direction}" "${pctprefix}${percentage}${pctsuffix}" )
-    executecmd "${cmds[1]:-}"
+		# split off first pane (adjusted according to size array)
+		tmuxargs+=( ';' 'split-window' "-${direction}" "${pctprefix}${percentage}${pctsuffix}" )
+		executecmd "${cmds[1]:-}"
 
-    # if more than 2 panes, keep splitting
-    if (( numpanes > 2 && numpanes % 2 > 0 )); then
-      split1d "${direction}" "$(( numpanes - 1 ))" "$( IFS=','; echo "${sizearr[@]:1}" )" "${cmds[@]:1}"
-    fi
-  fi
+		# if more than 2 panes, keep splitting
+		if (( numpanes > 2 && numpanes % 2 > 0 )); then
+			split1d "${direction}" "$(( numpanes - 1 ))" "$( IFS=','; echo "${sizearr[@]:1}" )" "${cmds[@]:1}"
+		fi
+	fi
 }
 
 function split2d() {
-  local direction layout cmds idx jdx char nextchar depth flag
-  local sublayouts numsublayouts
-  local sublayoutpanecounts sublayoutpanecount sublayoutsizings
-  local initialcmds initialcmdidx subcmds sizebracketsopen multidigitvalue
+	local direction layout cmds idx jdx char nextchar depth flag
+	local sublayouts numsublayouts
+	local sublayoutpanecounts sublayoutpanecount sublayoutsizings
+	local initialcmds initialcmdidx subcmds sizebracketsopen multidigitvalue
 
-  # Construct a set of tmux split-window and select-pane commands that will split
-  # the current pane according to layout.
-  # Params:
-  #   $1 direction [string "v"|"h"] direction to split pane (vertical or horizontal)
-  #   $2 layout    [string]         number of panes to split current pane into
-  #   $3 sizing    [string]         relative sizing of panes
-  #   $@ cmds      [array<string>]  list of commands to be executed in resulting panes
-  # Modifies external:
-  #   ${tmuxargs}
-  #   ${centerpaneidx}
+	# Construct a set of tmux split-window and select-pane commands that will split
+	# the current pane according to layout.
+	# Params:
+	#   $1 direction [string "v"|"h"] direction to split pane (vertical or horizontal)
+	#   $2 layout    [string]         number of panes to split current pane into
+	#   $3 sizing    [string]         relative sizing of panes
+	#   $@ cmds      [array<string>]  list of commands to be executed in resulting panes
+	# Modifies external:
+	#   ${tmuxargs}
+	#   ${centerpaneidx}
 
-  direction="$1"
-  layout="$2"
-  sizing="$3"
+	direction="$1"
+	layout="$2"
+	sizing="$3"
 
-  shift 3; cmds=( "${@:-}" )
+	shift 3; cmds=( "${@:-}" )
 
-  # expand layout string into three arrays:
-  # e.g. "12{31}[3[45]{21}]{12}6"
-  # -> ["1", "11",   "3[45]{21}", "111111"]  # sublayouts
-  # -> [ 1,   2,      12,          6      ]  # sublayoutpanecounts
-  # -> ["",  "3,1,", "1,2,",      ""      ]  # sublayoutsizings
-  depth=0
-  sublayouts=()
-  sublayoutpanecounts=()
-  sublayoutsizings=()
-  sizebracketsopen=FALSE
-  multidigitvalue='-1'
-  if [[ "${layout}" =~ ^[0-9]+\. ]]; then
-    multidigitvalue=''
-  fi
-  for (( idx = 0; idx < ${#layout}; idx++ )); do
-    char="${layout:${idx}:1}"
-    nextchar="${layout:$(( idx + 1 )):1}"
+	# expand layout string into three arrays:
+	# e.g. "12{31}[3[45]{21}]{12}6"
+	# -> ["1", "11",   "3[45]{21}", "111111"]  # sublayouts
+	# -> [ 1,   2,      12,          6      ]  # sublayoutpanecounts
+	# -> ["",  "3,1,", "1,2,",      ""      ]  # sublayoutsizings
+	depth=0
+	sublayouts=()
+	sublayoutpanecounts=()
+	sublayoutsizings=()
+	sizebracketsopen=FALSE
+	multidigitvalue='-1'
+	if [[ "${layout}" =~ ^[0-9]+\. ]]; then
+		multidigitvalue=''
+	fi
+	for (( idx = 0; idx < ${#layout}; idx++ )); do
+		char="${layout:${idx}:1}"
+		nextchar="${layout:$(( idx + 1 )):1}"
 
-    if [[ "${char}" == '.' ]]; then
-      if [[ "${nextchar}" =~ ^[0-9]$ ]]; then
-        multidigitvalue=''
-      fi
-      if (( depth > 0 )); then
-        sublayouts[${#sublayouts[@]} - 1]+="${char}"
-      fi
-      continue
-    elif [[ "${multidigitvalue}" != '-1' && "${char}" =~ ^[0-9]$ ]]; then
-      multidigitvalue+="${char}"
-      if [[ "${nextchar}" =~ ^[0-9]$ ]]; then
-        continue
-      else
-        char="${multidigitvalue}"
-        multidigitvalue='-1'
-      fi
-    else
-      multidigitvalue='-1'
-    fi
+		if [[ "${char}" == '.' ]]; then
+			if [[ "${nextchar}" =~ ^[0-9]$ ]]; then
+				multidigitvalue=''
+			fi
+			if (( depth > 0 )); then
+				sublayouts[${#sublayouts[@]} - 1]+="${char}"
+			fi
+			continue
+		elif [[ "${multidigitvalue}" != '-1' && "${char}" =~ ^[0-9]$ ]]; then
+			multidigitvalue+="${char}"
+			if [[ "${nextchar}" =~ ^[0-9]$ ]]; then
+				continue
+			else
+				char="${multidigitvalue}"
+				multidigitvalue='-1'
+			fi
+		else
+			multidigitvalue='-1'
+		fi
 
-    if [[ "${char}" == '0' ]]; then
-      continue
-    elif [[ "${char}" == '{' ]]; then
-      sizebracketsopen=TRUE
-      if [[ "${layout:$(( idx + 1 ))}" =~ ^[0-9]+\. ]]; then
-        multidigitvalue=''
-      fi
-    elif [[ "${char}" == '}' ]]; then
-      sizebracketsopen=FALSE
-    elif [[ "${sizebracketsopen:-}" == TRUE ]] && (( depth == 0 )); then
-      sublayoutsizings[${#sublayoutsizings[@]} - 1]+="${char},"
-    fi
+		if [[ "${char}" == '0' ]]; then
+			continue
+		elif [[ "${char}" == '{' ]]; then
+			sizebracketsopen=TRUE
+			if [[ "${layout:$(( idx + 1 ))}" =~ ^[0-9]+\. ]]; then
+				multidigitvalue=''
+			fi
+		elif [[ "${char}" == '}' ]]; then
+			sizebracketsopen=FALSE
+		elif [[ "${sizebracketsopen:-}" == TRUE ]] && (( depth == 0 )); then
+			sublayoutsizings[${#sublayoutsizings[@]} - 1]+="${char},"
+		fi
 
-    if [[ "${char}" == ']' ]]; then
-      (( depth -= 1 )) || true
-    fi
+		if [[ "${char}" == ']' ]]; then
+			(( depth -= 1 )) || true
+		fi
 
-    if (( depth > 0 )); then
-      sublayouts[${#sublayouts[@]} - 1]+="${char}"
+		if (( depth > 0 )); then
+			sublayouts[${#sublayouts[@]} - 1]+="${char}"
 
-      if [[ "${char}" =~ ^[0-9]+$ && "${sizebracketsopen:-}" == FALSE ]]; then
-        (( sublayoutpanecounts[${#sublayoutpanecounts[@]} - 1] += char )) || true
-      fi
-    fi
+			if [[ "${char}" =~ ^[0-9]+$ && "${sizebracketsopen:-}" == FALSE ]]; then
+				(( sublayoutpanecounts[${#sublayoutpanecounts[@]} - 1] += char )) || true
+			fi
+		fi
 
-    if [[ "${char}" == '[' ]]; then
-      if (( depth == 0 )); then
-        sublayouts+=( "" )
-        sublayoutpanecounts+=( 0 )
-        sublayoutsizings+=( "" )
-      fi
-      (( depth++ )) || true
-    fi
+		if [[ "${char}" == '[' ]]; then
+			if (( depth == 0 )); then
+				sublayouts+=( "" )
+				sublayoutpanecounts+=( 0 )
+				sublayoutsizings+=( "" )
+			fi
+			(( depth++ )) || true
+		fi
 
-    if [[ "${char}" =~ ^[0-9]+$ && "${sizebracketsopen:-}" == FALSE ]] && (( depth == 0 )); then
-      sublayout=$( printf '%0.s1' $( seq 1 "${char}" ) ) # "111..1" str len == char
-      sublayouts+=( "${sublayout}" )
-      sublayoutpanecounts+=( "${char}" )
-      sublayoutsizings+=( "" )
-    fi
-  done
+		if [[ "${char}" =~ ^[0-9]+$ && "${sizebracketsopen:-}" == FALSE ]] && (( depth == 0 )); then
+			sublayout=$( printf '%0.s1' $( seq 1 "${char}" ) ) # "111..1" str len == char
+			sublayouts+=( "${sublayout}" )
+			sublayoutpanecounts+=( "${char}" )
+			sublayoutsizings+=( "" )
+		fi
+	done
 
-  numsublayouts="${#sublayouts[@]}"
+	numsublayouts="${#sublayouts[@]}"
 
-  # LAYOUT DEBUG LOGGING:
-  # echo "LAYOUT: ${layout}"
-  # echo "SUBLAYOUTS: ${sublayouts[*]}"
-  # echo "SUBLAYOUTPANECOUNTS: ${sublayoutpanecounts[*]}"
-  # echo "SUBLAYOUTSIZINGS: ${sublayoutsizings[*]}"
-  # echo "NUMSUBLAYOUTS: ${numsublayouts}"
+	# LAYOUT DEBUG LOGGING:
+	# echo "LAYOUT: ${layout}"
+	# echo "SUBLAYOUTS: ${sublayouts[*]}"
+	# echo "SUBLAYOUTPANECOUNTS: ${sublayoutpanecounts[*]}"
+	# echo "SUBLAYOUTSIZINGS: ${sublayoutsizings[*]}"
+	# echo "NUMSUBLAYOUTS: ${numsublayouts}"
 
-  # construct initial set of panes
-  initialcmds=()
-  initialcmdidx=0
+	# construct initial set of panes
+	initialcmds=()
+	initialcmdidx=0
 
-  for (( idx = 0; idx < numsublayouts; idx++ )); do
-    sublayoutpanecount="${sublayoutpanecounts[idx]}"
+	for (( idx = 0; idx < numsublayouts; idx++ )); do
+		sublayoutpanecount="${sublayoutpanecounts[idx]}"
 
-    if [[ "${argsimulator}" == TRUE ]]; then
-      # layout debug feature: print each pane's sublayout and sublayout parent,
-      # and keep the pane alive indefinitely for layout review
-      initialcmds+=( "echo 'LAYOUT'; echo '${sublayouts[idx]}'; sleep 100000" )
-    else
-      initialcmds+=( "${cmds[${initialcmdidx}]:-}" )
-    fi
+		if [[ "${argsimulator}" == TRUE ]]; then
+			# layout debug feature: print each pane's sublayout and sublayout parent,
+			# and keep the pane alive indefinitely for layout review
+			initialcmds+=( "echo 'LAYOUT'; echo '${sublayouts[idx]}'; sleep 100000" )
+		else
+			initialcmds+=( "${cmds[${initialcmdidx}]:-}" )
+		fi
 
-    (( initialcmdidx += sublayoutpanecount )) || true
-  done
-  split1d "${direction}" "${numsublayouts}" "${sizing}" "${initialcmds[@]}"
+		(( initialcmdidx += sublayoutpanecount )) || true
+	done
+	split1d "${direction}" "${numsublayouts}" "${sizing}" "${initialcmds[@]}"
 
-  # select first pane
-  selectpane "${direction}" 'UL' $(( numsublayouts - 1 ))
+	# select first pane
+	selectpane "${direction}" 'UL' $(( numsublayouts - 1 ))
 
-  # split each pane as specified by layout
-  initialcmdidx=0
-  for (( idx = 0; idx < numsublayouts; idx++ )); do
-    sublayout="${sublayouts[${idx}]}"
-    sublayoutpanecount="${sublayoutpanecounts[${idx}]}"
-    sublayoutsizing="${sublayoutsizings[${idx}]}"
+	# split each pane as specified by layout
+	initialcmdidx=0
+	for (( idx = 0; idx < numsublayouts; idx++ )); do
+		sublayout="${sublayouts[${idx}]}"
+		sublayoutpanecount="${sublayoutpanecounts[${idx}]}"
+		sublayoutsizing="${sublayoutsizings[${idx}]}"
 
-    if (( idx > 0 )); then
-      selectpane "${direction}" 'DR' 1
-    fi
+		if (( idx > 0 )); then
+			selectpane "${direction}" 'DR' 1
+		fi
 
-    [[ "${direction}" == 'v' ]] && flag='h' || flag='v'
-    subcmds=( "${cmds[@]:${initialcmdidx}:${sublayoutpanecount}}" )
+		[[ "${direction}" == 'v' ]] && flag='h' || flag='v'
+		subcmds=( "${cmds[@]:${initialcmdidx}:${sublayoutpanecount}}" )
 
-    # layout debug feature: print each pane's sublayout and sublayout parent,
-    # and keep the pane alive indefinitely for layout review
-    if [[ "${argsimulator}" == TRUE ]]; then
-      subcmds=()
-      for (( jdx = 0; jdx <= ( sublayoutpanecount + 1); jdx++ )); do
-        subcmds+=( "echo '${sublayoutpanecount}'; sleep 100000" )
-      done
-    fi
+		# layout debug feature: print each pane's sublayout and sublayout parent,
+		# and keep the pane alive indefinitely for layout review
+		if [[ "${argsimulator}" == TRUE ]]; then
+			subcmds=()
+			for (( jdx = 0; jdx <= ( sublayoutpanecount + 1); jdx++ )); do
+				subcmds+=( "echo '${sublayoutpanecount}'; sleep 100000" )
+			done
+		fi
 
-    # if layout contains only columns of 1, we can split 1-dimensional
-    if [[ "${sublayout}" =~ ^1+$ ]]; then
-      split1d "${flag}" "${sublayoutpanecount}" "${sublayoutsizing}" "${subcmds[@]:-}"
-    else
-      split2d "${flag}" "${sublayout}" "${sublayoutsizing}" "${subcmds[@]:-}"
-    fi
+		# if layout contains only columns of 1, we can split 1-dimensional
+		if [[ "${sublayout}" =~ ^1+$ ]]; then
+			split1d "${flag}" "${sublayoutpanecount}" "${sublayoutsizing}" "${subcmds[@]:-}"
+		else
+			split2d "${flag}" "${sublayout}" "${sublayoutsizing}" "${subcmds[@]:-}"
+		fi
 
-    (( initialcmdidx += sublayoutpanecount )) || true
-  done
+		(( initialcmdidx += sublayoutpanecount )) || true
+	done
 }
 
 function buildtmuxargs() {
-  local pattern flag idx char nextchar
-  local layoutsize partiallayout parentlayout invalidlayoutmsgs
-  local toplevelsizing sizebracketsopen multidigitvalue npmcmds
+	local pattern flag idx char nextchar
+	local layoutsize partiallayout parentlayout invalidlayoutmsgs
+	local toplevelsizing sizebracketsopen multidigitvalue npmcmds
 
-  # Construct a tmux command that runs a set of commands inside a layout.
-  # During normal operation, this will only be called once by the `main` function.
-  # If multi-window mode is in use, it will be called once for each tmux window.
-  # Params:
-  #   $@ args [array<any>] subset of script args relevant to the current tmux command
-  # Modifies external:
-  #   ${tmuxcmd}
-  #   ${tmuxargs}
-  #   ${argcmds}
-  #   ${arglayout}
-  #   ${argtranspose}
-  #   ${argfocus}
+	# Construct a tmux command that runs a set of commands inside a layout.
+	# During normal operation, this will only be called once by the `main` function.
+	# If multi-window mode is in use, it will be called once for each tmux window.
+	# Params:
+	#   $@ args [array<any>] subset of script args relevant to the current tmux command
+	# Modifies external:
+	#   ${tmuxcmd}
+	#   ${tmuxargs}
+	#   ${argcmds}
+	#   ${arglayout}
+	#   ${argtranspose}
+	#   ${argfocus}
 
-  processargs "$@"
+	processargs "$@"
 
-  tmuxcmd='new-session'
+	tmuxcmd='new-session'
 
-  if [[ -n "${argtmuxcmd}" ]]; then
-    tmuxcmd="${argtmuxcmd}"
-  fi
+	if [[ -n "${argtmuxcmd}" ]]; then
+		tmuxcmd="${argtmuxcmd}"
+	fi
 
-  if [[ "${arghelp}" == TRUE ]]; then
-    echo "${version}"
-    echo ""
-    echo "${usage}"
-    echo "${help}"
-    exit 0
-  fi
+	if [[ "${arghelp}" == TRUE ]]; then
+		echo "${version}"
+		echo ""
+		echo "${usage}"
+		echo "${help}"
+		exit 0
+	fi
 
-  if [[ "${argversion}" == TRUE ]]; then
-    echo "${version}"
-    exit 0
-  fi
+	if [[ "${argversion}" == TRUE ]]; then
+		echo "${version}"
+		exit 0
+	fi
 
-  # if -k/--kill specified, kill tmux session then exit:
-  if [[ "${argkill:-}" == TRUE ]]; then
-    tmuxargs=("kill-session" "-t" "${argsession}")
-    if [[ "${argprint}" == TRUE ]]; then
-      echo "${tmuxargs[@]}"
-    else
-      if [[ "${argquiet:-}" == TRUE ]]; then
-        tmux "${tmuxargs[@]}" &>/dev/null || true  # ignore errors; always exit 0
-      else
-        tmux "${tmuxargs[@]}"
-      fi
-    fi
-    exit 0
-  fi
+	# if -k/--kill specified, kill tmux session then exit:
+	if [[ "${argkill:-}" == TRUE ]]; then
+		tmuxargs=("kill-session" "-t" "${argsession}")
+		if [[ "${argprint}" == TRUE ]]; then
+			echo "${tmuxargs[@]}"
+		else
+			if [[ "${argquiet:-}" == TRUE ]]; then
+				tmux "${tmuxargs[@]}" &>/dev/null || true  # ignore errors; always exit 0
+			else
+				tmux "${tmuxargs[@]}"
+			fi
+		fi
+		exit 0
+	fi
 
-  # if npm option is set, prefix commands `npm run ...`
-  if [[ "${argnpm}" == TRUE ]]; then
-    npmcmds="$( npm -h 2>/dev/null | awk '/access/,/whoami/' | sed -E 's/ (help|start|test),//g' | xargs | sed 's/, /|/g' )" || true
-    for (( idx = 0; idx < ${#argcmds[@]}; idx++ )); do
-      if ! [[ "${argcmds[idx]}" == 'npm '* ]]; then
-        # if command is an npm builtin, use `npm <cmd>` instead of `npm run <cmd>`:
-        if [[ "|${npmcmds}|" == *"|${argcmds[idx]}|"* ]]; then
-          argcmds[idx]="${TMEX_NPM_COMMAND:-npm} ${argcmds[idx]}"
-        else
-          argcmds[idx]="${TMEX_NPM_COMMAND:-npm} run ${argcmds[idx]}"
-        fi
-      fi
-    done
-  fi
+	# if npm option is set, prefix commands `npm run ...`
+	if [[ "${argnpm}" == TRUE ]]; then
+		npmcmds="$( npm -h 2>/dev/null | awk '/access/,/whoami/' | sed -E 's/ (help|start|test),//g' | xargs | sed 's/, /|/g' )" || true
+		for (( idx = 0; idx < ${#argcmds[@]}; idx++ )); do
+			if ! [[ "${argcmds[idx]}" == 'npm '* ]]; then
+				# if command is an npm builtin, use `npm <cmd>` instead of `npm run <cmd>`:
+				if [[ "|${npmcmds}|" == *"|${argcmds[idx]}|"* ]]; then
+					argcmds[idx]="${TMEX_NPM_COMMAND:-npm} ${argcmds[idx]}"
+				else
+					argcmds[idx]="${TMEX_NPM_COMMAND:-npm} run ${argcmds[idx]}"
+				fi
+			fi
+		done
+	fi
 
-  # if we're already in a tmux pane, ensure we're not in "shell-less" mode;
-  # this would fail to run the 1st command in the 1st pane since the pane
-  # would die after executing the nested tmex command
-  if [[ -n "${TMUX_PANE:-}" ]]; then
-    if [[ "${argshellless}" == TRUE ]]; then
-      echo "Error: --shellless mode cannot be used when nesting tmex commands"
-      exit 1
-    fi
-  fi
+	# if we're already in a tmux pane, ensure we're not in "shell-less" mode;
+	# this would fail to run the 1st command in the 1st pane since the pane
+	# would die after executing the nested tmex command
+	if [[ -n "${TMUX_PANE:-}" ]]; then
+		if [[ "${argshellless}" == TRUE ]]; then
+			echo "Error: --shellless mode cannot be used when nesting tmex commands"
+			exit 1
+		fi
+	fi
 
-  # if we're already in a tmux pane, further split the pane rather than nesting tmux sessions
-  if [[ -n "${TMUX_PANE:-}" && "${tmuxcmd}" == 'new-session' ]]; then
-    if [[ -z "${argwindow}" ]]; then
-      tmuxargs+=( ';' 'select-window' '-t' "$TMUX_PANE" )
-      tmuxargs+=( ';' 'select-pane' '-t' "$TMUX_PANE" )
-    else
-      if (( ${#tmuxargs[@]} == 0 )); then
-        tmuxargs+=( ';' 'select-window' '-t' "$TMUX_PANE" )
-        tmuxargs+=( ';' 'select-pane' '-t' "$TMUX_PANE" )
-        if [[ -n "${argwindow}" && "${argwindow}" != "''" && "${argwindow}" != '""' && "${argwindow}" != '-' ]]; then
-          tmuxargs+=( ';' 'rename-window' "${argwindow}" )
-        fi
-      elif [[ -n "${argwindow}" && "${argwindow}" != "''" && "${argwindow}" != '""' && "${argwindow}" != '-' ]]; then
-        tmuxargs+=( ';' 'new-window' '-n' "${argwindow}" )
-      else
-        tmuxargs+=( ';' 'new-window' )
-      fi
-    fi
-  # otherwise start a new session OR window
-  else
-    if (( ${#tmuxargs[@]} > 0 )); then
-      if [[ -n "${argwindow}" && "${argwindow}" != "''" && "${argwindow}" != '""' && "${argwindow}" != '-' ]]; then
-        tmuxargs+=( ';' 'new-window' '-n' "${argwindow}" )
-      else
-        tmuxargs+=( ';' 'new-window' )
-      fi
-    else
-      if [[ "${tmuxcmd}" == 'new-session' ]]; then
-        tmuxargs+=( 'new-session' '-s' "${argsession}" )
-      else
-        tmuxargs+=( "${tmuxcmd}" )
-      fi
-      if [[ -n "${argwindow}" && "${argwindow}" != "''" && "${argwindow}" != '""' && "${argwindow}" != '-' ]]; then
-        tmuxargs+=( ';' 'rename-window' "${argwindow}" )
-      fi
-    fi
+	# if we're already in a tmux pane, further split the pane rather than nesting tmux sessions
+	if [[ -n "${TMUX_PANE:-}" && "${tmuxcmd}" == 'new-session' ]]; then
+		if [[ -z "${argwindow}" ]]; then
+			tmuxargs+=( ';' 'select-window' '-t' "$TMUX_PANE" )
+			tmuxargs+=( ';' 'select-pane' '-t' "$TMUX_PANE" )
+		else
+			if (( ${#tmuxargs[@]} == 0 )); then
+				tmuxargs+=( ';' 'select-window' '-t' "$TMUX_PANE" )
+				tmuxargs+=( ';' 'select-pane' '-t' "$TMUX_PANE" )
+				if [[ -n "${argwindow}" && "${argwindow}" != "''" && "${argwindow}" != '""' && "${argwindow}" != '-' ]]; then
+					tmuxargs+=( ';' 'rename-window' "${argwindow}" )
+				fi
+			elif [[ -n "${argwindow}" && "${argwindow}" != "''" && "${argwindow}" != '""' && "${argwindow}" != '-' ]]; then
+				tmuxargs+=( ';' 'new-window' '-n' "${argwindow}" )
+			else
+				tmuxargs+=( ';' 'new-window' )
+			fi
+		fi
+	# otherwise start a new session OR window
+	else
+		if (( ${#tmuxargs[@]} > 0 )); then
+			if [[ -n "${argwindow}" && "${argwindow}" != "''" && "${argwindow}" != '""' && "${argwindow}" != '-' ]]; then
+				tmuxargs+=( ';' 'new-window' '-n' "${argwindow}" )
+			else
+				tmuxargs+=( ';' 'new-window' )
+			fi
+		else
+			if [[ "${tmuxcmd}" == 'new-session' ]]; then
+				tmuxargs+=( 'new-session' '-s' "${argsession}" )
+			else
+				tmuxargs+=( "${tmuxcmd}" )
+			fi
+			if [[ -n "${argwindow}" && "${argwindow}" != "''" && "${argwindow}" != '""' && "${argwindow}" != '-' ]]; then
+				tmuxargs+=( ';' 'rename-window' "${argwindow}" )
+			fi
+		fi
 
-    # if running in "detached" mode, add -d flag
-    if [[ "${argdetached}" == TRUE ]]; then
-      tmuxargs+=( '-d' )
-    fi
-  fi
+		# if running in "detached" mode, add -d flag
+		if [[ "${argdetached}" == TRUE ]]; then
+			tmuxargs+=( '-d' )
+		fi
+	fi
 
-  if [[ "${argsimulator}" == TRUE ]]; then
-    executecmd "echo 'LAYOUT'; echo '${arglayout}'; sleep 100000"
-  else
-    executecmd "${argcmds[0]:-}"
-  fi
+	if [[ "${argsimulator}" == TRUE ]]; then
+		executecmd "echo 'LAYOUT'; echo '${arglayout}'; sleep 100000"
+	else
+		executecmd "${argcmds[0]:-}"
+	fi
 
-  # if layout is not specified, generate a default
-  if [[ -z "${arglayout}" ]]; then
-    generatelayout "${#argcmds[@]}"
-  else
-    arglayoutoriginal="${arglayout}"
+	# if layout is not specified, generate a default
+	if [[ -z "${arglayout}" ]]; then
+		generatelayout "${#argcmds[@]}"
+	else
+		arglayoutoriginal="${arglayout}"
 
-    # --- Grid Sub-Layouts --- #
-    # for each pane count followed by {+} within layout
-    # replace with a default grid sub-layout with size matching digits:
-    pattern="([0-9]|\.[0-9]+)\{\+\}"
-    # normally treat pane counts as single-digit, but if count
-    # is preceeded by a "." character allow multi-digit count
-    while [[ "${arglayout}" =~ ${pattern} ]]; do
-      layoutsize="${BASH_REMATCH[1]/./}"  # remove possible "." from start of count
-      parentlayout="${arglayout}"
-      generatelayout "${layoutsize}"
-      # wrap every pane count of new sub-layout within its own set of [[ ]] brackets,
-      # so that slashes in adjacent sections of parent layout don't trigger multi-digit
-      # counting logic within the new sub-layout:
-      arglayout="$( sed -E 's/([0-9])/[[\1]]/g' <<< "${arglayout}" )"
-      arglayout="${parentlayout/${layoutsize}\{+\}/${arglayout}}"
-    done
-    # if layout _starts_ with {+} exit with error
-    if [[ "${arglayout}" == '{+}'* ]]; then
-      echo ""
-      echo "Invalid input: --layout=${arglayoutoriginal} cannot start with {+} clause."
-      echo ""
-      exit 1
-    fi
+		# --- Grid Sub-Layouts --- #
+		# for each pane count followed by {+} within layout
+		# replace with a default grid sub-layout with size matching digits:
+		pattern="([0-9]|\.[0-9]+)\{\+\}"
+		# normally treat pane counts as single-digit, but if count
+		# is preceeded by a "." character allow multi-digit count
+		while [[ "${arglayout}" =~ ${pattern} ]]; do
+			layoutsize="${BASH_REMATCH[1]/./}"	# remove possible "." from start of count
+			parentlayout="${arglayout}"
+			generatelayout "${layoutsize}"
+			# wrap every pane count of new sub-layout within its own set of [[ ]] brackets,
+			# so that slashes in adjacent sections of parent layout don't trigger multi-digit
+			# counting logic within the new sub-layout:
+			arglayout="$( sed -E 's/([0-9])/[[\1]]/g' <<< "${arglayout}" )"
+			arglayout="${parentlayout/${layoutsize}\{+\}/${arglayout}}"
+		done
+		# if layout _starts_ with {+} exit with error
+		if [[ "${arglayout}" == '{+}'* ]]; then
+			echo ""
+			echo "Invalid input: --layout=${arglayoutoriginal} cannot start with {+} clause."
+			echo ""
+			exit 1
+		fi
 
-    # --- Top Level Sizing --- #
-    # if layout starts with { } bracket sizing, automatically wrap the whole thing
-    # in a sublayout and transpose it, so that top-level sizing is applied
-    if [[ "${arglayout}" =~ ^(\{[0-9.]+\}) ]]; then
-      toplevelsizing="${BASH_REMATCH[1]}"
-      arglayout="[${arglayout/${toplevelsizing}/}]${toplevelsizing}"
-      [[ "${argtranspose}" == TRUE ]] && argtranspose=FALSE || argtranspose=TRUE
-    fi
+		# --- Top Level Sizing --- #
+		# if layout starts with { } bracket sizing, automatically wrap the whole thing
+		# in a sublayout and transpose it, so that top-level sizing is applied
+		if [[ "${arglayout}" =~ ^(\{[0-9.]+\}) ]]; then
+			toplevelsizing="${BASH_REMATCH[1]}"
+			arglayout="[${arglayout/${toplevelsizing}/}]${toplevelsizing}"
+			[[ "${argtranspose}" == TRUE ]] && argtranspose=FALSE || argtranspose=TRUE
+		fi
 
-    # --- Inter-Layout Pane Focus --- #
-    # if a digit (or digits) representing a set of panes in a layout is followed by
-    # any number of + or - chars, select the pane within that set corresponding with
-    # the index represented by the number of + or - chars,
-    # eg. +++ : pane index 2 (3rd from start), ---- : pane index -4 (4th from last)
-    if [[ -z "${argfocus}" && "${arglayout}" =~ ^([^+-]*)([+-]+) ]]; then
-      partiallayout="${BASH_REMATCH[1]}"
-      if [[ "${BASH_REMATCH[2]}" == '+'* ]]; then
-        argfocus="${#BASH_REMATCH[2]}"
-      else
-        argfocus="-${#BASH_REMATCH[2]}"
-      fi
-      multidigitvalue='-1'
-      if [[ "${partiallayout}" =~ ^[0-9]+\. ]]; then
-        multidigitvalue=''
-      fi
-      sizebracketsopen=FALSE
-      for (( idx = 0; idx < ${#partiallayout}; idx++ )); do
-        char="${partiallayout:${idx}:1}"
-        nextchar="${partiallayout:$(( idx + 1 )):1}"
+		# --- Inter-Layout Pane Focus --- #
+		# if a digit (or digits) representing a set of panes in a layout is followed by
+		# any number of + or - chars, select the pane within that set corresponding with
+		# the index represented by the number of + or - chars,
+		# eg. +++ : pane index 2 (3rd from start), ---- : pane index -4 (4th from last)
+		if [[ -z "${argfocus}" && "${arglayout}" =~ ^([^+-]*)([+-]+) ]]; then
+			partiallayout="${BASH_REMATCH[1]}"
+			if [[ "${BASH_REMATCH[2]}" == '+'* ]]; then
+				argfocus="${#BASH_REMATCH[2]}"
+			else
+				argfocus="-${#BASH_REMATCH[2]}"
+			fi
+			multidigitvalue='-1'
+			if [[ "${partiallayout}" =~ ^[0-9]+\. ]]; then
+				multidigitvalue=''
+			fi
+			sizebracketsopen=FALSE
+			for (( idx = 0; idx < ${#partiallayout}; idx++ )); do
+				char="${partiallayout:${idx}:1}"
+				nextchar="${partiallayout:$(( idx + 1 )):1}"
 
-        if [[ "${char}" == '.' ]]; then
-          if [[ "${nextchar}" =~ ^[0-9]$ ]]; then
-            multidigitvalue=''
-          fi
-          continue
-        elif [[ "${multidigitvalue}" != '-1' && "${char}" =~ ^[0-9]$ ]]; then
-          multidigitvalue+="${char}"
-          if [[ "${nextchar}" =~ ^[0-9]$ ]]; then
-            continue
-          else
-            char="${multidigitvalue}"
-            multidigitvalue='-1'
-          fi
-        else
-          multidigitvalue='-1'
-        fi
+				if [[ "${char}" == '.' ]]; then
+					if [[ "${nextchar}" =~ ^[0-9]$ ]]; then
+						multidigitvalue=''
+					fi
+					continue
+				elif [[ "${multidigitvalue}" != '-1' && "${char}" =~ ^[0-9]$ ]]; then
+					multidigitvalue+="${char}"
+					if [[ "${nextchar}" =~ ^[0-9]$ ]]; then
+						continue
+					else
+						char="${multidigitvalue}"
+						multidigitvalue='-1'
+					fi
+				else
+					multidigitvalue='-1'
+				fi
 
-        if [[ "${char}" == '0' ]]; then
-          continue
-        elif [[ "${char}" == '{' ]]; then
-          sizebracketsopen=TRUE
-        elif [[ "${char}" == '}' ]]; then
-          sizebracketsopen=FALSE
-        elif [[ "${sizebracketsopen:-}" == FALSE && "${char}" =~ ^[0-9]+$ ]]; then
-          (( argfocus += char )) || true
-        fi
-      done
-      # if +++ chars are in use, algorithm is as follows:
-      # - sum number of panes in each row/col PRECEEDING row/col with selected pane
-      # - to accomplish this, sum all row/cols up to and INCLUDING selected,
-      #   then subtract that one at the end
-      # - also subtract 1 since positive select-pane operations should be 0-indexed
-      # - the resulting integer is the selected pane index, and is used as argfocus
-      # if +++ chars are in use, algorithm is as follows:
-      # - sum all row/cols up to and INCLUDING selected
-      # - no decrement by 1 needed since negative select-pane operations are 1-indexed
-      # - the resulting integer is the selected pane index, and is used as argfocus
-      if [[ "${arglayout}" =~ [0-9]\+ ]]; then
-        (( argfocus -= char )) || true
-        (( argfocus -= 1 )) || true
-      fi
-    fi
-  fi
+				if [[ "${char}" == '0' ]]; then
+					continue
+				elif [[ "${char}" == '{' ]]; then
+					sizebracketsopen=TRUE
+				elif [[ "${char}" == '}' ]]; then
+					sizebracketsopen=FALSE
+				elif [[ "${sizebracketsopen:-}" == FALSE && "${char}" =~ ^[0-9]+$ ]]; then
+					(( argfocus += char )) || true
+				fi
+			done
+			# if +++ chars are in use, algorithm is as follows:
+			# - sum number of panes in each row/col PRECEEDING row/col with selected pane
+			# - to accomplish this, sum all row/cols up to and INCLUDING selected,
+			#   then subtract that one at the end
+			# - also subtract 1 since positive select-pane operations should be 0-indexed
+			# - the resulting integer is the selected pane index, and is used as argfocus
+			# if +++ chars are in use, algorithm is as follows:
+			# - sum all row/cols up to and INCLUDING selected
+			# - no decrement by 1 needed since negative select-pane operations are 1-indexed
+			# - the resulting integer is the selected pane index, and is used as argfocus
+			if [[ "${arglayout}" =~ [0-9]\+ ]]; then
+				(( argfocus -= char )) || true
+				(( argfocus -= 1 )) || true
+			fi
+		fi
+	fi
 
-  # ensure layout is valid and large enough to contain commands provided
-  invalidlayoutmsgs="$( validatelayout "${arglayout}" "${#argcmds[@]}" )"
-  if [[ -n "${invalidlayoutmsgs}" ]]; then
-    echo ""
-    echo "Invalid input: --layout=${arglayoutoriginal}"
-    echo "               - ${invalidlayoutmsgs//$'\n'/$'\n'               - }"
-    echo ""                             # prefix each message with hyphen ^
-    exit 1
-  fi
+	# ensure layout is valid and large enough to contain commands provided
+	invalidlayoutmsgs="$( validatelayout "${arglayout}" "${#argcmds[@]}" )"
+	if [[ -n "${invalidlayoutmsgs}" ]]; then
+		echo ""
+		echo "Invalid input: --layout=${arglayoutoriginal}"
+		echo "							 - ${invalidlayoutmsgs//$'\n'/$'\n'								- }"
+		echo ""															# prefix each message with hyphen ^
+		exit 1
+	fi
 
-  # append layout commands onto tmuxargs
-  [[ "${argtranspose}" == TRUE ]] && flag='v' || flag='h'
-  split2d "${flag}" "${arglayout}" '' "${argcmds[@]:-}"
+	# append layout commands onto tmuxargs
+	[[ "${argtranspose}" == TRUE ]] && flag='v' || flag='h'
+	split2d "${flag}" "${arglayout}" '' "${argcmds[@]:-}"
 
-  # select a pane if focus arg was provided
-  if [[ -n "${argfocus}" ]]; then
-    tmuxargs+=( ';' 'select-pane' "-t${argfocus}" )
-  fi
+	# select a pane if focus arg was provided
+	if [[ -n "${argfocus}" ]]; then
+		tmuxargs+=( ';' 'select-pane' "-t${argfocus}" )
+	fi
 
-  # if running shell-less, command exit will kill tmux pane which makes troubleshooting hard
-  # set remain-on-exit on - more of a sane default since user will see when a command failed
-  if [[ "${argshellless}" == TRUE ]]; then
-    tmuxargs+=( ';' 'set-window-option' 'remain-on-exit' 'on' )
-  fi
+	# if running shell-less, command exit will kill tmux pane which makes troubleshooting hard
+	# set remain-on-exit on - more of a sane default since user will see when a command failed
+	if [[ "${argshellless}" == TRUE ]]; then
+		tmuxargs+=( ';' 'set-window-option' 'remain-on-exit' 'on' )
+	fi
 }
 
 function main() {
-  local argtmuxcmd argcmds argsettings argsettingvalues argdetached argfocus arghelp
-  local argnpm argprint argreattach argsession argshellless argtranspose argkill
-  local argquiet argversion argwindow firstwindowarg nextwindowidx focuswindowidx
-  local arglayout arglayoutoriginal
+	local argtmuxcmd argcmds argsettings argsettingvalues argdetached argfocus arghelp
+	local argnpm argprint argreattach argsession argshellless argtranspose argkill
+	local argquiet argversion argwindow firstwindowarg nextwindowidx focuswindowidx
+	local arglayout arglayoutoriginal
 
-  local args tmuxcmd tmexargs tmuxargs idx output version tmuxversion usage help
+	local args tmuxcmd tmexargs tmuxargs idx output version tmuxversion usage help
 
-  # Construct and execute a tmux command that runs a set of commands inside a layout.
-  # Params:
-  #   $@ args [array<any>] arguments passed to script
+	# Construct and execute a tmux command that runs a set of commands inside a layout.
+	# Params:
+	#   $@ args [array<any>] arguments passed to script
 
-  if [[ -z "${TMEX_SUPPRESS_WARNING_TMUX:-}" ]]; then
-    if ! command -v tmux &>/dev/null; then
-      echo "!!! WARNING: tmux is not yet installed, tmex will not work without tmux !!!"
-      echo
-      echo "Here are basic install instructions for tmux:"
-      echo "  brew install tmux      # OSX (via Homebrew)"
-      echo "  sudo apt install tmux  # Ubuntu, Debian, etc."
-      echo
-      echo "or refer to https://github.com/tmux/tmux/wiki/Installing"
-      echo "for install instructions applicable to your platform."
-      echo "'export TMEX_SUPPRESS_WARNING_TMUX=1' in shell rc file will hide this warning."
-      echo
-      echo
-    fi
-  fi
+	if [[ -z "${TMEX_SUPPRESS_WARNING_TMUX:-}" ]]; then
+		if ! command -v tmux &>/dev/null; then
+			echo "!!! WARNING: tmux is not yet installed, tmex will not work without tmux !!!"
+			echo
+			echo "Here are basic install instructions for tmux:"
+			echo "  brew install tmux      # OSX (via Homebrew)"
+			echo "  sudo apt install tmux  # Ubuntu, Debian, etc."
+			echo
+			echo "or refer to https://github.com/tmux/tmux/wiki/Installing"
+			echo "for install instructions applicable to your platform."
+			echo "'export TMEX_SUPPRESS_WARNING_TMUX=1' in shell rc file will hide this warning."
+			echo
+			echo
+		fi
+	fi
 
-  tmuxversion="$( tmux -V )"
-  if [[ "${tmuxversion}" =~ ([0-9]+(\.[0-9]+)?) ]]; then
-    tmuxversion="${BASH_REMATCH[0]}"
-  elif [[ -z "${TMEX_SUPPRESS_WARNING_PCT_FLAGS:-}" ]]; then
-    echo "!!! WARNING: current tmux version could not be determined from !!!"
-    echo "  tmux -V  >>>  \"${tmuxversion}\""
-    echo "This can result in incorrect pane-splitting behavior since tmux has made"
-    echo "backwards-incompatible changes to flags of the split-window command."
-    echo "Please ensure your installation of tmux produces a semver string within"
-    echo "the output of 'tmux -V'."
-    echo "'export TMEX_SUPPRESS_WARNING_PCT_FLAGS=1' in shell rc file will hide warning."
-    echo "See https://github.com/tmux/tmux/blob/master/CHANGES#L663-L665 for details."
-    echo
-  fi
+	tmuxversion="$( tmux -V )"
+	if [[ "${tmuxversion}" =~ ([0-9]+(\.[0-9]+)?) ]]; then
+		tmuxversion="${BASH_REMATCH[0]}"
+	elif [[ -z "${TMEX_SUPPRESS_WARNING_PCT_FLAGS:-}" ]]; then
+		echo "!!! WARNING: current tmux version could not be determined from !!!"
+		echo "  tmux -V  >>>	\"${tmuxversion}\""
+		echo "This can result in incorrect pane-splitting behavior since tmux has made"
+		echo "backwards-incompatible changes to flags of the split-window command."
+		echo "Please ensure your installation of tmux produces a semver string within"
+		echo "the output of 'tmux -V'."
+		echo "'export TMEX_SUPPRESS_WARNING_PCT_FLAGS=1' in shell rc file will hide warning."
+		echo "See https://github.com/tmux/tmux/blob/master/CHANGES#L663-L665 for details."
+		echo
+	fi
 
-  version="$( head -n 3 < "$0" | tail -1 )"
-  version="${version#\# }"  # remove "# " prefix
-  usage='Usage:
+	version="$( head -n 3 < "$0" | tail -1 )"
+	version="${version#\# }"	# remove "# " prefix
+	usage='Usage:
 
 tmex <session-name> -nt 1224 "cmd a" "cmd b" "cmd c" ... etc.
                      |     |              |
@@ -1029,8 +1029,8 @@ tmex <session-name> ··············  session name required unless -
   [--set-XYZ "value" ] ···········  set tmux option XYZ, eg. "tmex test --set-status=off" -> "tmux -s test ; set status off"
   ["command 1" "command 2" ...] ··  shell commands to be executed in each pane (num commands cannot exceed total pane count)
 '
-  # shellcheck disable=SC2016
-  help='-l, --layout : If no layout is provided, a default will be generated to match the number of commands provided.
+	# shellcheck disable=SC2016
+	help='-l, --layout : If no layout is provided, a default will be generated to match the number of commands provided.
   Otherwise, layout must be a string of 0-9 [ ] { } . - + chars. Each digit divides a column into a number of panes, e.g.
     $ tmex -n --layout=1224
   This layout produces 1 pane in the first column, 2 panes in the 2nd and 3rd columns, and 4 panes in the 4th column.
@@ -1052,179 +1052,179 @@ tmex <session-name> ··············  session name required unless -
 
 For complete documentation, please see https://github.com/evnp/tmex#readme'
 
-  argdetached=FALSE   # optional - if TRUE, invoke tmux with -d flag (detached session)
-  argfocus=''         # optional - tmux pane to select by index
-  arghelp=FALSE       # optional - if TRUE, display usage message and exit
-  arglayout=''        # optional - string of digits defining a custom layout
-  argnpm=FALSE        # optional - if TRUE, prefix each command with "npm run" for package.json scripts
-  argprint=FALSE      # optional - if TRUE, print final tmux command to console instead of executing it
-  argreattach=FALSE   # optional - if TRUE, re-attach to existing tmux session isntead of replacing it
-  argsession=''       # required - session name
-  argwindow=''        # optional - window name
-  argshellless=FALSE  # optional - if TRUE, execute commands standalone instead of in a shell
-  argtranspose=FALSE  # optional - if TRUE, layout in left-to-right instead of top-to-bottom orientation
-  argversion=FALSE    # optional - if TRUE, display version and exit
-  argsimulator=FALSE  # optional - if TRUE, use simulator-generated commands
-  argcmds=()          # optional - list of commands to be executed in resulting panes
-  argsettings=()      # optional - list of tmux settings that will be applied on init
-  argsettingvalues=() # optional - list of tmux setting values that will be applied on init
-  argtmuxcmd=''       # optional - tmux command to call; default is "new-session"
+	argdetached=FALSE		# optional - if TRUE, invoke tmux with -d flag (detached session)
+	argfocus=''					# optional - tmux pane to select by index
+	arghelp=FALSE				# optional - if TRUE, display usage message and exit
+	arglayout=''				# optional - string of digits defining a custom layout
+	argnpm=FALSE				# optional - if TRUE, prefix each command with "npm run" for package.json scripts
+	argprint=FALSE			# optional - if TRUE, print final tmux command to console instead of executing it
+	argreattach=FALSE		# optional - if TRUE, re-attach to existing tmux session isntead of replacing it
+	argsession=''				# required - session name
+	argwindow=''				# optional - window name
+	argshellless=FALSE	# optional - if TRUE, execute commands standalone instead of in a shell
+	argtranspose=FALSE	# optional - if TRUE, layout in left-to-right instead of top-to-bottom orientation
+	argversion=FALSE		# optional - if TRUE, display version and exit
+	argsimulator=FALSE	# optional - if TRUE, use simulator-generated commands
+	argcmds=()					# optional - list of commands to be executed in resulting panes
+	argsettings=()			# optional - list of tmux settings that will be applied on init
+	argsettingvalues=() # optional - list of tmux setting values that will be applied on init
+	argtmuxcmd=''				# optional - tmux command to call; default is "new-session"
 
-  # begin to construct tmux arguments
-  tmuxcmd=''
-  tmuxargs=()
+	# begin to construct tmux arguments
+	tmuxcmd=''
+	tmuxargs=()
 
-  # --- Multi-Window Management --- #
-  args=( "${@:-}" )
-  tmexargs=()
-  nextwindowidx=0
-  focuswindowidx=0
-  for (( idx = 0; idx <= ${#args[@]}; idx++ )); do
-    if (( idx == ${#args[@]} )) || [[ "${args[idx]}" =~ ^(-w|-W|--window|--window-focus) ]]; then
-      if [[ -z "${argwindow}" ]]; then
-        firstwindowarg="${args[idx]:-}"
-        if [[ "${args[idx]:-}" =~ ^(-w|-W|--window|--window-focus)$ ]]; then
-          firstwindowarg+=" ${args[$(( idx + 1 ))]:--}"
-        fi
-      fi
-      if [[ -n "${argwindow}" ]]; then
-        if [[ -n "${TMUX_PANE:-}" ]]; then
-          buildtmuxargs "${TMUX_PANE}" "${tmexargs[@]:-}"
-        elif (( ${#tmuxargs[@]} == 0 )); then
-          buildtmuxargs "${tmexargs[@]:-}"
-        else
-          buildtmuxargs "${argsession}" "${tmexargs[@]:-}"
-        fi
-        tmexargs=()
-        argtmuxcmd=''
-        argwindow=''
-        argfocus=''
-        arglayout=''
-        argnpm=FALSE
-        argtranspose=FALSE
-        argcmds=()
-        argsettings=()
-        argsettingvalues=()
-      fi
-      if [[ "${args[idx]:-}" =~ ^(-w|-W|--window|--window-focus)$ ]]; then
-        if [[ "${args[idx]:-}" =~ ^(-W|--window-focus)$ ]]; then
-          focuswindowidx="${nextwindowidx}"
-        fi
-        (( nextwindowidx++ )) || true
-        (( idx++ )) || true
-        argwindow="${args[idx]}"
-        if [[ -z "${argwindow}" ]]; then
-          argwindow='-'
-        fi
-      elif [[ "${args[idx]:-}" =~ ^(-w|-W|--window|--window-focus)\=?(.*)$ ]]; then
-        argwindow="${BASH_REMATCH[2]}"
-        if [[ "${args[idx]:-}" =~ ^(-W|--window-focus)\=?(.*)$ ]]; then
-          focuswindowidx="${nextwindowidx}"
-        fi
-        (( nextwindowidx++ )) || true
-        if [[ -z "${argwindow}" ]]; then
-          argwindow='-'
-        fi
-      fi
-    else
-      tmexargs+=( "${args[idx]}" )
-    fi
-  done
+	# --- Multi-Window Management --- #
+	args=( "${@:-}" )
+	tmexargs=()
+	nextwindowidx=0
+	focuswindowidx=0
+	for (( idx = 0; idx <= ${#args[@]}; idx++ )); do
+		if (( idx == ${#args[@]} )) || [[ "${args[idx]}" =~ ^(-w|-W|--window|--window-focus) ]]; then
+			if [[ -z "${argwindow}" ]]; then
+				firstwindowarg="${args[idx]:-}"
+				if [[ "${args[idx]:-}" =~ ^(-w|-W|--window|--window-focus)$ ]]; then
+					firstwindowarg+=" ${args[$(( idx + 1 ))]:--}"
+				fi
+			fi
+			if [[ -n "${argwindow}" ]]; then
+				if [[ -n "${TMUX_PANE:-}" ]]; then
+					buildtmuxargs "${TMUX_PANE}" "${tmexargs[@]:-}"
+				elif (( ${#tmuxargs[@]} == 0 )); then
+					buildtmuxargs "${tmexargs[@]:-}"
+				else
+					buildtmuxargs "${argsession}" "${tmexargs[@]:-}"
+				fi
+				tmexargs=()
+				argtmuxcmd=''
+				argwindow=''
+				argfocus=''
+				arglayout=''
+				argnpm=FALSE
+				argtranspose=FALSE
+				argcmds=()
+				argsettings=()
+				argsettingvalues=()
+			fi
+			if [[ "${args[idx]:-}" =~ ^(-w|-W|--window|--window-focus)$ ]]; then
+				if [[ "${args[idx]:-}" =~ ^(-W|--window-focus)$ ]]; then
+					focuswindowidx="${nextwindowidx}"
+				fi
+				(( nextwindowidx++ )) || true
+				(( idx++ )) || true
+				argwindow="${args[idx]}"
+				if [[ -z "${argwindow}" ]]; then
+					argwindow='-'
+				fi
+			elif [[ "${args[idx]:-}" =~ ^(-w|-W|--window|--window-focus)\=?(.*)$ ]]; then
+				argwindow="${BASH_REMATCH[2]}"
+				if [[ "${args[idx]:-}" =~ ^(-W|--window-focus)\=?(.*)$ ]]; then
+					focuswindowidx="${nextwindowidx}"
+				fi
+				(( nextwindowidx++ )) || true
+				if [[ -z "${argwindow}" ]]; then
+					argwindow='-'
+				fi
+			fi
+		else
+			tmexargs+=( "${args[idx]}" )
+		fi
+	done
 
-  if (( ${#tmuxargs[@]} == 0 )); then
-    # not using windows - build tmux args normally:
-    buildtmuxargs "$@"
-  else
-    # using windows - add select-window command to focus correct window:
-    selectwindow "${focuswindowidx}"
+	if (( ${#tmuxargs[@]} == 0 )); then
+		# not using windows - build tmux args normally:
+		buildtmuxargs "$@"
+	else
+		# using windows - add select-window command to focus correct window:
+		selectwindow "${focuswindowidx}"
 
-    # validate that first arg was session name in multi-window mode
-    # OR that session name was omitted if using multi-windows within a tmux session
-    if [[ -n "${TMUX_PANE:-}" ]]; then
-      if ! [[ "$1" =~ ^(-w|-W|--window|--window-focus) ]]; then
-        echo ""
-        echo "Invalid input: You must omit session name when using multi-window mode"
-        echo "               from within another tmux session."
-        echo "          Try: $ tmex ${*:2}"
-        echo ""
-        exit 1
-      fi
-    else
-      if ! [[ "$1" == "${argsession}" ]]; then
-        echo ""
-        echo "Invalid input: You must define session name prior to 1st --window (-w)"
-        echo "               arg when using multi-window mode (even with --npm/-n set)."
-        echo "          Try: $ tmex SESSION-NAME $*"
-        echo ""
-        exit 1
-      fi
-    fi
-  fi
+		# validate that first arg was session name in multi-window mode
+		# OR that session name was omitted if using multi-windows within a tmux session
+		if [[ -n "${TMUX_PANE:-}" ]]; then
+			if ! [[ "$1" =~ ^(-w|-W|--window|--window-focus) ]]; then
+				echo ""
+				echo "Invalid input: You must omit session name when using multi-window mode"
+				echo "               from within another tmux session."
+				echo "          Try: $ tmex ${*:2}"
+				echo ""
+				exit 1
+			fi
+		else
+			if ! [[ "$1" == "${argsession}" ]]; then
+				echo ""
+				echo "Invalid input: You must define session name prior to 1st --window (-w)"
+				echo "               arg when using multi-window mode (even with --npm/-n set)."
+				echo "          Try: $ tmex SESSION-NAME $*"
+				echo ""
+				exit 1
+			fi
+		fi
+	fi
 
-  if [[ "${argnpm}" == TRUE && -z "${TMEX_SUPPRESS_WARNING_NPM:-}" ]]; then
-    if ! command -v "${TMEX_NPM_COMMAND:-npm}" &>/dev/null; then
-      echo "!!! WARNING: You're using tmex with an --npm/-n flag but ${TMEX_NPM_COMMAND:-npm} is not installed !!!"
-      echo
-      if [[ "${TMEX_NPM_COMMAND:-npm}" != 'npm' ]]; then
-        echo "(you've specified TMEX_NPM_COMMAND=${TMEX_NPM_COMMAND} instead of 'npm')"
-        echo
-      fi
-      echo "You may want to install ${TMEX_NPM_COMMAND:-npm} first, or remove --npm/-n from your tmex command."
-      echo "'export TMEX_SUPPRESS_WARNING_NPM=1' in shell rc file will hide this warning."
-      echo
-      echo
-    fi
-  fi
+	if [[ "${argnpm}" == TRUE && -z "${TMEX_SUPPRESS_WARNING_NPM:-}" ]]; then
+		if ! command -v "${TMEX_NPM_COMMAND:-npm}" &>/dev/null; then
+			echo "!!! WARNING: You're using tmex with an --npm/-n flag but ${TMEX_NPM_COMMAND:-npm} is not installed !!!"
+			echo
+			if [[ "${TMEX_NPM_COMMAND:-npm}" != 'npm' ]]; then
+				echo "(you've specified TMEX_NPM_COMMAND=${TMEX_NPM_COMMAND} instead of 'npm')"
+				echo
+			fi
+			echo "You may want to install ${TMEX_NPM_COMMAND:-npm} first, or remove --npm/-n from your tmex command."
+			echo "'export TMEX_SUPPRESS_WARNING_NPM=1' in shell rc file will hide this warning."
+			echo
+			echo
+		fi
+	fi
 
-  # Apply any additional settings specified for tmux session:
-  if (( ${#argsettings[@]} )); then
-    for (( idx = 0; idx < ${#argsettings[@]}; idx++ )); do
-      tmuxargs+=( ';' 'set' "${argsettings[idx]}" "${argsettingvalues[idx]}" )
-    done
-  fi
+	# Apply any additional settings specified for tmux session:
+	if (( ${#argsettings[@]} )); then
+		for (( idx = 0; idx < ${#argsettings[@]}; idx++ )); do
+			tmuxargs+=( ';' 'set' "${argsettings[idx]}" "${argsettingvalues[idx]}" )
+		done
+	fi
 
-  if [[ "${argprint}" == TRUE ]]; then
-    output=""
-    for (( idx = 0; idx < ${#tmuxargs[@]}; idx++ )); do
-      if [[ "${tmuxargs[idx]}" == *' '* ]]; then
-        output+="\"${tmuxargs[idx]}\" "
-      else
-        output+="${tmuxargs[idx]} "
-      fi
-    done
-    echo "${output}"
-  else
-    # either attach to an existing session or kill it based on specified behavior
-    if [[ -z "${TMUX_PANE:-}" && "${tmuxcmd}" == 'new-session' ]]; then # avoid doing this if we're already in tmux session
-      if tmux has-session -t "${argsession}" &>/dev/null; then
-        if [[ "${argreattach}" == TRUE ]]; then
-          if [[ "${argquiet:-}" == TRUE ]]; then
-            tmux attach-session -t "${argsession}" &>/dev/null
-          else
-            tmux attach-session -t "${argsession}"
-          fi
-          exit 0
-        else
-          if [[ "${argquiet:-}" == TRUE ]]; then
-            tmux kill-session -t "${argsession}" &>/dev/null
-          else
-            tmux kill-session -t "${argsession}"
-          fi
-        fi
-      fi
-    fi
+	if [[ "${argprint}" == TRUE ]]; then
+		output=""
+		for (( idx = 0; idx < ${#tmuxargs[@]}; idx++ )); do
+			if [[ "${tmuxargs[idx]}" == *' '* ]]; then
+				output+="\"${tmuxargs[idx]}\" "
+			else
+				output+="${tmuxargs[idx]} "
+			fi
+		done
+		echo "${output}"
+	else
+		# either attach to an existing session or kill it based on specified behavior
+		if [[ -z "${TMUX_PANE:-}" && "${tmuxcmd}" == 'new-session' ]]; then # avoid doing this if we're already in tmux session
+			if tmux has-session -t "${argsession}" &>/dev/null; then
+				if [[ "${argreattach}" == TRUE ]]; then
+					if [[ "${argquiet:-}" == TRUE ]]; then
+						tmux attach-session -t "${argsession}" &>/dev/null
+					else
+						tmux attach-session -t "${argsession}"
+					fi
+					exit 0
+				else
+					if [[ "${argquiet:-}" == TRUE ]]; then
+						tmux kill-session -t "${argsession}" &>/dev/null
+					else
+						tmux kill-session -t "${argsession}"
+					fi
+				fi
+			fi
+		fi
 
-    if [[ "${argquiet:-}" == TRUE ]]; then
-      # execute constructed tmux command
-      tmux "${tmuxargs[@]}" &>/dev/null
-    else
-      # execute constructed tmux command
-      tmux "${tmuxargs[@]}"
+		if [[ "${argquiet:-}" == TRUE ]]; then
+			# execute constructed tmux command
+			tmux "${tmuxargs[@]}" &>/dev/null
+		else
+			# execute constructed tmux command
+			tmux "${tmuxargs[@]}"
 
-      # ouput session name for later attachment, setting options, etc.
-      echo "${argsession}"
-    fi
-  fi
+			# ouput session name for later attachment, setting options, etc.
+			echo "${argsession}"
+		fi
+	fi
 }
 
 main "$@"

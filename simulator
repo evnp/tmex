@@ -5,51 +5,51 @@
 set -euo pipefail
 
 function rand() {
-  shuf -i"1-$1" -n1 | tr -d '[:space:]'
+	shuf -i"1-$1" -n1 | tr -d '[:space:]'
 }
 
 function sizing() {
-  local sizes='' multi=FALSE leading=''
-  if (( $( rand 4 ) == 1 )); then
-    multi=TRUE
-  fi
-  for (( idx = "$( rand "$1" )"; idx; idx-- )); do
-    if [[ "${multi}" == TRUE ]]; then
-      leading=''; (( $( rand 3 ) == 1 )) && leading='.'
-      sizes+="${leading}$( rand 19 )."
-    else
-      sizes+="$( rand 9 )"
-    fi
-  done
-  echo "{${sizes}}"
+	local sizes='' multi=FALSE leading=''
+	if (( $( rand 4 ) == 1 )); then
+		multi=TRUE
+	fi
+	for (( idx = "$( rand "$1" )"; idx; idx-- )); do
+		if [[ "${multi}" == TRUE ]]; then
+			leading=''; (( $( rand 3 ) == 1 )) && leading='.'
+			sizes+="${leading}$( rand 19 )."
+		else
+			sizes+="$( rand 9 )"
+		fi
+	done
+	echo "{${sizes}}"
 }
 
 function randlayout() {
-  local n="$1" layout='' idx=0 multi=FALSE leading='' panes=0 sizing=''
-  if (( $( rand 4 ) == 1 )); then
-    multi=TRUE
-  fi
-  for (( idx = "$( rand "${n}" )"; idx; idx-- )); do
-    if (( n > 2 && $( rand 4 ) == 1 )); then
-      layout+="[$( randlayout "$(( n / 2 ))" )]"
-    elif [[ "${multi}" == TRUE ]]; then
-      panes="$( rand 19 )"
-      leading=''; (( $( rand 3 ) == 1 )) && leading='.'
-      sizing=''; (( $( rand 4 ) == 1 )) && sizing="$( sizing "${panes}" )"
-      layout+="${leading}${panes}.${sizing}"
-    else
-      panes="$( rand 9 )"
-      sizing=''; (( $( rand 4 ) == 1 )) && sizing="$( sizing "${panes}" )"
-      layout+="${panes}${sizing}"
-    fi
-  done
-  echo "${layout//../.}"
+	local n="$1" layout='' idx=0 multi=FALSE leading='' panes=0 sizing=''
+	if (( $( rand 4 ) == 1 )); then
+		multi=TRUE
+	fi
+	for (( idx = "$( rand "${n}" )"; idx; idx-- )); do
+		if (( n > 2 && $( rand 4 ) == 1 )); then
+			layout+="[$( randlayout "$(( n / 2 ))" )]"
+		elif [[ "${multi}" == TRUE ]]; then
+			panes="$( rand 19 )"
+			leading=''; (( $( rand 3 ) == 1 )) && leading='.'
+			sizing=''; (( $( rand 4 ) == 1 )) && sizing="$( sizing "${panes}" )"
+			layout+="${leading}${panes}.${sizing}"
+		else
+			panes="$( rand 9 )"
+			sizing=''; (( $( rand 4 ) == 1 )) && sizing="$( sizing "${panes}" )"
+			layout+="${panes}${sizing}"
+		fi
+	done
+	echo "${layout//../.}"
 }
 
 function main() {
-  local layout
-  layout="$( randlayout "${1:-8}" )"
-  tmex "LAYOUT=${layout}" --simulator --shellless --layout="${layout}"
+	local layout
+	layout="$( randlayout "${1:-8}" )"
+	tmex "LAYOUT=${layout}" --simulator --shellless --layout="${layout}"
 }
 
 main "$@"

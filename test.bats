@@ -176,15 +176,15 @@ function assert_layout() {
 	IFS=$'\n'
 	expected=""
 	for command in ${layout}; do
-		command="${command#"${command%%[![:space:]]*}"}"	# remove leading whitespace
-		command="${command%"${command##*[![:space:]]}"}"	# remove trailing whitespace
-		command=$( echo "${command}" | tr -s " " )	# replace multiple space with single
+		command="${command#"${command%%[![:space:]]*}"}" # remove leading whitespace
+		command="${command%"${command##*[![:space:]]}"}" # remove trailing whitespace
+		command=$( echo "${command}" | tr -s " " ) # replace multiple space with single
 		if [[ -n "${command}" ]]; then
 			expected+="${command} ; "
 		fi
 	done
 	suffix=" ; "
-	expected="${expected%"${suffix}"}"	# remove trailing semicolon
+	expected="${expected%"${suffix}"}" # remove trailing semicolon
 
 	assert_output -p "${expected}"
 }
@@ -378,14 +378,14 @@ layout_1234="
 	assert_success
 }
 @test "${BATS_TEST_NUMBER} tmex testsessionname -f6 123+++4" {
-  # --focus arg value should take precedence over layout focus characters
+	# --focus arg value should take precedence over layout focus characters
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_1234} select-pane -t6"
 	assert_success
 }
 @test "${BATS_TEST_NUMBER} tmex testsessionname 123+++4 -f6" {
-  # --focus arg value should take precedence over layout focus characters
+	# --focus arg value should take precedence over layout focus characters
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_1234} select-pane -t6"
@@ -458,14 +458,14 @@ layout_1234="
 	assert_success
 }
 @test "${BATS_TEST_NUMBER} tmex testsessionname --focus=0 -l 1+++234" {
-  # --focus arg value should take precedence over layout focus characters
+	# --focus arg value should take precedence over layout focus characters
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_1234} select-pane -t0"
 	assert_success
 }
 @test "${BATS_TEST_NUMBER} tmex testsessionname --focus=0 -l 1---234" {
-  # --focus arg value should take precedence over layout focus characters
+	# --focus arg value should take precedence over layout focus characters
 	run_tmex
 	assert_output -p "new-session -s testsessionname"
 	assert_layout "${layout_1234} select-pane -t0"
@@ -545,7 +545,7 @@ layout_1234="
 }
 @test "${BATS_TEST_NUMBER} tmex testsessionname --focus=0 -l +++1234+" {
 	run_tmex
-  assert_output -p "Invalid input: --layout=+++1234+"
+	assert_output -p "Invalid input: --layout=+++1234+"
 	assert_output -p "cannot start with + character"
 	refute_output -p "new-session -s testsessionname"
 	refute_layout "${layout_1234}"
@@ -2599,10 +2599,9 @@ function layout_with_new_pct_flags() {
 
 # Test all tmex commands written in README.md
 # Run this command:
-#     grep "^tmex your-session-name" < README.md | sed -E "s/ +#.*//"
+#   grep "^tmex your-session-name" < README.md | sed -E "s/ +#.*//"
 # Then diff the output against this list of commands. Add tests if any are missing.
-# NOTE: All instances of "cmd a" "cmd b" etc. must be replaced with cmdA, cmdB, etc.
-#       (quotes removed)
+# NOTE: Instances of "cmd a" "cmd b" etc. replaced with cmdA, cmdB, etc. (quotes removed)
 # tmex your-session-name "cmd a" "cmd b" "cmd c" ... etc.
 # tmex your-session-name --npm --layout=1224 --transpose "cmd a" "cmd b" "cmd c" ... etc.
 # tmex your-session-name -nt 1224 "cmd a" "cmd b" "cmd c" ... etc.
