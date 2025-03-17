@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+function main() {
+	local skip_lines_backref="" prev_file_contents="" next_file_contents=""
+
+	if ! command -v shfmt &> /dev/null
+	then
+		echo "!!! Install shfmt first: brew install shfmt !!!"
+		exit 1
+	fi
+
+	for file in "$@"
+	do
+		# First, auto-format with shfmt (https://github.com/mvdan/sh):
+		shfmt -w -kp -ci -sr "${file}"
+
+		# Move "then" and "do" keywords onto separate lines for readability:
+		perl -0777 -pe 's/; then\n(\s+)(\s)(\S)/\n\1then\n\1\2\3/g;' -i "${file}"
+		perl -0777 -pe 's/; do\n(\s+)(\s)(\S)/\n\1do\n\1\2\3/g;' -i "${file}"
+
+		# Add surrounding spaces to $(...) and ((...)) expressions for readability:
+		skip_lines_backref='(?<!(?:=~|s\/|# |echo).{1,250})'
+		next_file_contents="$( cat "${file}" )"
+		while [[ "${prev_file_contents}" != "${next_file_contents}" ]]
+		do
+			prev_file_contents="$( cat "${file}" )"
+			perl -0777 -pe \
+				"s/${skip_lines_backref}"'(\$|\()\(([^\(\)\s])/\1\( \2/g' \
+				-i "${file}"
+			# ^ Add space after $( and (( when they aren't followed by space already,
+			#   skipping lines which contain regex match, sed pattern, comments, or echos.
+			perl -0777 -pe \
+				"s/${skip_lines_backref}"'(?<=(?:\$\(|\(\().{1,250})([^\(\)\s])\)/\1 \)/g' \
+				-i "${file}"
+			# ^ Add space before ) and )) when they aren't preceeded by space already,
+			#   skipping lines which contain regex match, sed pattern, comments, or echos.
+			#   Only do this when $( or (( occurs before these char sequences earlier in line.
+			perl -0777 -pe "s/${skip_lines_backref}"'\) +/\) /g' -i "${file}"
+			# ^ If the above spacing changes result in multiple spaces after ), reduce to one.
+			perl -0777 -pe "s/${skip_lines_backref}"'\(\(\(/\(\( \(/g' -i "${file}"
+			perl -0777 -pe "s/${skip_lines_backref}"'\)\)\)/\) \)\)/g' -i "${file}"
+			# ^ Refine spacing of nested (( (...) )) and (( ((...)) )) expressions.
+			perl -0777 -pe "s/${skip_lines_backref}"' \( / \(/g' -i "${file}"
+			perl -0777 -pe \
+				"s/${skip_lines_backref}"'(?<!(?:\$\()[^\(\)]{1,250}) \) /\) /g' \
+				-i "${file}"
+			# ^ Remove extra spacing inside (...) expressions.
+			next_file_contents="$( cat "${file}" )"
+		done
+
+		# Remove trailing space from all lines in all files:
+		perl -0777 -pe 's/\s+$//g' -i "${file}"
+
+		# Ensure every file has a trailing newline:
+		if [[ -n "$( tail -c1 "${file}" )" ]]
+		then
+			echo >> "${file}"
+		fi
+	done
+}
+
+main "$@"

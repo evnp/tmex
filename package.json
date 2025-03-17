@@ -12,6 +12,7 @@
   ],
   "scripts": {
     "lint": "shellcheck tmex",
+    "format": "grep '[#]!/usr/bin/env bash' -rl --exclude-dir=node_modules * | xargs ./format",
     "test": "npm run -s lint && time bats --jobs 16 --no-parallelize-across-files test.bats",
     "testf": "run() { npm run -s lint && bats -f \"$@\" test.bats; }; run",
     "testi": "run() { npm run -s lint && bats -f \" $( cat test.bats | grep @test | cut -d' ' -f3- | head -$1 | tail -1 | sed 's/\" {$//' )$\" test.bats; }; run",

@@ -10,12 +10,16 @@ function rand() {
 
 function sizing() {
 	local sizes='' multi=FALSE leading=''
-	if (( $( rand 4 ) == 1 )); then
+	if (( $( rand 4 ) == 1 ))
+	then
 		multi=TRUE
 	fi
-	for (( idx = "$( rand "$1" )"; idx; idx-- )); do
-		if [[ "${multi}" == TRUE ]]; then
-			leading=''; (( $( rand 3 ) == 1 )) && leading='.'
+	for (( idx = $( rand "$1" ); idx; idx-- ))
+	do
+		if [[ "${multi}" == TRUE ]]
+		then
+			leading=''
+			(( $( rand 3 ) == 1 )) && leading='.'
 			sizes+="${leading}$( rand 19 )."
 		else
 			sizes+="$( rand 9 )"
@@ -26,20 +30,27 @@ function sizing() {
 
 function randlayout() {
 	local n="$1" layout='' idx=0 multi=FALSE leading='' panes=0 sizing=''
-	if (( $( rand 4 ) == 1 )); then
+	if (( $( rand 4 ) == 1 ))
+	then
 		multi=TRUE
 	fi
-	for (( idx = "$( rand "${n}" )"; idx; idx-- )); do
-		if (( n > 2 && $( rand 4 ) == 1 )); then
+	for (( idx = $( rand "${n}" ); idx; idx-- ))
+	do
+		if (( n > 2 && $( rand 4 ) == 1 ))
+		then
 			layout+="[$( randlayout "$(( n / 2 ))" )]"
-		elif [[ "${multi}" == TRUE ]]; then
+		elif [[ "${multi}" == TRUE ]]
+		then
 			panes="$( rand 19 )"
-			leading=''; (( $( rand 3 ) == 1 )) && leading='.'
-			sizing=''; (( $( rand 4 ) == 1 )) && sizing="$( sizing "${panes}" )"
+			leading=''
+			(( $( rand 3 ) == 1 )) && leading='.'
+			sizing=''
+			(( $( rand 4 ) == 1 )) && sizing="$( sizing "${panes}" )"
 			layout+="${leading}${panes}.${sizing}"
 		else
 			panes="$( rand 9 )"
-			sizing=''; (( $( rand 4 ) == 1 )) && sizing="$( sizing "${panes}" )"
+			sizing=''
+			(( $( rand 4 ) == 1 )) && sizing="$( sizing "${panes}" )"
 			layout+="${panes}${sizing}"
 		fi
 	done

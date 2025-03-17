@@ -23,20 +23,23 @@ function mock_tmux() {
 	rm -rf testbin
 	mkdir testbin
 	export PATH="./testbin:$PATH"
-	cat <<-EOF > ./testbin/tmux
+	cat <<- EOF > ./testbin/tmux
 		#!/usr/bin/env bash
 		main() {
 			local args
 			local arg
 			local output=""
-			if [[ "\$*" == '-V' ]]; then
+			if [[ "\$*" == '-V' ]]
+			then
 				echo "tmux \${TMUX_VERSION}"
 				exit 0
 			fi
-			args=( "\$@" )
-			for (( idx = 0; idx < \${#args[@]}; idx++ )); do
+			args=("\$@")
+			for (( idx = 0; idx < \${#args[@]}; idx++ ))
+			do
 				arg="\${args[idx]}"
-				if [[ "\${args[idx]}" =~ [[:space:]] ]]; then
+				if [[ "\${args[idx]}" =~ [[:space:]] ]]
+				then
 					arg="\${arg//\\"/\\\\\\"}"
 					output+="\\"\${arg}\\" "
 				else
@@ -62,7 +65,8 @@ function run_tmex() {
 	cmd="${cmd/README /}"
 	cmd="${cmd/tmex/${BATS_TEST_DIRNAME}/tmex}"
 
-	while [[ "${cmd}" =~ ^([A-Z_]+=[^ ]*) ]]; do
+	while [[ "${cmd}" =~ ^([A-Z_]+=[^ ]*) ]]
+	do
 		# handle env var declarations placed before test command
 		export "${BASH_REMATCH[1]}"
 		cmd=${cmd/${BASH_REMATCH[1]} /}
@@ -152,12 +156,14 @@ function print_layout() {
 
 	IFS=$';'
 	expected=""
-	for command in ${layout}; do
-		command="${command#"${command%%[![:space:]]*}"}"	# remove leading whitespace
-		command="${command%"${command##*[![:space:]]}"}"	# remove trailing whitespace
-		command=$( echo "${command}" | tr -s " " )	# replace multiple space with single
+	for command in ${layout}
+	do
+		command="${command#"${command%%[![:space:]]*}"}" # remove leading whitespace
+		command="${command%"${command##*[![:space:]]}"}" # remove trailing whitespace
+		command=$( echo "${command}" | tr -s " ") # replace multiple space with single
 
-		if [[ "${command}" =~ ^(split-window|select-pane|send-keys) ]]; then
+		if [[ "${command}" =~ ^(split-window|select-pane|send-keys) ]]
+		then
 			expected+="${command}
 "
 		fi
@@ -175,11 +181,13 @@ function assert_layout() {
 
 	IFS=$'\n'
 	expected=""
-	for command in ${layout}; do
+	for command in ${layout}
+	do
 		command="${command#"${command%%[![:space:]]*}"}" # remove leading whitespace
 		command="${command%"${command##*[![:space:]]}"}" # remove trailing whitespace
-		command=$( echo "${command}" | tr -s " " ) # replace multiple space with single
-		if [[ -n "${command}" ]]; then
+		command=$( echo "${command}" | tr -s " ") # replace multiple space with single
+		if [[ -n "${command}" ]]
+		then
 			expected+="${command} ; "
 		fi
 	done
@@ -189,16 +197,16 @@ function assert_layout() {
 	assert_output -p "${expected}"
 }
 
-function refute_layout () {
+function refute_layout() {
 	! assert_layout "$@"
 }
 
 function assert_layout_shorthand() {
 	assert_layout "$(
 		xargs <<< "$1" |
-		sed -E 's/H/; split-window -h/g' |
-		sed -E 's/V/; split-window -v/g' |
-		sed -E 's/(U|D|L|R)/; select-pane -\1/g'
+			sed -E 's/H/; split-window -h/g' |
+			sed -E 's/V/; split-window -v/g' |
+			sed -E 's/(U|D|L|R)/; select-pane -\1/g'
 	)"
 }
 
@@ -2354,7 +2362,7 @@ function assert_alt_tmux_command() {
 	tmuxcmd="$1"
 	run_tmex
 	refute_output -p "new-session"
-	refute_output -p "%5"  # tmux pane should not be used
+	refute_output -p "%5" # tmux pane should not be used
 	refute_output -p "12"
 	assert_output -p "${tmuxcmd} ; split-window"
 	assert_layout "
