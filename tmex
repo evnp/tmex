@@ -64,7 +64,7 @@ function processargs() {
 			then
 				arg="${arg/-${BASH_REMATCH[2]}/-}"
 			fi
-			if [[ "${arg}" == "-f" || "${arg}" == "--focus" ]]
+			if [[ "${arg}" == '-f' || "${arg}" == '--focus' ]]
 			then
 				arg="${args[argidx]:-}"
 				(( argidx++ )) || true
@@ -90,7 +90,7 @@ function processargs() {
 			then
 				arg="${arg/-${BASH_REMATCH[2]}/-}"
 			fi
-			if [[ "${arg}" == "-c" || "${arg}" == "--command" ]]
+			if [[ "${arg}" == '-c' || "${arg}" == '--command' ]]
 			then
 				arg="${args[argidx]:-}"
 				(( argidx++ )) || true
@@ -494,7 +494,7 @@ function executecmd() {
 		then
 			tmuxargs+=("${cmd}")
 		else
-			tmuxargs+=(";" "send-keys" "${cmd}" "Enter")
+			tmuxargs+=(';' 'send-keys' "${cmd}" 'Enter')
 		fi
 	fi
 }
@@ -527,11 +527,11 @@ function split1d() {
 	# see https://github.com/tmux/tmux/blob/master/CHANGES#L663-L665 for details
 	if [[ -z "${tmuxversion}" ]] || (( $( bc -l <<< "${tmuxversion} < 3.1" ) ))
 	then
-		pctprefix="-p"
-		pctsuffix=""
+		pctprefix='-p'
+		pctsuffix=''
 	else
-		pctprefix="-l"
-		pctsuffix="%"
+		pctprefix='-l'
+		pctsuffix='%'
 	fi
 
 	# convert sizing string to sizearr:
@@ -864,7 +864,7 @@ function buildtmuxargs() {
 	# if -k/--kill specified, kill tmux session then exit:
 	if [[ "${argkill:-}" == TRUE ]]
 	then
-		tmuxargs=("kill-session" "-t" "${argsession}")
+		tmuxargs=('kill-session' '-t' "${argsession}")
 		if [[ "${argprint}" == TRUE ]]
 		then
 			echo "${tmuxargs[@]}"

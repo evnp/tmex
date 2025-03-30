@@ -160,7 +160,7 @@ function print_layout() {
 	do
 		command="${command#"${command%%[![:space:]]*}"}" # remove leading whitespace
 		command="${command%"${command##*[![:space:]]}"}" # remove trailing whitespace
-		command=$( echo "${command}" | tr -s " ") # replace multiple space with single
+		command="$( tr -s " " <<< "${command}" )" # replace multiple space with single
 
 		if [[ "${command}" =~ ^(split-window|select-pane|send-keys) ]]
 		then
@@ -185,7 +185,7 @@ function assert_layout() {
 	do
 		command="${command#"${command%%[![:space:]]*}"}" # remove leading whitespace
 		command="${command%"${command##*[![:space:]]}"}" # remove trailing whitespace
-		command=$( echo "${command}" | tr -s " ") # replace multiple space with single
+		command=$( tr -s " " <<< "${command}" ) # replace multiple space with single
 		if [[ -n "${command}" ]]
 		then
 			expected+="${command} ; "
