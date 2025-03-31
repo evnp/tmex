@@ -42,7 +42,7 @@ function processargs() {
 		if [[ "${arg}" =~ ^(-([dhknprstvV]*)l|--layout) ]]
 		then
 			(( argidx++ )) || true
-			if [[ "${arg}" != '--layout' ]]
+			if [[ "${arg}" != '--layout'* ]]
 			then
 				arg="${arg/-${BASH_REMATCH[2]}/-}"
 			fi
@@ -60,7 +60,7 @@ function processargs() {
 		elif [[ "${arg}" =~ ^(-([dhknprstvV]*)f|--focus) ]]
 		then
 			(( argidx++ )) || true
-			if [[ "${arg}" != '--focus' ]]
+			if [[ "${arg}" != '--focus'* ]]
 			then
 				arg="${arg/-${BASH_REMATCH[2]}/-}"
 			fi
@@ -86,7 +86,7 @@ function processargs() {
 		elif [[ "${arg}" =~ ^(-([dhknprstvV]*)c|--command) ]]
 		then
 			(( argidx++ )) || true
-			if [[ "${arg}" != '--command' ]]
+			if [[ "${arg}" != '--command'* ]]
 			then
 				arg="${arg/-${BASH_REMATCH[2]}/-}"
 			fi
