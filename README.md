@@ -28,7 +28,7 @@
 
 If you'd like to jump straight to installing tmex, please go to the [Install](https://github.com/evnp/tmex#install) section or try one of these:
 ```sh
-brew tap evnp/tmex && brew install tmex
+brew install tmex
 # OR
 npm install -g tmex
 # OR to curl directly, see https://github.com/evnp/tmex#install
@@ -393,7 +393,7 @@ Install
 -------
 Homebrew:
 ```sh
-brew tap evnp/tmex && brew install tmex
+brew install tmex
 ```
 NPM:
 ```sh
