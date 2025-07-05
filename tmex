@@ -1241,8 +1241,9 @@ For complete documentation, please see https://github.com/evnp/tmex#readme'
 	# --- Multi-Window Management --- #
 	args=("${@:-}")
 	tmexargs=()
-	nextwindowidx=$(tmux show -Av base-index)
-	focuswindowidx=$nextwindowidx
+	nextwindowidx="$( tmux show-options -Av base-index 2>/dev/null )"
+	! [[ "${nextwindowidx}" =~ ^[0-9]+$ ]] && nextwindowidx=0
+	focuswindowidx="${nextwindowidx}"
 	for (( idx = 0; idx <= ${#args[@]}; idx++ ))
 	do
 		if (( idx == ${#args[@]} )) || [[ "${args[idx]}" =~ ^(-w|-W|--window|--window-focus) ]]
