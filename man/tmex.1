@@ -1,4 +1,4 @@
-.TH "TMEX" "1" "May 2025"
+.TH "TMEX" "1" "July 2025"
 .SH "NAME"
 \fBtmex – “tmux-execute” – a lightweight tmux command & layout composer\fR
 .SH DESCRIPTION
@@ -293,7 +293,7 @@ tmex your\-session\-name \-w abc \-f4 123 "cmd a" "cmd b" \-w efg \-f\-2 44 "cmd
 .fi
 .RE
 .P
-By default, the session will begin with the \fIfirst\fR window in focus\. If you'd like to begin with a different window in focus, simply replace the corresponding \fB\-\-window\fP or \fB\-w\fP arg with \fB\-\-window\-active\fP or \fB\-W\fP, respectively:
+By default, the session will begin with the \fIfirst\fR window in focus\. If you'd like to begin with a different window in focus, simply replace the corresponding \fB\-\-window\fP or \fB\-w\fP arg with \fB\-\-window\-focus\fP or \fB\-W\fP, respectively:
 .RS 2
 .nf
 tmex your\-session\-name \-\-window\-focus abc 123 \-w efg 44  # focus 1st window
