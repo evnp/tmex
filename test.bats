@@ -34,6 +34,11 @@ function mock_tmux() {
 				echo "tmux \${TMUX_VERSION}"
 				exit 0
 			fi
+			if [[ "\$*" == 'show-options -Av base-index' ]]
+			then
+				echo "\${TMUX_BASE_INDEX}"
+				exit 0
+			fi
 			args=("\$@")
 			for (( idx = 0; idx < \${#args[@]}; idx++ ))
 			do
@@ -2249,6 +2254,46 @@ new-session -s testsessionname ; split-window -h -p50 ; select-pane -L ; select-
 	assert_output -p "${tmux_args_multi_window} ; select-window -t 2"
 	assert_success
 }
+@test "${BATS_TEST_NUMBER} TMUX_BASE_INDEX=1 tmex testsessionname -w- 11 -w- 2 -w- 3" {
+	run_tmex
+	assert_output -p "${tmux_args_multi_window} ; select-window -t 1"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} TMUX_BASE_INDEX=1 tmex testsessionname -W- 11 -w- 2 -w- 3" {
+	run_tmex
+	assert_output -p "${tmux_args_multi_window} ; select-window -t 1"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} TMUX_BASE_INDEX=1 tmex testsessionname -w- 11 -W- 2 -w- 3" {
+	run_tmex
+	assert_output -p "${tmux_args_multi_window} ; select-window -t 2"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} TMUX_BASE_INDEX=1 tmex testsessionname -w- 11 -w- 2 -W- 3" {
+	run_tmex
+	assert_output -p "${tmux_args_multi_window} ; select-window -t 3"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} TMUX_BASE_INDEX=2 tmex testsessionname -w- 11 -w- 2 -w- 3" {
+	run_tmex
+	assert_output -p "${tmux_args_multi_window} ; select-window -t 2"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} TMUX_BASE_INDEX=2 tmex testsessionname -W- 11 -w- 2 -w- 3" {
+	run_tmex
+	assert_output -p "${tmux_args_multi_window} ; select-window -t 2"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} TMUX_BASE_INDEX=2 tmex testsessionname -w- 11 -W- 2 -w- 3" {
+	run_tmex
+	assert_output -p "${tmux_args_multi_window} ; select-window -t 3"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} TMUX_BASE_INDEX=2 tmex testsessionname -w- 11 -w- 2 -W- 3" {
+	run_tmex
+	assert_output -p "${tmux_args_multi_window} ; select-window -t 4"
+	assert_success
+}
 @test "${BATS_TEST_NUMBER} tmex testsessionname --window '' 11 --window '' 2 --window '' 3" {
 	run_tmex
 	assert_output -p "${tmux_args_multi_window} ; select-window -t 0"
@@ -2282,6 +2327,76 @@ new-session -s testsessionname ; split-window -h -p50 ; select-pane -L ; select-
 @test "${BATS_TEST_NUMBER} tmex testsessionname -w- 11 -w- 2 --window-focus \"\" 3" {
 	run_tmex
 	assert_output -p "${tmux_args_multi_window} ; select-window -t 2"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} TMUX_BASE_INDEX=1 tmex testsessionname --window '' 11 --window '' 2 --window '' 3" {
+	run_tmex
+	assert_output -p "${tmux_args_multi_window} ; select-window -t 1"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} TMUX_BASE_INDEX=1 tmex testsessionname --window-focus '' 11 --window '' 2 --window '' 3" {
+	run_tmex
+	assert_output -p "${tmux_args_multi_window} ; select-window -t 1"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} TMUX_BASE_INDEX=1 tmex testsessionname --window '' 11 --window-focus \"\" 2 --window '' 3" {
+	run_tmex
+	assert_output -p "${tmux_args_multi_window} ; select-window -t 2"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} TMUX_BASE_INDEX=1 tmex testsessionname --window '' 11 --window \"\" 2 --window-focus '' 3" {
+	run_tmex
+	assert_output -p "${tmux_args_multi_window} ; select-window -t 3"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} TMUX_BASE_INDEX=1 tmex testsessionname --window-focus \"\" 11 -w- 2 -w- 3" {
+	run_tmex
+	assert_output -p "${tmux_args_multi_window} ; select-window -t 1"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} TMUX_BASE_INDEX=1 tmex testsessionname -w- 11 --window-focus '' 2 -w- 3" {
+	run_tmex
+	assert_output -p "${tmux_args_multi_window} ; select-window -t 2"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} TMUX_BASE_INDEX=1 tmex testsessionname -w- 11 -w- 2 --window-focus \"\" 3" {
+	run_tmex
+	assert_output -p "${tmux_args_multi_window} ; select-window -t 3"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} TMUX_BASE_INDEX=2 tmex testsessionname --window '' 11 --window '' 2 --window '' 3" {
+	run_tmex
+	assert_output -p "${tmux_args_multi_window} ; select-window -t 2"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} TMUX_BASE_INDEX=2 tmex testsessionname --window-focus '' 11 --window '' 2 --window '' 3" {
+	run_tmex
+	assert_output -p "${tmux_args_multi_window} ; select-window -t 2"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} TMUX_BASE_INDEX=2 tmex testsessionname --window '' 11 --window-focus \"\" 2 --window '' 3" {
+	run_tmex
+	assert_output -p "${tmux_args_multi_window} ; select-window -t 3"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} TMUX_BASE_INDEX=2 tmex testsessionname --window '' 11 --window \"\" 2 --window-focus '' 3" {
+	run_tmex
+	assert_output -p "${tmux_args_multi_window} ; select-window -t 4"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} TMUX_BASE_INDEX=2 tmex testsessionname --window-focus \"\" 11 -w- 2 -w- 3" {
+	run_tmex
+	assert_output -p "${tmux_args_multi_window} ; select-window -t 2"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} TMUX_BASE_INDEX=2 tmex testsessionname -w- 11 --window-focus '' 2 -w- 3" {
+	run_tmex
+	assert_output -p "${tmux_args_multi_window} ; select-window -t 3"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} TMUX_BASE_INDEX=2 tmex testsessionname -w- 11 -w- 2 --window-focus \"\" 3" {
+	run_tmex
+	assert_output -p "${tmux_args_multi_window} ; select-window -t 4"
 	assert_success
 }
 
