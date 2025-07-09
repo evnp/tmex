@@ -525,7 +525,7 @@ function split1d() {
 	# support for percentage values under `split-pane -l<value>%` was added in tmux 3.1
 	# and `split-pane -p<value>` was deprecated (fully removed in tmux 3.4)
 	# see https://github.com/tmux/tmux/blob/master/CHANGES#L663-L665 for details
-	if [[ -z "${tmuxversion}" ]] || (( $( bc -l <<< "${tmuxversion} < 3.1" ) ))
+	if [[ -z "${tmuxversion:-}" ]] || (( $( bc -l <<< "${tmuxversion} < 3.1" ) ))
 	then
 		pctprefix='-p'
 		pctsuffix=''
@@ -1132,9 +1132,10 @@ function main() {
 	# Params:
 	#   $@ args [array<any>] arguments passed to script
 
-	if [[ -z "${TMEX_SUPPRESS_WARNING_TMUX:-}" ]]
+	if ! command -v tmux &> /dev/null
 	then
-		if ! command -v tmux &> /dev/null
+		tmuxversion=""
+		if [[ -z "${TMEX_SUPPRESS_WARNING_TMUX:-}" ]]
 		then
 			echo "!!! WARNING: tmux is not yet installed, tmex will not work without tmux !!!"
 			echo
@@ -1148,23 +1149,23 @@ function main() {
 			echo
 			echo
 		fi
-	fi
-
-	tmuxversion="$( tmux -V )"
-	if [[ "${tmuxversion}" =~ ([0-9]+(\.[0-9]+)?) ]]
-	then
-		tmuxversion="${BASH_REMATCH[0]}"
-	elif [[ -z "${TMEX_SUPPRESS_WARNING_PCT_FLAGS:-}" ]]
-	then
-		echo "!!! WARNING: current tmux version could not be determined from !!!"
-		echo "  tmux -V  >>>	\"${tmuxversion}\""
-		echo "This can result in incorrect pane-splitting behavior since tmux has made"
-		echo "backwards-incompatible changes to flags of the split-window command."
-		echo "Please ensure your installation of tmux produces a semver string within"
-		echo "the output of 'tmux -V'."
-		echo "'export TMEX_SUPPRESS_WARNING_PCT_FLAGS=1' in shell rc file will hide warning."
-		echo "See https://github.com/tmux/tmux/blob/master/CHANGES#L663-L665 for details."
-		echo
+	else
+		tmuxversion="$( tmux -V )"
+		if [[ "${tmuxversion}" =~ ([0-9]+(\.[0-9]+)?) ]]
+		then
+			tmuxversion="${BASH_REMATCH[0]}"
+		elif [[ -z "${TMEX_SUPPRESS_WARNING_PCT_FLAGS:-}" ]]
+		then
+			echo "!!! WARNING: current tmux version could not be determined from !!!"
+			echo "  tmux -V  >>>	\"${tmuxversion}\""
+			echo "This can result in incorrect pane-splitting behavior since tmux has made"
+			echo "backwards-incompatible changes to flags of the split-window command."
+			echo "Please ensure your installation of tmux produces a semver string within"
+			echo "the output of 'tmux -V'."
+			echo "'export TMEX_SUPPRESS_WARNING_PCT_FLAGS=1' in shell rc file will hide warning."
+			echo "See https://github.com/tmux/tmux/blob/master/CHANGES#L663-L665 for details."
+			echo
+		fi
 	fi
 
 	version="$( head -n 3 < "$0" | tail -1 )"
@@ -1241,8 +1242,13 @@ For complete documentation, please see https://github.com/evnp/tmex#readme'
 	# --- Multi-Window Management --- #
 	args=("${@:-}")
 	tmexargs=()
-	nextwindowidx="$( tmux show-options -Av base-index 2> /dev/null )"
-	! [[ "${nextwindowidx}" =~ ^[0-9]+$ ]] && nextwindowidx=0
+	nextwindowidx=0
+	if command -v tmux &> /dev/null
+	then
+		# if tmux installed, make window-focus system relative to current base-index:
+		nextwindowidx="$( tmux show-options -Av base-index 2> /dev/null || true )"
+		! [[ "${nextwindowidx}" =~ ^[0-9]+$ ]] && nextwindowidx=0 # default to zero
+	fi
 	focuswindowidx="${nextwindowidx}"
 	for (( idx = 0; idx <= ${#args[@]}; idx++ ))
 	do
