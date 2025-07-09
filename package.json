@@ -13,7 +13,7 @@
   "scripts": {
     "lint": "shellcheck tmex",
     "format": "grep '[#]!/usr/bin/env bash' -rl --exclude-dir=node_modules * | xargs ./format",
-    "test": "npm run -s lint && time bats --jobs 16 --no-parallelize-across-files test.bats",
+    "test": "npm run -s lint && echo 'Running parallel tests:' && time bats --filter-tags !serial --jobs 16 --no-parallelize-across-files test.bats && echo $'\n''Running serial tests:' && time bats --filter-tags serial test.bats",
     "testf": "run() { npm run -s lint && bats -f \"$@\" test.bats; }; run",
     "testi": "run() { npm run -s lint && bats -f \" $( cat test.bats | grep @test | cut -d' ' -f3- | head -$1 | tail -1 | sed 's/\" {$//' )$\" test.bats; }; run",
     "testw": "run() { npm run -s test; fswatch -0 -o -r . | xargs -0 -n1 npm run test; }; run",

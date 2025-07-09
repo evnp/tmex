@@ -20,7 +20,7 @@ function teardown_file() {
 }
 
 function mock_tmux() {
-	rm -rf testbin
+	rm -rf ./testbin
 	mkdir testbin
 	export PATH="./testbin:$PATH"
 	cat <<- EOF > ./testbin/tmux
@@ -59,13 +59,21 @@ function mock_tmux() {
 }
 
 function restore_tmux() {
-	rm -rf testbin
+	rm -rf ./testbin
 	export PATH="$ORIGINAL_PATH"
 }
 
 function run_tmex() {
-	local cmd
+	local cmd tmuxuninstalled=FALSE
+
 	cmd="${BATS_TEST_DESCRIPTION}"
+
+	if [[ "${cmd}" == *'TMUX_UNINSTALLED'* ]]
+	then
+		tmuxuninstalled=TRUE
+		cmd="${cmd/TMUX_UNINSTALLED /}"
+	fi
+
 	cmd="${cmd/${BATS_TEST_NUMBER} /}"
 	cmd="${cmd/README /}"
 	cmd="${cmd/tmex/${BATS_TEST_DIRNAME}/tmex}"
@@ -77,7 +85,17 @@ function run_tmex() {
 		cmd=${cmd/${BASH_REMATCH[1]} /}
 	done
 
+	if [[ "${tmuxuninstalled}" == TRUE ]]
+	then
+		rm -f ./testbin/tmux
+	fi
+
 	run ${cmd}
+
+	if [[ "${tmuxuninstalled}" == TRUE ]]
+	then
+		mock_tmux # revert back to original mocked-tmux state for next test case
+	fi
 }
 
 @test "${BATS_TEST_NUMBER} tmex" {
@@ -125,6 +143,50 @@ function run_tmex() {
 @test "${BATS_TEST_NUMBER} tmex -v" {
 	run_tmex
 	assert_output -p "tmex"
+	assert_success
+}
+
+# Test command used by Homebrew formula:
+# (https://github.com/Homebrew/homebrew-core/blob/main/Formula/t/tmex.rb)
+@test "${BATS_TEST_NUMBER} tmex test -tp 1224" {
+	run_tmex
+	assert_output -p "new-session -s test"
+	assert_success
+}
+
+# Note: Following tests all need to be run serially and separately from other parallel
+# tests because they remove the mocked tmux executable (via TMUX_UNINSTALLED) which
+# can interrupt sucessful execution of other tests while running in parallel.
+# bats test_tags=serial
+@test "${BATS_TEST_NUMBER} TMUX_UNINSTALLED tmex --help" {
+	run_tmex
+	assert_output -p "Usage:"
+	assert_success
+}
+# bats test_tags=serial
+@test "${BATS_TEST_NUMBER} TMUX_UNINSTALLED tmex -h" {
+	run_tmex
+	assert_output -p "Usage:"
+	assert_success
+}
+# bats test_tags=serial
+@test "${BATS_TEST_NUMBER} TMUX_UNINSTALLED tmex --version" {
+	run_tmex
+	assert_output -p "tmex"
+	assert_success
+}
+# bats test_tags=serial
+@test "${BATS_TEST_NUMBER} TMUX_UNINSTALLED tmex -v" {
+	run_tmex
+	assert_output -p "tmex"
+	assert_success
+}
+# Test command used by Homebrew formula:
+# (https://github.com/Homebrew/homebrew-core/blob/main/Formula/t/tmex.rb)
+# bats test_tags=serial
+@test "${BATS_TEST_NUMBER} TMUX_UNINSTALLED tmex test -tp 1224" {
+	run_tmex
+	assert_output -p "new-session -s test"
 	assert_success
 }
 
